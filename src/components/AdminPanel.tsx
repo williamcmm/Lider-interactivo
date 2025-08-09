@@ -1,3 +1,7 @@
+&quot;Texto con comillas&quot;
+import Link from 'next/link';
+// ...existing code...
+<Link href="/">Inicio</Link>
 // ...existing code...
 import Link from 'next/link';
 // ...existing code...
@@ -336,14 +340,14 @@ export function AdminPanel({}: AdminPanelProps) {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 title="Ir a la aplicación principal de enseñanza"
               >
                 <FiBook className="mr-2" />
                 Usar Aplicación
-              </a>
+              </Link>
               {!isCreatingContainer && !isEditingLessons && (
                 <button
                   onClick={handleCreateContainer}
