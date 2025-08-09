@@ -238,7 +238,6 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
     { id: 'compartidas' as TabType, label: 'Compartidas' },
     { id: 'compartir' as TabType, label: 'Compartir' },
   ];
-
   return (
     <div className="h-full flex flex-col p-4">
       {/* Pestañas de navegación */}
