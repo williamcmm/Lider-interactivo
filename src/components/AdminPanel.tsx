@@ -1,4 +1,3 @@
-&quot;Texto con comillas&quot;
 import Link from 'next/link';
 // ...existing code...
 <Link href="/">Inicio</Link>
