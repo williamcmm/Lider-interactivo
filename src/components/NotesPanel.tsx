@@ -125,8 +125,8 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
       return;
     }
     // Obtener lista actual de usuarios que han recibido mis notas
-    let sharedList = localStorage.getItem(`sharedWith_${email}`);
-    let sharedArr: string[] = sharedList ? JSON.parse(sharedList) : [];
+  const sharedList = localStorage.getItem(`sharedWith_${email}`);
+  const sharedArr: string[] = sharedList ? JSON.parse(sharedList) : [];
     if (!sharedArr.includes(myEmail)) {
       sharedArr.push(myEmail);
       localStorage.setItem(`sharedWith_${email}`, JSON.stringify(sharedArr));
@@ -154,7 +154,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
     }
     try {
       const existingNotes = localStorage.getItem(notesKey);
-      let notes: Note[] = existingNotes ? JSON.parse(existingNotes) : [];
+  let notes: Note[] = existingNotes ? JSON.parse(existingNotes) : [];
       const newNote: Note = {
         id: `quick_${noteFragmentId}_${Date.now()}`,
         content: newNoteText.trim(),
@@ -207,7 +207,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
 
     try {
       const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
-      let notes: Note[] = existingNotes ? JSON.parse(existingNotes) : [];
+  const notes: Note[] = existingNotes ? JSON.parse(existingNotes) : [];
       
       const newNote: Note = {
         id: `imported_${fragment.id}_${Date.now()}`,
@@ -290,7 +290,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
                         <div className="flex-grow">
                           {note.selectedText && (
                             <div className="text-xs text-blue-600 mb-1 font-medium">
-                              "{note.selectedText}"
+                              &quot;{note.selectedText}&quot;
                             </div>
                           )}
                           <div className="text-sm text-gray-800">{note.content}</div>
@@ -386,7 +386,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
                         <div className="flex-grow">
                           {note.selectedText && (
                             <div className="text-xs text-blue-600 mb-1 font-medium">
-                              "{note.selectedText}"
+                              &quot;{note.selectedText}&quot;
                             </div>
                           )}
                           <div className="text-sm text-gray-800">{note.content}</div>
