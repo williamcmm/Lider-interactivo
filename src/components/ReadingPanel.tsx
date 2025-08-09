@@ -31,7 +31,6 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
         const selectedText = selection?.toString().trim();
         if (selectedText && fragment) {
           let showPopup = true;
-          // Si el texto es muy corto, mostrar advertencia pero permitir popup
           if (selectedText.length <= 3) {
             console.warn('Texto seleccionado muy corto:', selectedText);
           }

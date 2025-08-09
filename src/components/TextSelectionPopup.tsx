@@ -1,4 +1,4 @@
-&quot;Texto con comillas&quot;
+// ...existing code...
 import { useState } from 'react';
 import { TextSelectionPopup as TextSelectionPopupType } from '@/types';
 
