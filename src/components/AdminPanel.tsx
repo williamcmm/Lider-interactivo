@@ -1,7 +1,6 @@
 // ...existing code...
 import Link from 'next/link';
 // ...existing code...
-<Link href="/">Inicio</Link>
 "use client";
 
 import { useState, useEffect } from 'react';
