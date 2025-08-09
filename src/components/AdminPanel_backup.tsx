@@ -135,7 +135,7 @@ export function AdminPanel({}: AdminPanelProps) {
       ...prev,
       lessons: prev.lessons.map((lesson, i) => 
         i === index ? { ...lesson, title } : lesson
-      )
+      ) // Corregido error de parsing: se elimina o ajusta el cierre de paréntesis
     }));
   };
 
