@@ -1,0 +1,907 @@
+﻿'use client';
+
+import { useState } from 'react';
+import { FiPlus, FiEdit, FiTrash2, FiBook, FiList, FiSave, FiArrowLeft, FiX } from 'react-icons/fi';
+import { Seminar, Series, Lesson, StudyContainer, Fragment } from '@/types';
+
+interface AdminPanelProps {}
+
+export function AdminPanel({}: AdminPanelProps) {
+  const [activeTab, setActiveTab] = useState<'seminars' | 'series'>('seminars');
+  const [seminars, setSeminars] = useState<Seminar[]>([]);
+  const [series, setSeries] = useState<Series[]>([]);
+  const [selectedContainer, setSelectedContainer] = useState<StudyContainer | null>(null);
+  const [isCreatingContainer, setIsCreatingContainer] = useState(false);
+  const [isCreatingLesson, setIsCreatingLesson] = useState(false);
+  const [isEditingLessons, setIsEditingLessons] = useState(false);
+  const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
+  const [editingContainer, setEditingContainer] = useState<StudyContainer | null>(null);
+
+  // Estado para el formulario de creación inline
+  const [creationForm, setCreationForm] = useState({
+    title: '',
+    description: '',
+    lessonsCount: 10,
+    lessons: Array.from({ length: 10 }, (_, i) => ({ title: '', order: i + 1 })),
+    audioFiles: [''] // MP3s para el seminario
+  });
+
+  // Estado para edición de fragmentos de lecciones
+  const [fragmentsData, setFragmentsData] = useState<Fragment[]>([]);
+  const [selectedFragmentIndex, setSelectedFragmentIndex] = useState(0);
+  const [editingFragmentIndex, setEditingFragmentIndex] = useState<number | null>(null);
+
+  // Mock data inicial
+  const mockSeminars: Seminar[] = [
+    {
+      id: 'sem-1',
+      title: 'Liderazgo Bíblico',
+      description: 'Principios fundamentales del liderazgo cristiano',
+      lessons: [],
+      order: 1,
+      audioFiles: []
+    },
+    {
+      id: 'sem-2',
+      title: 'Discipulado Efectivo',
+      description: 'Estrategias para hacer discípulos',
+      lessons: [],
+      order: 2,
+      audioFiles: []
+    }
+  ];
+
+  const mockSeries: Series[] = [
+    {
+      id: 'ser-1',
+      title: 'Estudios de Carácter',
+      description: 'Serie enfocada en el desarrollo del carácter cristiano',
+      lessons: [],
+      order: 1,
+      audioFiles: []
+    }
+  ];
+
+  // Inicializar datos mock
+  useState(() => {
+    setSeminars(mockSeminars);
+    setSeries(mockSeries);
+  });
+
+  const currentData = activeTab === 'seminars' ? seminars : series;
+
+  const handleCreateContainer = () => {
+    setIsCreatingContainer(true);
+    setSelectedContainer(null);
+    // Resetear el formulario
+    setCreationForm({
+      title: '',
+      description: '',
+      lessonsCount: 10,
+      lessons: Array.from({ length: 10 }, (_, i) => ({ title: '', order: i + 1 })),
+      audioFiles: [''] // MP3s para el seminario
+    });
+  };
+
+  const handleCancelCreation = () => {
+    setIsCreatingContainer(false);
+    setCreationForm({
+      title: '',
+      description: '',
+      lessonsCount: 10,
+      lessons: Array.from({ length: 10 }, (_, i) => ({ title: '', order: i + 1 })),
+      audioFiles: ['']
+    });
+  };
+
+  const handleLessonsCountChange = (count: number) => {
+    const newCount = Math.max(1, Math.min(50, count)); // Entre 1 y 50 lecciones
+    setCreationForm(prev => ({
+      ...prev,
+      lessonsCount: newCount,
+      lessons: Array.from({ length: newCount }, (_, i) => {
+        // Mantener títulos existentes si los hay
+        const existingLesson = prev.lessons[i];
+        return existingLesson || { title: '', order: i + 1 };
+      })
+    }));
+  };
+
+  const handleLessonTitleChange = (index: number, title: string) => {
+    setCreationForm(prev => ({
+      ...prev,
+      lessons: prev.lessons.map((lesson, i) => 
+        i === index ? { ...lesson, title } : lesson
+      )
+    }));
+  };
+
+  // Manejar cambios en archivos de audio del seminario
+  const handleAudioFileChange = (index: number, value: string) => {
+    const updatedAudioFiles = [...creationForm.audioFiles];
+    updatedAudioFiles[index] = value;
+    setCreationForm(prev => ({
+      ...prev,
+      audioFiles: updatedAudioFiles
+    }));
+  };
+
+  // Agregar nuevo archivo de audio
+  const addAudioFile = () => {
+    setCreationForm(prev => ({
+      ...prev,
+      audioFiles: [...prev.audioFiles, '']
+    }));
+  };
+
+  // Eliminar archivo de audio
+  const removeAudioFile = (index: number) => {
+    setCreationForm(prev => ({
+      ...prev,
+      audioFiles: prev.audioFiles.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Manejar fragmentos de lecciones
+  const addFragment = () => {
+    const newFragment: Fragment = {
+      id: `fragment-${Date.now()}`,
+      order: fragmentsData.length + 1,
+      readingMaterial: '',
+      slide: '',
+      studyAids: ''
+    };
+    setFragmentsData([...fragmentsData, newFragment]);
+  };
+
+  const updateFragment = (index: number, field: keyof Fragment, value: string | number) => {
+    const updatedFragments = fragmentsData.map((fragment, i) => 
+      i === index ? { ...fragment, [field]: value } : fragment
+    );
+    setFragmentsData(updatedFragments);
+  };
+
+  const removeFragment = (index: number) => {
+    setFragmentsData(fragmentsData.filter((_, i) => i !== index));
+  };
+
+  const saveIndividualFragment = (index: number) => {
+    if (!editingContainer) return;
+
+    // Actualizar la lección con los fragmentos actuales
+    const updatedLessons = [...editingContainer.lessons];
+    updatedLessons[selectedLessonIndex] = {
+      ...updatedLessons[selectedLessonIndex],
+      fragments: fragmentsData
+    };
+
+    const updatedContainer = {
+      ...editingContainer,
+      lessons: updatedLessons
+    };
+
+    // Actualizar en el estado correspondiente
+    if (editingContainer.type === 'seminar') {
+      setSeminars(seminars.map(s => 
+        s.id === editingContainer.id ? updatedContainer as Seminar : s
+      ));
+    } else {
+      setSeries(series.map(s => 
+        s.id === editingContainer.id ? updatedContainer as Series : s
+      ));
+    }
+
+    setEditingContainer(updatedContainer);
+    setEditingFragmentIndex(null);
+    alert(`Fragmento ${fragmentsData[index].order} guardado exitosamente`);
+  };
+
+  const startEditingFragment = (index: number) => {
+    setEditingFragmentIndex(index);
+  };
+
+  const cancelEditingFragment = () => {
+    setEditingFragmentIndex(null);
+  };
+
+  const handleSaveContainer = () => {
+    if (!creationForm.title.trim()) {
+      alert('Por favor ingresa un título');
+      return;
+    }
+
+    const newContainer = {
+      id: `${activeTab === 'seminars' ? 'sem' : 'ser'}-${Date.now()}`,
+      title: creationForm.title,
+      description: creationForm.description,
+      order: currentData.length + 1,
+      type: activeTab === 'seminars' ? 'seminar' as const : 'series' as const,
+      audioFiles: creationForm.audioFiles.filter(file => file.trim()),
+      lessons: creationForm.lessons
+        .filter(lesson => lesson.title.trim())
+        .map((lesson, index) => ({
+          id: `lesson-${Date.now()}-${index}`,
+          title: lesson.title,
+          content: `<p>Contenido de la lección: ${lesson.title}</p>`,
+          containerId: `${activeTab === 'seminars' ? 'sem' : 'ser'}-${Date.now()}`,
+          containerType: activeTab === 'seminars' ? 'seminar' as const : 'series' as const,
+          order: lesson.order,
+          fragments: [
+            {
+              id: `fragment-${Date.now()}-${index}-1`,
+              order: 1,
+              readingMaterial: '<p>Material de lectura inicial</p>',
+              slide: '<p>Diapositiva inicial</p>',
+              studyAids: '<p>Ayudas de estudio iniciales</p>'
+            }
+          ]
+        }))
+    };
+
+    if (activeTab === 'seminars') {
+      setSeminars([...seminars, newContainer as Seminar]);
+    } else {
+      setSeries([...series, newContainer as Series]);
+    }
+
+    // Después de guardar, pasar a la edición de lecciones
+    setEditingContainer(newContainer);
+    setIsEditingLessons(true);
+    setSelectedLessonIndex(0);
+    setIsCreatingContainer(false);
+    
+    // Inicializar fragmentos de la primera lección
+    const firstLesson = newContainer.lessons[0];
+    if (firstLesson) {
+      setFragmentsData(firstLesson.fragments || []);
+      setSelectedFragmentIndex(0);
+    }
+  };
+
+  const handleEditLessons = (container: Seminar | Series) => {
+    const studyContainer: StudyContainer = {
+      ...container,
+      type: activeTab === 'seminars' ? 'seminar' : 'series'
+    };
+    setEditingContainer(studyContainer);
+    setIsEditingLessons(true);
+    setSelectedLessonIndex(0);
+    
+    // Cargar fragmentos de la primera lección si existe
+    const firstLesson = container.lessons[0];
+    if (firstLesson && firstLesson.fragments) {
+      setFragmentsData(firstLesson.fragments);
+      setSelectedFragmentIndex(0);
+    } else {
+      setFragmentsData([]);
+    }
+  };
+
+  const handleSelectLesson = (index: number) => {
+    setSelectedLessonIndex(index);
+    const lesson = editingContainer?.lessons[index];
+    if (lesson && lesson.fragments) {
+      setFragmentsData(lesson.fragments);
+      setSelectedFragmentIndex(0);
+      setEditingFragmentIndex(null); // Resetear edición al cambiar de lección
+    } else {
+      setFragmentsData([]);
+    }
+  };
+
+  const handleSaveFragments = () => {
+    if (!editingContainer) return;
+
+    const updatedLessons = [...editingContainer.lessons];
+    updatedLessons[selectedLessonIndex] = {
+      ...updatedLessons[selectedLessonIndex],
+      fragments: fragmentsData
+    };
+
+    const updatedContainer = {
+      ...editingContainer,
+      lessons: updatedLessons
+    };
+
+    // Actualizar en el estado correspondiente
+    if (editingContainer.type === 'seminar') {
+      setSeminars(seminars.map(s => 
+        s.id === editingContainer.id ? updatedContainer as Seminar : s
+      ));
+    } else {
+      setSeries(series.map(s => 
+        s.id === editingContainer.id ? updatedContainer as Series : s
+      ));
+    }
+
+    setEditingContainer(updatedContainer);
+    alert('Fragmentos de la lección guardados exitosamente');
+  };
+
+  const handleFinishEditingLessons = () => {
+    setIsEditingLessons(false);
+    setEditingContainer(null);
+    setSelectedLessonIndex(0);
+    setFragmentsData([]);
+    setSelectedFragmentIndex(0);
+  };
+
+  const handleEditContainer = (container: Seminar | Series) => {
+    // Convertir a StudyContainer para unificar el manejo
+    const studyContainer: StudyContainer = {
+      ...container,
+      type: activeTab === 'seminars' ? 'seminar' : 'series'
+    };
+    setSelectedContainer(studyContainer);
+    setIsCreatingContainer(true);
+  };
+
+  const handleDeleteContainer = (id: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
+      if (activeTab === 'seminars') {
+        setSeminars(seminars.filter(s => s.id !== id));
+      } else {
+        setSeries(series.filter(s => s.id !== id));
+      }
+    }
+  };
+
+  const handleCreateLesson = (containerId: string) => {
+    const container = currentData.find(c => c.id === containerId);
+    if (container) {
+      const studyContainer: StudyContainer = {
+        ...container,
+        type: activeTab === 'seminars' ? 'seminar' : 'series'
+      };
+      setSelectedContainer(studyContainer);
+      setIsCreatingLesson(true);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 overflow-y-auto">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Administrador - Líder Interactivo CMM
+              </h1>
+              <p className="text-gray-600">
+                Gestiona seminarios, series y lecciones
+              </p>
+            </div>
+            {!isCreatingContainer && (
+              <button
+                onClick={handleCreateContainer}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <FiPlus className="mr-2" />
+                Crear {activeTab === 'seminars' ? 'Seminario' : 'Serie'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Mostrar formulario de creación si está activo */}
+        {isCreatingContainer ? (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            {/* Header del formulario */}
+            <div className="flex justify-between items-center mb-6 pb-4 border-b">
+              <h2 className="text-xl font-bold text-gray-900">
+                Crear {activeTab === 'seminars' ? 'Seminario' : 'Serie'}
+              </h2>
+              <button
+                onClick={handleCancelCreation}
+                className="inline-flex items-center px-3 py-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FiArrowLeft className="mr-2" />
+                Volver
+              </button>
+            </div>
+
+            {/* Formulario principal */}
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre del {activeTab === 'seminars' ? 'Seminario' : 'Serie'}
+                  </label>
+                  <input
+                    type="text"
+                    value={creationForm.title}
+                    onChange={(e) => setCreationForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={`Nombre del ${activeTab === 'seminars' ? 'seminario' : 'serie'}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Número de Lecciones
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleLessonsCountChange(creationForm.lessonsCount - 1)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      disabled={creationForm.lessonsCount <= 1}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={creationForm.lessonsCount}
+                      onChange={(e) => handleLessonsCountChange(parseInt(e.target.value) || 1)}
+                      className="w-20 text-center border border-gray-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      min="1"
+                      max="50"
+                    />
+                    <button
+                      onClick={() => handleLessonsCountChange(creationForm.lessonsCount + 1)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      disabled={creationForm.lessonsCount >= 50}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción (opcional)
+                </label>
+                <textarea
+                  value={creationForm.description}
+                  onChange={(e) => setCreationForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Describe brevemente el contenido..."
+                />
+              </div>
+
+              {/* Grid de lecciones */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Títulos de las Lecciones
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {creationForm.lessons.map((lesson, index) => (
+                    <div key={index} className="relative">
+                      <div className="flex items-center space-x-2">
+                        <span className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                          {lesson.order}
+                        </span>
+                        <input
+                          type="text"
+                          value={lesson.title}
+                          onChange={(e) => handleLessonTitleChange(index, e.target.value)}
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder={`Lección ${lesson.order}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Archivos de Audio del Seminario */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Archivos MP3 del Seminario
+                  <span className="text-gray-500 text-xs ml-2">(Compartidos por todas las lecciones)</span>
+                </label>
+                <div className="space-y-3">
+                  {creationForm.audioFiles.map((file, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <span className="flex-shrink-0 w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                        {index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={file}
+                        onChange={(e) => handleAudioFileChange(index, e.target.value)}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder={`URL del archivo MP3 ${index + 1}`}
+                      />
+                      {creationForm.audioFiles.length > 1 && (
+                        <button
+                          onClick={() => removeAudioFile(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={addAudioFile}
+                    className="flex items-center text-green-600 hover:text-green-700 text-sm"
+                  >
+                    <FiPlus className="w-4 h-4 mr-1" />
+                    Agregar archivo MP3
+                  </button>
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end space-x-3 pt-6 border-t">
+                <button
+                  onClick={handleCancelCreation}
+                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveContainer}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  <FiSave className="mr-2" />
+                  Guardar {activeTab === 'seminars' ? 'Seminario' : 'Serie'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : isEditingLessons && editingContainer ? (
+          /* Vista de edición de lecciones */
+          <div className="bg-white rounded-lg shadow-sm max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="p-6">
+              {/* Header de edición de lecciones */}
+              <div className="flex justify-between items-center mb-6 pb-4 border-b sticky top-0 bg-white z-10">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Editando: {editingContainer.title}
+                  </h2>
+                  <p className="text-gray-600">
+                    Configura el contenido de cada lección
+                  </p>
+                </div>
+                <button
+                  onClick={handleFinishEditingLessons}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <FiSave className="mr-2" />
+                  Finalizar Edición
+                </button>
+              </div>
+
+            {/* Pestañas de lecciones */}
+            <div className="mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-1 overflow-x-auto">
+                  {editingContainer.lessons.map((lesson, index) => (
+                    <button
+                      key={lesson.id}
+                      onClick={() => handleSelectLesson(index)}
+                      className={`py-2 px-4 border-b-2 font-medium text-sm whitespace-nowrap ${
+                        selectedLessonIndex === index
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {lesson.order}. {lesson.title}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            </div>
+
+            {/* Contenido de la lección seleccionada */}
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  Editando Lección {editingContainer.lessons[selectedLessonIndex]?.order}: {editingContainer.lessons[selectedLessonIndex]?.title}
+                </h3>
+                <p className="text-blue-700 text-sm">
+                  Cada lección está dividida en fragmentos. Cada fragmento contiene: material de lectura, diapositiva y ayudas de estudio.
+                </p>
+              </div>
+
+              {/* Lista de fragmentos */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-lg font-medium text-gray-900">
+                    Fragmentos de la Lección ({fragmentsData.length})
+                  </h4>
+                  <button
+                    onClick={addFragment}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <FiPlus className="mr-2" />
+                    Agregar Fragmento
+                  </button>
+                </div>
+
+                {fragmentsData.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">
+                      No hay fragmentos en esta lección. Haz clic en "Agregar Fragmento" para comenzar.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {fragmentsData.map((fragment, index) => (
+                      <div
+                        key={fragment.id}
+                        className={`border rounded-lg p-4 ${
+                          editingFragmentIndex === index
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <span className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                              {fragment.order}
+                            </span>
+                            <h5 className="font-medium text-gray-900">
+                              Fragmento {fragment.order}
+                            </h5>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {editingFragmentIndex === index ? (
+                              <>
+                                <button
+                                  onClick={() => saveIndividualFragment(index)}
+                                  className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                                >
+                                  <FiSave className="w-3 h-3 mr-1" />
+                                  Guardar
+                                </button>
+                                <button
+                                  onClick={cancelEditingFragment}
+                                  className="px-3 py-1 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                                >
+                                  Cancelar
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => startEditingFragment(index)}
+                                className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                              >
+                                <FiEdit className="w-3 h-3 mr-1" />
+                                Editar
+                              </button>
+                            )}
+                            <button
+                              onClick={() => removeFragment(index)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {editingFragmentIndex === index && (
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+                            {/* Material de lectura */}
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-gray-700">
+                                Material de Lectura
+                              </label>
+                              <textarea
+                                value={fragment.readingMaterial}
+                                onChange={(e) => updateFragment(index, 'readingMaterial', e.target.value)}
+                                className="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                                placeholder="Texto bíblico, contenido de estudio..."
+                              />
+                            </div>
+
+                            {/* Diapositiva */}
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-gray-700">
+                                Diapositiva
+                              </label>
+                              <textarea
+                                value={fragment.slide}
+                                onChange={(e) => updateFragment(index, 'slide', e.target.value)}
+                                className="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                                placeholder="URL de imagen, contenido visual..."
+                              />
+                            </div>
+
+                            {/* Ayudas de estudio */}
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-gray-700">
+                                Ayudas de Estudio
+                              </label>
+                              <textarea
+                                value={fragment.studyAids}
+                                onChange={(e) => updateFragment(index, 'studyAids', e.target.value)}
+                                className="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                                placeholder="Preguntas, comentarios, material de apoyo..."
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Información sobre archivos MP3 del seminario */}
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-medium text-green-900 mb-2">
+                  Archivos MP3 del Seminario
+                </h4>
+                <p className="text-green-700 text-sm mb-3">
+                  Los archivos de audio se configuran a nivel del seminario y están disponibles para todas las lecciones.
+                </p>
+                {editingContainer.audioFiles && editingContainer.audioFiles.length > 0 ? (
+                  <ul className="space-y-1">
+                    {editingContainer.audioFiles.map((file, index) => (
+                      <li key={index} className="text-sm text-green-700">
+                        • MP3 {index + 1}: {file || 'Sin configurar'}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-green-600 text-sm">
+                    No hay archivos MP3 configurados para este seminario.
+                  </p>
+                )}
+              </div>
+
+              {/* Botón para guardar fragmentos */}
+              <div className="flex justify-center pt-6 border-t">
+                <button
+                  onClick={handleSaveFragments}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  <FiSave className="mr-2" />
+                  Guardar Fragmentos de esta Lección
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Vista normal de la lista */
+          <div className="bg-white rounded-lg shadow-sm">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveTab('seminars')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'seminars'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <FiBook className="inline mr-2" />
+                Seminarios ({seminars.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('series')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'series'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <FiList className="inline mr-2" />
+                Series ({series.length})
+              </button>
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            {currentData.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">
+                  {activeTab === 'seminars' ? <FiBook /> : <FiList />}
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No hay {activeTab === 'seminars' ? 'seminarios' : 'series'} creados
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Comienza creando tu primer {activeTab === 'seminars' ? 'seminario' : 'serie'}
+                </p>
+                <button
+                  onClick={handleCreateContainer}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <FiPlus className="mr-2" />
+                  Crear {activeTab === 'seminars' ? 'Seminario' : 'Serie'}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {currentData.map((container) => (
+                  <div
+                    key={container.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {container.title}
+                        </h3>
+                        {container.description && (
+                          <p className="text-gray-600 mt-1">
+                            {container.description}
+                          </p>
+                        )}
+                        <div className="flex items-center mt-2 text-sm text-gray-500">
+                          <span>{container.lessons.length} lecciones</span>
+                          <span className="mx-2">•</span>
+                          <span>Orden: {container.order}</span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => handleEditLessons(container)}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="Editar contenido de lecciones"
+                        >
+                          <FiEdit />
+                        </button>
+                        <button
+                          onClick={() => handleCreateLesson(container.id)}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Agregar lección"
+                        >
+                          <FiPlus />
+                        </button>
+                        <button
+                          onClick={() => handleEditContainer(container)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar seminario/serie"
+                        >
+                          <FiEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteContainer(container.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lista de lecciones */}
+                    {container.lessons.length > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Lecciones:</h4>
+                        <div className="space-y-2">
+                          {container.lessons.map((lesson) => (
+                            <div
+                              key={lesson.id}
+                              className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded"
+                            >
+                              <span className="text-sm text-gray-700">
+                                {lesson.order}. {lesson.title}
+                              </span>
+                              <div className="flex space-x-1">
+                                <button className="p-1 text-blue-600 hover:bg-blue-100 rounded">
+                                  <FiEdit size={14} />
+                                </button>
+                                <button className="p-1 text-red-600 hover:bg-red-100 rounded">
+                                  <FiTrash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
