@@ -2,7 +2,7 @@
 import Link from 'next/link';
 // ...existing code...
 <Link href="/">Inicio</Link>
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiBook, FiList, FiSave, FiArrowLeft, FiX, FiChevronDown, FiChevronUp, FiRefreshCw } from 'react-icons/fi';
