@@ -1,10 +1,5 @@
-import Link from 'next/link';
-// ...existing code...
-<Link href="/">Inicio</Link>
 "use client";
-// ...existing code...
 import Link from 'next/link';
-// ...existing code...
 import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiBook, FiList, FiSave, FiArrowLeft, FiX, FiChevronDown, FiChevronUp, FiRefreshCw } from 'react-icons/fi';
 import { Seminar, Series, Lesson, StudyContainer, Fragment, AudioFile } from '@/types';

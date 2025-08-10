@@ -3,6 +3,7 @@ import { TbCast } from 'react-icons/tb';
 import Link from 'next/link';
 import { Fragment, Lesson } from '../types';
 import { useState } from 'react';
+import React from 'react';
 import { ShareModal } from './ShareModal';
 
 interface TopBarProps {
@@ -15,6 +16,40 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex }: TopBar
   const [isCasting, setIsCasting] = useState(false);
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Pantalla completa
+  const handleFullscreen = () => {
+    if (!isFullscreen) {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if ((elem as any).webkitRequestFullscreen) {
+        (elem as any).webkitRequestFullscreen();
+      } else if ((elem as any).msRequestFullscreen) {
+        (elem as any).msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // Detectar salida de pantalla completa
+  React.useEffect(() => {
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
 
   // Función para iniciar Chromecast/Presentation API
   const startCasting = async () => {
@@ -80,9 +115,12 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex }: TopBar
         </Link>
         
         {/* Botón de Presentador */}
-        <button className="flex items-center p-2 text-white bg-purple-500 rounded-md hover:bg-purple-600 transition duration-150">
+        <button
+          className="flex items-center p-2 text-white bg-purple-500 rounded-md hover:bg-purple-600 transition duration-150"
+          onClick={handleFullscreen}
+        >
           <FiPlay className="w-5 h-5 mr-2" />
-          <span>Presentador</span>
+          <span>{isFullscreen ? 'Cerrar' : 'Presentador'}</span>
         </button>
         
         {/* Botón de Enviar a Pantalla (Chromecast) */}
