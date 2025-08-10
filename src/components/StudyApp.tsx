@@ -205,7 +205,7 @@ export function StudyApp() {
             <PanelGroup
               direction="horizontal"
               className={`h-full flex-1${isMobile ? ' min-w-[750px] overflow-x-auto' : ''}`}
-              style={isMobile ? { height: '100%', minWidth: '750px', overflowX: 'auto' } : { height: '100%' }}
+              style={isMobile ? { height: '100%', minWidth: '750px' } : { height: '100%' }}
             >
               {/* Panel de Lectura - Izquierda */}
               <Panel defaultSize={35} minSize={20} className="h-full">

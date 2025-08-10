@@ -335,7 +335,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
                     value={newNoteText}
                     onChange={(e) => setNewNoteText(e.target.value)}
                     placeholder="Escribe tu nota aquí..."
-                    className="w-full h-20 p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-20 p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
                     autoFocus
                   />
                   <div className="flex gap-2 mt-2">

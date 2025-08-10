@@ -225,7 +225,7 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
         >
           <div
             className={`flex ${isLandscape ? 'flex-col h-full w-20 overflow-y-auto' : 'flex-row w-full h-16 overflow-x-auto'} scrollbar-hide`}
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            style={isLandscape ? { WebkitOverflowScrolling: 'touch' } : { WebkitOverflowScrolling: 'touch' }}
           >
             {/* Botón hamburguesa para abrir la biblioteca */}
             <button
