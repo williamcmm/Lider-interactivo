@@ -8,7 +8,7 @@ import { Sidebar } from './Sidebar';
 import { ReadingPanel } from './ReadingPanel';
 import { SlidePanel } from './SlidePanel';
 import { MusicPanel } from './MusicPanel';
-import { NotesPanel } from './NotesPanel';
+import NotesPanel from './NotesPanel';
 import { NotesProvider } from '../context/NotesContext';
 // ...existing code...
 import { Seminar, Series, Lesson } from '@/types';
@@ -309,7 +309,7 @@ export function StudyApp() {
                       )}
                       {activePanel === 'notes' && (
                         <div className="pb-24">
-                          <NotesPanel lesson={currentLesson} fragment={fragment} />
+                          <NotesPanel />
                         </div>
                       )}
                     </>
@@ -364,10 +364,7 @@ export function StudyApp() {
                       {/* Panel de Notas - Derecha */}
                       <Panel defaultSize={30} minSize={20} className="h-full">
                         <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
-                          <NotesPanel
-                            lesson={currentLesson}
-                            fragment={fragment}
-                          />
+                          <NotesPanel />
                         </div>
                       </Panel>
                     </PanelGroup>
@@ -400,7 +397,7 @@ export function StudyApp() {
                   )}
                   {activePanel === 'notes' && (
                     <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden pb-24">
-                      <NotesPanel lesson={currentLesson} fragment={fragment} />
+                      <NotesPanel />
                     </div>
                   )}
                 </>
@@ -433,7 +430,7 @@ export function StudyApp() {
               )}
               {activePanel === 'notes' && (
                 <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                  <NotesPanel lesson={currentLesson} fragment={fragment} />
+                  <NotesPanel />
                 </div>
               )}
             </div>

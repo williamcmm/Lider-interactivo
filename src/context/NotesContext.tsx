@@ -5,6 +5,8 @@ interface Note {
   id: string;
   content: string;
   selectedText?: string;
+  contentHtml?: string;
+  fragmentId?: string;
 }
 
 interface NotesContextType {
@@ -60,7 +62,14 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   };
   const saveNewNote = () => {
     if (newNoteText.trim()) {
-      setFragmentNotes([...fragmentNotes, { id: Date.now().toString(), content: newNoteText }]);
+      setFragmentNotes([
+        ...fragmentNotes,
+        {
+          id: Date.now().toString(),
+          content: newNoteText,
+          contentHtml: newNoteText.startsWith('<') ? newNoteText : undefined
+        }
+      ]);
       setNewNoteText('');
       setIsAddingNote(false);
     }

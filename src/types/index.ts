@@ -67,8 +67,6 @@ export interface StudyContainer {
 export interface Note {
   id: string;
   content: string;
-  lessonId: string;
-  fragmentId: string;       // Asociada al fragmento específico
   userId: string;
   isShared: boolean;
   type: 'direct' | 'selection' | 'imported'; // Tipo de nota
@@ -79,6 +77,8 @@ export interface Note {
   };
   createdAt: Date;
   updatedAt: Date;
+  contentHtml?: string; // nuevo campo para contenido enriquecido
+    fragmentId?: string;   // Asociada al fragmento específico
 }
 
 export interface SharedNote {

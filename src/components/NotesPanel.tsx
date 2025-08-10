@@ -1,237 +1,174 @@
-import React from 'react';
-import { useNotes } from '@/context/NotesContext';
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import React, { useState } from "react";
 
-type TabType = 'ayuda' | 'notas' | 'compartidas' | 'compartir';
+const TABS = [
+  { key: "ayuda", label: "Ayuda" },
+  { key: "notas", label: "Notas" },
+  { key: "compartidas", label: "Compartidas" },
+  { key: "compartir", label: "Compartir" },
+];
 
-interface Note {
-  id: string;
-  content: string;
-  selectedText?: string;
-}
+export default function NotesPanel() {
+  const [activeTab, setActiveTab] = useState("ayuda");
+  const [notes, setNotes] = useState<string[]>([]);
+  const [noteContent, setNoteContent] = useState("");
+  const [shareEmail, setShareEmail] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
 
-export function NotesPanel({ fragment, lesson }: { fragment?: any; lesson?: any }) {
-  const {
-    fragmentNotes,
-    sharedUsers,
-    selectedSharedUser,
-    sharedUserNotes,
-    shareEmail,
-    shareStatus,
-    setActiveTab,
-    activeTab,
-    setShareEmail,
-    handleShare,
-    handleSelectSharedUser,
-    saveNewNote,
-    deleteNote,
-    isAddingNote,
-    setIsAddingNote,
-    newNoteText,
-    setNewNoteText,
-  } = useNotes();
+  // Función para agregar una nota
+  const handleAddNote = () => {
+    if (noteContent.trim()) {
+      setNotes([...notes, noteContent]);
+      setNoteContent("");
+    }
+  };
 
-  const tabs = [
-    { id: 'ayuda' as TabType, label: 'Ayuda' },
-    { id: 'notas' as TabType, label: 'Notas' },
-    { id: 'compartidas' as TabType, label: 'Compartidas' },
-    { id: 'compartir' as TabType, label: 'Compartir' },
-  ];
+  // Función para eliminar una nota
+  const handleDeleteNote = (idx: number) => {
+    setNotes(notes.filter((_, i) => i !== idx));
+  };
+
+  // Renderizado de contenido por pestaña
+  let tabContent;
+  switch (activeTab) {
+    case "ayuda":
+      tabContent = (
+        <div className="p-4">
+          <h2 className="font-bold mb-2">Ayuda para tomar notas</h2>
+          <ul className="list-disc pl-5 text-sm">
+            <li>Escribe tus ideas o apuntes en la pestaña "Notas".</li>
+            <li>Puedes eliminar notas haciendo clic en el botón de borrar.</li>
+            <li>Las notas son privadas y solo visibles para ti.</li>
+            <li>Próximamente podrás sincronizarlas en la nube.</li>
+          </ul>
+        </div>
+      );
+      break;
+    case "notas":
+      tabContent = (
+        <div className="p-4 flex flex-col h-full">
+          {/* Eliminado título redundante */}
+
+          {/* Lista de notas, la nota nueva aparece arriba */}
+          <ul className="space-y-2 flex-1 overflow-y-auto mb-2">
+            {/* Sin mensaje ni comentario si no hay notas */}
+            {notes.slice().reverse().map((note, idx) => (
+              <li key={notes.length - 1 - idx} className="flex justify-between items-center bg-gray-100 p-2 rounded">
+                <span>{note}</span>
+                <button
+                  className="text-red-500 ml-2"
+                  onClick={() => handleDeleteNote(notes.length - 1 - idx)}
+                  title="Eliminar nota"
+                >
+                  🗑️
+                </button>
+              </li>
+            ))}
+          </ul>
+          {/* Botón + y cuadro para agregar nota solo en la parte inferior, separado 1cm */}
+          <div style={{ marginBottom: '1cm' }}>
+            {!showNoteInput && (
+              <button
+                className="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full"
+                onClick={() => setShowNoteInput(true)}
+              >
+                + Agregar nota
+              </button>
+            )}
+            {showNoteInput && (
+              <div className="mt-2 flex flex-col items-stretch">
+                <textarea
+                  className="w-full border rounded p-1 text-sm"
+                  rows={2}
+                  value={noteContent}
+                  onChange={e => setNoteContent(e.target.value)}
+                  placeholder="Escribe una nota..."
+                  autoFocus
+                />
+                <div className="flex gap-2 mt-1">
+                  <button
+                    className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => {
+                      handleAddNote();
+                      setShowNoteInput(false);
+                    }}
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs"
+                    onClick={() => {
+                      setNoteContent("");
+                      setShowNoteInput(false);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+      break;
+    case "compartidas":
+      tabContent = (
+        <div className="p-4">
+          <h2 className="font-bold mb-2">Notas compartidas</h2>
+          <p className="text-sm text-gray-500">
+            Aquí verás las notas que otros han compartido contigo. (Demo)
+          </p>
+          <ul className="mt-2 list-disc pl-5 text-sm">
+            <li>Ejemplo: "Recuerda revisar el capítulo 3"</li>
+            <li>Ejemplo: "Pregunta sobre la parábola del sembrador"</li>
+          </ul>
+        </div>
+      );
+      break;
+    case "compartir":
+      tabContent = (
+        <div className="p-4">
+          <h2 className="font-bold mb-2">Compartir nota</h2>
+          <input
+            type="email"
+            className="border rounded p-2 w-full mb-2"
+            value={shareEmail}
+            onChange={e => setShareEmail(e.target.value)}
+            placeholder="Correo del destinatario"
+          />
+          <button
+            className="bg-green-500 text-white px-3 py-1 rounded"
+            onClick={() => alert("Función de compartir en desarrollo")}
+          >
+            Compartir
+          </button>
+          <p className="text-xs text-gray-400 mt-2">
+            Pronto podrás enviar tus notas por correo o WhatsApp.
+          </p>
+        </div>
+      );
+      break;
+    default:
+      tabContent = null;
+  }
 
   return (
-    <div className="h-full max-h-full flex flex-col p-4 pb-16 overflow-y-auto custom-scrollbar">
-      {/* Pestañas de navegación */}
-      <div className="flex justify-around border-b border-gray-300 mb-4 flex-shrink-0">
-        {tabs.map((tab) => (
+    <div className="h-full flex flex-col bg-white rounded shadow">
+      <div className="flex border-b">
+        {TABS.map(tab => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`p-3 text-center font-semibold transition-colors text-sm ${
-              activeTab === tab.id
-                ? 'text-blue-500 border-b-2 border-blue-500'
-                : 'text-gray-600 hover:text-blue-500'
+            key={tab.key}
+            className={`flex-1 py-2 px-2 text-sm font-medium ${
+              activeTab === tab.key
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500"
             }`}
+            onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
           </button>
         ))}
       </div>
-
-      {/* Contenido de las pestañas */}
-      <div className="flex-grow flex flex-col text-gray-800">
-        {activeTab === 'ayuda' && (
-          <div className="flex-grow overflow-y-auto custom-scrollbar">
-            {fragment && fragment.studyAids && fragment.studyAids.trim() ? (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div
-                  className="text-blue-800 text-sm"
-                  dangerouslySetInnerHTML={{ __html: fragment.studyAids }}
-                />
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">
-                  {lesson ? 'No hay ayudas disponibles para este fragmento.' : 'Seleccione una lección para ver las ayudas.'}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'notas' && (
-          <div className="flex-grow flex flex-col">
-            {/* Lista de notas existentes */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar mb-4">
-              {fragmentNotes.length > 0 ? (
-                <div className="space-y-2">
-                  {fragmentNotes.map((note) => (
-                    <div key={note.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-grow">
-                          {note.selectedText && (
-                            <div className="text-xs text-blue-600 mb-1 font-medium">
-                              &quot;{note.selectedText}&quot;
-                            </div>
-                          )}
-                          <div className="text-sm text-gray-800">{note.content}</div>
-                        </div>
-                        <button
-                          onClick={() => deleteNote(note.id)}
-                          className="ml-2 text-red-500 hover:text-red-700 p-1 rounded"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-grow flex items-center justify-center text-gray-500">
-                  <p className="text-sm">No hay notas para este fragmento</p>
-                </div>
-              )}
-            </div>
-            {/* Botón + y formulario de nueva nota (siempre abajo) */}
-            <div className="flex-shrink-0">
-              <div style={{ marginBottom: '16px' }}>
-                {!isAddingNote ? (
-                  <button
-                    onClick={() => setIsAddingNote(true)}
-                    className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
-                  >
-                    <FiPlus className="w-5 h-5 mr-2" />
-                    Agregar nota rápida
-                  </button>
-                ) : (
-                  <div className="bg-white border border-gray-300 rounded-lg p-4">
-                    <textarea
-                      value={newNoteText}
-                      onChange={(e) => setNewNoteText(e.target.value)}
-                      placeholder="Escribe tu nota aquí..."
-                      className="w-full h-20 p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                      autoFocus
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={saveNewNote}
-                        disabled={!newNoteText.trim()}
-                        className="px-4 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsAddingNote(false);
-                          setNewNoteText('');
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'compartidas' && (
-          <div className="flex-grow flex flex-col overflow-y-auto custom-scrollbar">
-            <div className="mb-4">
-              <h3 className="font-semibold text-sm mb-2">Usuarios que te han compartido notas:</h3>
-              {sharedUsers.length > 0 ? (
-                <ul className="space-y-2">
-                  {sharedUsers.map((email) => (
-                    <li key={email}>
-                      <button
-                        className={`px-3 py-2 rounded text-left w-full border ${selectedSharedUser === email ? 'bg-blue-100 border-blue-400' : 'bg-gray-50 border-gray-200 hover:bg-blue-50'}`}
-                        onClick={() => handleSelectSharedUser(email)}
-                      >
-                        {email}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-gray-500 text-sm">Nadie te ha compartido notas aún.</div>
-              )}
-            </div>
-            {selectedSharedUser && (
-              <div className="flex-grow">
-                <h4 className="font-semibold text-sm mb-2">Notas de {selectedSharedUser}:</h4>
-                {sharedUserNotes.length > 0 ? (
-                  <div className="space-y-2">
-                    {sharedUserNotes.map((note: any) => (
-                      <div key={note.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex-grow">
-                          {note.selectedText && (
-                            <div className="text-xs text-blue-600 mb-1 font-medium">
-                              &quot;{note.selectedText}&quot;
-                            </div>
-                          )}
-                          <div className="text-sm text-gray-800">{note.content}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-gray-500 text-sm">No hay notas compartidas de este usuario.</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'compartir' && (
-          <div className="flex-grow overflow-y-auto custom-scrollbar">
-            <div className="space-y-4 max-w-md mx-auto mt-8">
-              <div>
-                <label className="block text-sm font-medium mb-2">Correo electrónico del usuario con quien compartir:</label>
-                <input
-                  type="email"
-                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="usuario@ejemplo.com"
-                  value={shareEmail}
-                  onChange={e => setShareEmail(e.target.value)}
-                />
-              </div>
-              <button
-                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition"
-                onClick={handleShare}
-              >
-                Compartir mis notas
-              </button>
-              {shareStatus && (
-                <div className={`mt-2 text-sm ${shareStatus.includes('correctamente') ? 'text-green-600' : 'text-red-600'}`}>{shareStatus}</div>
-              )}
-              <div className="text-xs text-gray-500 mt-4">
-                La persona debe estar registrada con ese correo y podrá ver tus notas en la pestaña "Compartidas".
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <div className="flex-1 overflow-y-auto">{tabContent}</div>
     </div>
   );
 }
