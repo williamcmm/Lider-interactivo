@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
 import { LocalStorage } from '@/lib/storage';
+// import { realtimeDb } from '@/lib/firebase';
+// import { ref, onValue } from 'firebase/database';
 
 export default function SharedSlidePage() {
   const searchParams = useSearchParams();
@@ -11,24 +13,31 @@ export default function SharedSlidePage() {
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [currentFragment, setCurrentFragment] = useState<Fragment | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [showReading, setShowReading] = useState(false);
+  const [showSlide, setShowSlide] = useState(false);
+  const [showAids, setShowAids] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   useEffect(() => {
     const lessonId = searchParams.get('lesson');
     const fragmentIndex = parseInt(searchParams.get('fragment') || '0');
+    const typeParam = searchParams.get('type') || '';
+    const types = typeParam.split(',');
+    setShowReading(types.includes('reading'));
+    setShowSlide(types.includes('slide'));
+    setShowAids(types.includes('aids'));
+    setShowNotes(types.includes('notes'));
 
     if (lessonId) {
       // Buscar la lección en seminarios y series
       const seminars = LocalStorage.getSeminars();
       const series = LocalStorage.getSeries();
-      
       let foundLesson = null;
-      
       // Buscar en seminarios
       for (const seminar of seminars) {
         foundLesson = seminar.lessons.find(l => l.id === lessonId);
         if (foundLesson) break;
       }
-      
       // Buscar en series si no se encontró en seminarios
       if (!foundLesson) {
         for (const serie of series) {
@@ -36,12 +45,13 @@ export default function SharedSlidePage() {
           if (foundLesson) break;
         }
       }
-
       if (foundLesson) {
         setLesson(foundLesson);
         setCurrentFragmentIndex(fragmentIndex);
         setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
         setIsConnected(true);
+
+  // Sincronización en tiempo real desactivada para desarrollo local
       }
     }
   }, [searchParams]);
@@ -90,27 +100,39 @@ export default function SharedSlidePage() {
         </div>
       </div>
 
-      {/* SOLO LA DIAPOSITIVA - Pantalla completa */}
-      <div className="h-screen bg-white mx-4 my-4 rounded-lg shadow-2xl overflow-hidden" style={{height: 'calc(100vh - 120px)'}}>
-        {currentFragment.slide ? (
-          <div 
-            className="w-full h-full p-8 flex items-center justify-center text-center"
-            dangerouslySetInnerHTML={{ __html: currentFragment.slide }}
-          />
-        ) : (
-          <div className="w-full h-full p-8 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-4xl font-bold mb-6 text-gray-800">{lesson.title}</h2>
-              <h3 className="text-2xl text-gray-600 mb-4">Fragmento {currentFragment.order}</h3>
-              <p className="text-lg text-gray-500">Esperando contenido de diapositiva...</p>
+      {/* Contenido compartido según selección */}
+      <div className="mx-4 my-4 rounded-lg shadow-2xl overflow-hidden bg-white" style={{minHeight: 'calc(100vh - 120px)'}}>
+        <div className="p-8 flex flex-col gap-8">
+          {showSlide && currentFragment.slide && (
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Diapositiva</h2>
+              <div className="w-full text-center" dangerouslySetInnerHTML={{ __html: currentFragment.slide }} />
             </div>
-          </div>
-        )}
+          )}
+          {showReading && currentFragment.readingMaterial && (
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Lectura</h2>
+              <div className="w-full text-left" dangerouslySetInnerHTML={{ __html: currentFragment.readingMaterial }} />
+            </div>
+          )}
+          {showAids && currentFragment.studyAids && (
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Ayudas</h2>
+              <div className="w-full text-left" dangerouslySetInnerHTML={{ __html: currentFragment.studyAids }} />
+            </div>
+          )}
+          {showNotes && (
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Notas</h2>
+              <div className="w-full text-left text-gray-700">(Las notas compartidas estarán aquí en la versión final)</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer minimalista */}
       <div className="bg-gray-900 text-gray-400 text-center py-2">
-        <p className="text-xs">Líder Interactivo CMM • Vista de Diapositiva</p>
+        <p className="text-xs">Líder Interactivo CMM • Vista Compartida</p>
       </div>
     </div>
   );

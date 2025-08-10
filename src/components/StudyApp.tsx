@@ -15,6 +15,8 @@ import { Seminar, Series, Lesson } from '@/types';
 import { LocalStorage } from '@/lib/storage';
 import { initializeSharedNotes } from '@/data/sharedNotes';
 import { initializeTestData } from '@/data/testData';
+// import { realtimeDb } from '@/lib/firebase';
+// import { ref, set } from 'firebase/database';
 
 export function StudyApp() {
   // Estados y handlers para NotesPanel
@@ -144,14 +146,12 @@ export function StudyApp() {
     }
   };
 
-  // Navegación de fragmentos
+  // Navegación de fragmentos sin sincronización remota
   const navigateToFragment = (direction: 'prev' | 'next') => {
     if (!currentLesson || !currentLesson.fragments.length) return;
-    
     const newIndex = direction === 'next' 
       ? Math.min(currentFragmentIndex + 1, currentLesson.fragments.length - 1)
       : Math.max(currentFragmentIndex - 1, 0);
-    
     setCurrentFragmentIndex(newIndex);
   };
 

@@ -1,4 +1,5 @@
 import { Fragment, Lesson } from '../types';
+import React, { useState } from 'react';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -11,13 +12,27 @@ interface ShareModalProps {
 export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }: ShareModalProps) {
   if (!isOpen) return null;
 
-  const shareUrl = `${window.location.origin}/shared-slide?lesson=${lesson.id}&fragment=${fragmentIndex}`;
-  const shareText = shareUrl; // Solo el enlace, texto más corto
+  // Opciones para compartir
+  const [shareReading, setShareReading] = useState(true);
+  const [shareSlide, setShareSlide] = useState(true);
+  const [shareAids, setShareAids] = useState(false);
+  const [shareNotes, setShareNotes] = useState(false);
+
+  // Generar parámetros según selección
+  const selectedTypes = [
+    shareReading ? 'reading' : null,
+    shareSlide ? 'slide' : null,
+    shareAids ? 'aids' : null,
+    shareNotes ? 'notes' : null
+  ].filter(Boolean).join(',');
+
+  // Enlace con parámetros
+  const shareUrl = `${window.location.origin}/shared-slide?lesson=${lesson.id}&fragment=${fragmentIndex}&type=${selectedTypes}`;
 
   const copyToClipboard = async () => {
     try {
       if ((navigator as any).clipboard) {
-        await (navigator as any).clipboard.writeText(shareUrl); // Solo el URL
+        await (navigator as any).clipboard.writeText(shareUrl);
         return true;
       }
     } catch (error) {
@@ -33,10 +48,9 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
       color: 'bg-green-500 hover:bg-green-600',
       action: async () => {
         await copyToClipboard();
-        // Para WhatsApp, enviar solo el URL para que sea clickeable
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareUrl)}`;
         window.open(whatsappUrl, '_blank');
-        setTimeout(() => alert('✅ ¡Enlace copiado y WhatsApp abierto! Solo la URL para que sea clickeable.'), 500);
+        setTimeout(() => alert('✅ ¡Enlace copiado y WhatsApp abierto!'), 500);
         onClose();
       }
     },
@@ -48,7 +62,7 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
         await copyToClipboard();
         const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`📖 ${lesson.title} - Fragmento ${fragmentIndex + 1}`)}`;
         window.open(telegramUrl, '_blank');
-        setTimeout(() => alert('✅ ¡Enlace copiado y Telegram abierto! Selecciona a quién enviar.'), 500);
+        setTimeout(() => alert('✅ ¡Enlace copiado y Telegram abierto!'), 500);
         onClose();
       }
     },
@@ -59,7 +73,7 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
       action: async () => {
         await copyToClipboard();
         const emailSubject = encodeURIComponent(`${lesson.title} - Fragmento ${fragmentIndex + 1}`);
-        const emailBody = encodeURIComponent(shareUrl); // Solo el URL
+        const emailBody = encodeURIComponent(shareUrl);
         const mailtoUrl = `mailto:?subject=${emailSubject}&body=${emailBody}`;
         window.location.href = mailtoUrl;
         setTimeout(() => alert('✅ ¡Enlace copiado y cliente de email abierto!'), 500);
@@ -75,7 +89,7 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
         if (success) {
           alert('✅ ¡Enlace copiado al portapapeles! Puedes pegarlo en cualquier aplicación.');
         } else {
-          prompt('Copia este enlace:', shareUrl); // Solo el URL
+          prompt('Copia este enlace:', shareUrl);
         }
         onClose();
       }
@@ -89,10 +103,30 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">Compartir Diapositiva</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Compartir contenido</h3>
           <p className="text-gray-600 text-sm">
             {lesson.title} - Fragmento {fragmentIndex + 1}
           </p>
+        </div>
+
+        {/* Opciones de contenido a compartir */}
+        <div className="mb-6 flex flex-col gap-2">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={shareReading} onChange={e => setShareReading(e.target.checked)} />
+            <span className="text-sm">Lectura</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={shareSlide} onChange={e => setShareSlide(e.target.checked)} />
+            <span className="text-sm">Diapositiva</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={shareAids} onChange={e => setShareAids(e.target.checked)} />
+            <span className="text-sm">Ayudas</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={shareNotes} onChange={e => setShareNotes(e.target.checked)} />
+            <span className="text-sm">Notas</span>
+          </label>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">

@@ -1,0 +1,48 @@
+# Instrucciones para activar Firebase y sincronización en producción
+
+Este proyecto está preparado para funcionar tanto en local (sin Firebase) como en producción (con Firebase y sincronización en tiempo real).
+
+## ¿Cómo activar Firebase?
+
+1. **Descomenta las líneas relacionadas con Firebase**
+   - En los archivos:
+     - `src/lib/firebase.ts`
+     - `src/components/StudyApp.tsx`
+     - `src/components/ShareModal.tsx`
+     - `src/app/shared-slide/page.tsx`
+   - Busca las líneas que están comentadas con `// import { ... }` y quita el `//`.
+   - Reactiva las funciones que usan `realtimeDb`, `ref`, `set`, `onValue`, etc.
+
+2. **Agrega tu configuración de Firebase**
+   - En `src/lib/firebase.ts`, reemplaza la configuración de ejemplo por tus credenciales reales de Firebase.
+   - Ejemplo:
+     ```ts
+     const firebaseConfig = {
+       apiKey: "TU_API_KEY",
+       authDomain: "TU_AUTH_DOMAIN",
+       projectId: "TU_PROJECT_ID",
+       storageBucket: "TU_STORAGE_BUCKET",
+       messagingSenderId: "TU_MESSAGING_SENDER_ID",
+       appId: "TU_APP_ID",
+       databaseURL: "TU_DATABASE_URL"
+     };
+     ```
+
+3. **Instala dependencias necesarias**
+   - Ejecuta en la terminal:
+     ```sh
+     npm install firebase
+     ```
+
+4. **Verifica que todo funciona**
+   - Inicia el servidor con `npm run dev`.
+   - Accede a la página y prueba las funciones de compartir, login y sincronización.
+
+## Notas adicionales
+- Si tienes dudas, revisa los archivos mencionados y busca las secciones comentadas.
+- Puedes alternar entre modo local y producción simplemente comentando/descomentando las líneas de Firebase.
+- Si necesitas ayuda, consulta la documentación oficial de Firebase: https://firebase.google.com/docs
+
+---
+
+**Este archivo fue generado automáticamente por GitHub Copilot para facilitar la activación de Firebase en el proyecto.**
