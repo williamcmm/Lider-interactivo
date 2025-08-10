@@ -20,6 +20,11 @@ export function StudyApp() {
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [seminars, setSeminars] = useState<Seminar[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
+  const [activePanel, setActivePanel] = useState<string>('all');
+
+  // Variables derivadas
+  const fragment = currentLesson?.fragments && currentLesson.fragments.length > 0 ? currentLesson.fragments[currentFragmentIndex] || null : null;
+  const totalFragments = currentLesson?.fragments ? currentLesson.fragments.length : 0;
 
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
@@ -102,8 +107,10 @@ export function StudyApp() {
       {/* Barra Superior */}
       <TopBar 
         currentLesson={currentLesson}
-        currentFragment={currentFragment}
+        currentFragment={fragment}
         fragmentIndex={currentFragmentIndex}
+        activePanel={activePanel}
+        setActivePanel={setActivePanel}
       />
 
       {/* Contenedor Principal - altura fija calculada */}
@@ -121,60 +128,96 @@ export function StudyApp() {
 
         {/* Paneles Principales Redimensionables */}
         <div className="flex-1 h-full p-2">
-          <PanelGroup direction="horizontal" className="h-full">
-            {/* Panel de Lectura - Izquierda */}
-            <Panel defaultSize={35} minSize={20} className="h-full">
-              <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                <ReadingPanel 
-                  lesson={currentLesson} 
-                  fragment={currentFragment}
-                  fragmentIndex={currentFragmentIndex}
-                  totalFragments={currentLesson?.fragments.length || 0}
-                  onNavigateFragment={navigateToFragment}
-                />
-              </div>
-            </Panel>
-
-            <PanelResizeHandle className="resize-handle-vertical" />
-
-            {/* Panel Central - División Vertical */}
-            <Panel defaultSize={35} minSize={20} className="h-full">
-              <PanelGroup direction="vertical" className="h-full">
-                {/* Panel de Diapositivas - Superior */}
-                <Panel defaultSize={70} minSize={30} className="h-full">
+          {activePanel === 'all' ? (
+            <PanelGroup direction="horizontal" className="h-full flex-1" style={{height: '100%'}}>
+              {/* Panel de Lectura - Izquierda */}
+              <Panel defaultSize={35} minSize={20} className="h-full">
+                <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                  <ReadingPanel 
+                    lesson={currentLesson} 
+                    fragment={fragment}
+                    fragmentIndex={currentFragmentIndex}
+                    totalFragments={totalFragments}
+                    onNavigateFragment={navigateToFragment}
+                  />
+                </div>
+              </Panel>
+              <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
+              {/* Panel Central - División Vertical */}
+              <Panel defaultSize={35} minSize={20} className="h-full">
+                <PanelGroup direction="vertical" className="h-full flex-1" style={{height: '100%'}}>
+                  {/* Panel de Diapositivas - Superior */}
+                  <Panel defaultSize={70} minSize={30} className="h-full">
+                    <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                      <SlidePanel
+                        fragment={fragment}
+                        fragmentIndex={currentFragmentIndex}
+                        totalFragments={totalFragments}
+                        onNavigateFragment={navigateToFragment}
+                      />
+                    </div>
+                  </Panel>
+                  <PanelResizeHandle className="resize-handle-horizontal bg-gray-300 h-2" />
+                  {/* Panel de Música - Inferior */}
+                  <Panel defaultSize={30} minSize={20} className="h-full">
+                    <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                      <MusicPanel />
+                    </div>
+                  </Panel>
+                </PanelGroup>
+              </Panel>
+              <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
+              {/* Panel de Notas - Derecha */}
+              <Panel defaultSize={30} minSize={20} className="h-full">
+                <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                  <NotesPanel fragment={fragment} lesson={currentLesson} />
+                </div>
+              </Panel>
+            </PanelGroup>
+          ) : (
+            <PanelGroup direction="horizontal" className="h-full">
+              {/* Solo el panel correspondiente en vistas individuales */}
+              {activePanel === 'reading' && (
+                <Panel defaultSize={100} minSize={20} className="h-full">
                   <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                    <SlidePanel 
-                      fragment={currentFragment}
+                    <ReadingPanel 
+                      lesson={currentLesson} 
+                      fragment={fragment}
                       fragmentIndex={currentFragmentIndex}
-                      totalFragments={currentLesson?.fragments.length || 0}
+                      totalFragments={totalFragments}
                       onNavigateFragment={navigateToFragment}
                     />
                   </div>
                 </Panel>
-
-                <PanelResizeHandle className="resize-handle-horizontal" />
-
-                {/* Panel de Música - Inferior */}
-                <Panel defaultSize={30} minSize={15} className="h-full">
+              )}
+              {activePanel === 'slides' && (
+                <Panel defaultSize={100} minSize={20} className="h-full">
+                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+                    <SlidePanel
+                      fragment={fragment}
+                      fragmentIndex={currentFragmentIndex}
+                      totalFragments={totalFragments}
+                      onNavigateFragment={navigateToFragment}
+                    />
+                  </div>
+                </Panel>
+              )}
+              {activePanel === 'music' && (
+                <Panel defaultSize={100} minSize={20} className="h-full">
                   <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
                     <MusicPanel />
                   </div>
                 </Panel>
-              </PanelGroup>
-            </Panel>
-
-            <PanelResizeHandle className="resize-handle-vertical" />
-
-            {/* Panel de Notas - Derecha */}
-            <Panel defaultSize={30} minSize={20} className="h-full">
-              <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                <NotesPanel 
-                  fragment={currentFragment}
-                  lesson={currentLesson}
-                />
-              </div>
-            </Panel>
-          </PanelGroup>
+              )}
+              {activePanel === 'notes' && (
+                <Panel defaultSize={100} minSize={20} className="h-full">
+                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+                    <NotesPanel fragment={fragment} lesson={currentLesson} />
+                  </div>
+                </Panel>
+              )}
+            </PanelGroup>
+          )}
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { FiPlay, FiShare2, FiSettings } from 'react-icons/fi';
+import { FiBookOpen, FiMonitor, FiMusic, FiEdit } from 'react-icons/fi';
 import { TbCast } from 'react-icons/tb';
 import Link from 'next/link';
 import { Fragment, Lesson } from '../types';
@@ -10,9 +11,20 @@ interface TopBarProps {
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
   fragmentIndex?: number;
+  activePanel: string;
+  setActivePanel: (panel: string) => void;
 }
 
 export function TopBar({ currentLesson, currentFragment, fragmentIndex }: TopBarProps) {
+  // Paneles disponibles
+  const { activePanel, setActivePanel } = arguments[0];
+  const panelOptions = [
+    { key: 'reading', label: 'Lectura', icon: <FiBookOpen className="w-4 h-4 mr-1" /> },
+    { key: 'slides', label: 'Diapositivas', icon: <FiMonitor className="w-4 h-4 mr-1" /> },
+    { key: 'music', label: 'Música', icon: <FiMusic className="w-4 h-4 mr-1" /> },
+    { key: 'notes', label: 'Notas', icon: <FiEdit className="w-4 h-4 mr-1" /> }
+  ];
+
   const [isCasting, setIsCasting] = useState(false);
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -105,6 +117,26 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex }: TopBar
       </Link>
       
       <div className="flex items-center space-x-2">
+        {/* Botones divisores para alternar paneles */}
+        <div className="flex items-center space-x-1 mr-4">
+          {panelOptions.map(panel => (
+            <button
+              key={panel.key}
+              className={`px-2 py-1 rounded-full border border-gray-300 text-xs font-medium flex items-center transition-colors duration-150 ${activePanel === panel.key ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-blue-100'}`}
+              onClick={() => setActivePanel(panel.key)}
+            >
+              {panel.icon}
+              {panel.label}
+            </button>
+          ))}
+          <button
+            className={`px-2 py-1 rounded-full border border-gray-300 text-xs font-medium transition-colors duration-150 ${activePanel === 'all' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-blue-100'}`}
+            onClick={() => setActivePanel('all')}
+          >
+            <span className="inline-block w-4 h-1 bg-gray-400 rounded-full mr-1 align-middle" />
+            Todas
+          </button>
+        </div>
         {/* Botón de Administrador */}
         <Link 
           href="/admin"
