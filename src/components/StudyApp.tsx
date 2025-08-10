@@ -19,6 +19,22 @@ import { initializeTestData } from '@/data/testData';
 // import { ref, set } from 'firebase/database';
 
 export function StudyApp() {
+  // Panel por defecto: 'all' en escritorio/tablet, 'reading' en móvil vertical
+  const [activePanel, setActivePanel] = useState<string>('all');
+  // Estado para mostrar aviso en móvil vertical en 'Ver todo'
+  const [showRotateMessage, setShowRotateMessage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      if (activePanel === 'all' && window.innerHeight > window.innerWidth) {
+        setShowRotateMessage(true);
+      } else {
+        setShowRotateMessage(false);
+      }
+    } else {
+      setShowRotateMessage(false);
+    }
+  }, [activePanel]);
   // Estados y handlers para NotesPanel
   const [activeTab, setActiveTab] = useState<'ayuda' | 'notas' | 'compartidas' | 'compartir'>('notas');
   const [fragmentNotes, setFragmentNotes] = useState<any[]>([]);
@@ -95,9 +111,6 @@ export function StudyApp() {
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [seminars, setSeminars] = useState<Seminar[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
-  // Restaurar: el panel por defecto es 'all' como antes
-  // El panel inicial por defecto debe ser 'all' en escritorio/tablet y 'reading' en móvil vertical
-  const [activePanel, setActivePanel] = useState<string>('all');
 
   useEffect(() => {
     const setInitialPanel = () => {
@@ -256,30 +269,50 @@ export function StudyApp() {
               {/* --- CAMBIO FINAL: Alternancia por iconos/menu superior en escritorio y móvil apaisado, solo un panel en móvil vertical --- */}
               {isMobile && window.innerHeight > window.innerWidth ? (
                 <div className="h-full w-full bg-white shadow-xl rounded-lg overflow-y-auto p-2" style={{paddingBottom: '80px'}}>
-                  {activePanel === 'reading' && (
-                    <ReadingPanel 
-                      lesson={currentLesson} 
-                      fragment={fragment}
-                      fragmentIndex={currentFragmentIndex}
-                      totalFragments={totalFragments}
-                      onNavigateFragment={navigateToFragment}
-                    />
-                  )}
-                  {activePanel === 'slides' && (
-                    <SlidePanel
-                      fragment={fragment}
-                      fragmentIndex={currentFragmentIndex}
-                      totalFragments={totalFragments}
-                      onNavigateFragment={navigateToFragment}
-                    />
-                  )}
-                  {activePanel === 'music' && (
-                    <MusicPanel />
-                  )}
-                  {activePanel === 'notes' && (
-                    <div className="pb-24">
-                      <NotesPanel lesson={currentLesson} fragment={fragment} />
+                  {/* Aviso elegante en 'Ver todo' en móvil vertical */}
+                  {activePanel === 'all' && showRotateMessage ? (
+                    <div className="flex flex-col items-center justify-center h-full">
+                      <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 text-blue-900 px-6 py-5 rounded-xl shadow-lg text-center max-w-xs mx-auto animate-fade-in">
+                        <div className="flex flex-col items-center mb-3">
+                          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-indigo-400 mb-2">
+                            <rect x="4" y="7" width="16" height="10" rx="2" fill="#c7d2fe" stroke="#6366f1" strokeWidth="1.5" />
+                            <path d="M8 19h8" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M12 22v-3" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          <span className="font-semibold text-lg">Vista limitada</span>
+                        </div>
+                        <span className="block text-base">Gira tu celular a <span className="font-bold text-indigo-600">horizontal</span> y luego haz clic en <span className="font-bold text-indigo-600">Modo Presentador</span> para ver la lección en pantalla completa.</span>
+                        <span className="block mt-2 text-sm text-blue-700 opacity-80">¡Así tendrás la mejor experiencia de estudio!</span>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      {activePanel === 'reading' && (
+                        <ReadingPanel 
+                          lesson={currentLesson} 
+                          fragment={fragment}
+                          fragmentIndex={currentFragmentIndex}
+                          totalFragments={totalFragments}
+                          onNavigateFragment={navigateToFragment}
+                        />
+                      )}
+                      {activePanel === 'slides' && (
+                        <SlidePanel
+                          fragment={fragment}
+                          fragmentIndex={currentFragmentIndex}
+                          totalFragments={totalFragments}
+                          onNavigateFragment={navigateToFragment}
+                        />
+                      )}
+                      {activePanel === 'music' && (
+                        <MusicPanel />
+                      )}
+                      {activePanel === 'notes' && (
+                        <div className="pb-24">
+                          <NotesPanel lesson={currentLesson} fragment={fragment} />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
