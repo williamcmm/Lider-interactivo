@@ -95,7 +95,27 @@ export function StudyApp() {
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [seminars, setSeminars] = useState<Seminar[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
+  // Restaurar: el panel por defecto es 'all' como antes
+  // El panel inicial por defecto debe ser 'all' en escritorio/tablet y 'reading' en móvil vertical
   const [activePanel, setActivePanel] = useState<string>('all');
+
+  useEffect(() => {
+    const setInitialPanel = () => {
+      if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
+        setActivePanel('reading');
+      } else {
+        setActivePanel('all');
+      }
+    };
+    setInitialPanel();
+    window.addEventListener('resize', setInitialPanel);
+    window.addEventListener('orientationchange', setInitialPanel);
+    return () => {
+      window.removeEventListener('resize', setInitialPanel);
+      window.removeEventListener('orientationchange', setInitialPanel);
+    };
+  }, []);
+
 
   // Variables derivadas
   const fragment = currentLesson?.fragments && currentLesson.fragments.length > 0 ? currentLesson.fragments[currentFragmentIndex] || null : null;
@@ -178,7 +198,7 @@ export function StudyApp() {
       <NotesProvider>
         <div className="h-screen w-screen overflow-hidden bg-gray-100 text-gray-900 font-sans flex flex-col">
           {/* Barra Superior */}
-          <TopBar 
+            <TopBar 
             currentLesson={currentLesson}
             currentFragment={fragment}
             fragmentIndex={currentFragmentIndex}
@@ -231,16 +251,95 @@ export function StudyApp() {
               />
             )}
 
-            {/* Paneles principales: forzar 3 columnas en móvil vertical */}
+            {/* Paneles principales: NAVEGACIÓN POR PESTAÑAS EN MÓVIL */}
             <div className="flex-1 h-full p-2">
-              {activePanel === 'all' && (
-                <PanelGroup
-                  direction="horizontal"
-                  className={`h-full flex-1${isMobile ? ' min-w-[750px] overflow-x-auto' : ''}`}
-                  style={isMobile ? { height: '100%', minWidth: '750px' } : { height: '100%' }}
-                >
-                  {/* Panel de Lectura - Izquierda */}
-                  <Panel defaultSize={35} minSize={20} className="h-full">
+              {/* --- CAMBIO FINAL: Alternancia por iconos/menu superior en escritorio y móvil apaisado, solo un panel en móvil vertical --- */}
+              {isMobile && window.innerHeight > window.innerWidth ? (
+                <div className="h-full w-full bg-white shadow-xl rounded-lg overflow-y-auto p-2" style={{paddingBottom: '80px'}}>
+                  {activePanel === 'reading' && (
+                    <ReadingPanel 
+                      lesson={currentLesson} 
+                      fragment={fragment}
+                      fragmentIndex={currentFragmentIndex}
+                      totalFragments={totalFragments}
+                      onNavigateFragment={navigateToFragment}
+                    />
+                  )}
+                  {activePanel === 'slides' && (
+                    <SlidePanel
+                      fragment={fragment}
+                      fragmentIndex={currentFragmentIndex}
+                      totalFragments={totalFragments}
+                      onNavigateFragment={navigateToFragment}
+                    />
+                  )}
+                  {activePanel === 'music' && (
+                    <MusicPanel />
+                  )}
+                  {activePanel === 'notes' && (
+                    <div className="pb-24">
+                      <NotesPanel lesson={currentLesson} fragment={fragment} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Alternancia por iconos/menu superior en escritorio y móvil apaisado
+                <>
+                  {activePanel === 'all' && (
+                    <PanelGroup
+                      direction="horizontal"
+                      className={`h-full flex-1${isMobile ? ' min-w-[750px] overflow-x-auto' : ''}`}
+                      style={isMobile ? { height: '100%', minWidth: '750px' } : { height: '100%' }}
+                    >
+                      {/* Panel de Lectura - Izquierda */}
+                      <Panel defaultSize={35} minSize={20} className="h-full">
+                        <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                          <ReadingPanel 
+                            lesson={currentLesson} 
+                            fragment={fragment}
+                            fragmentIndex={currentFragmentIndex}
+                            totalFragments={totalFragments}
+                            onNavigateFragment={navigateToFragment}
+                          />
+                        </div>
+                      </Panel>
+                      <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
+                      {/* Panel Central - División Vertical */}
+                      <Panel defaultSize={35} minSize={20} className="h-full">
+                        <PanelGroup direction="vertical" className="h-full flex-1" style={{height: '100%'}}>
+                            {/* Panel de Diapositivas - Superior */}
+                            <Panel defaultSize={50} minSize={20} className="h-full">
+                              <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                                <SlidePanel
+                                  fragment={fragment}
+                                  fragmentIndex={currentFragmentIndex}
+                                  totalFragments={totalFragments}
+                                  onNavigateFragment={navigateToFragment}
+                                />
+                              </div>
+                            </Panel>
+                            <PanelResizeHandle className="resize-handle-horizontal bg-gray-300 h-2" />
+                            {/* Panel de Música - Inferior */}
+                            <Panel defaultSize={50} minSize={20} className="h-full">
+                              <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                                <MusicPanel />
+                              </div>
+                            </Panel>
+                          </PanelGroup>
+                      </Panel>
+                      <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
+                      {/* Panel de Notas - Derecha */}
+                      <Panel defaultSize={30} minSize={20} className="h-full">
+                        <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+                          <NotesPanel
+                            lesson={currentLesson}
+                            fragment={fragment}
+                          />
+                        </div>
+                      </Panel>
+                    </PanelGroup>
+                  )}
+                  {activePanel === 'reading' && (
                     <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
                       <ReadingPanel 
                         lesson={currentLesson} 
@@ -250,42 +349,28 @@ export function StudyApp() {
                         onNavigateFragment={navigateToFragment}
                       />
                     </div>
-                  </Panel>
-                  <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
-                  {/* Panel Central - División Vertical */}
-                  <Panel defaultSize={35} minSize={20} className="h-full">
-                    <PanelGroup direction="vertical" className="h-full flex-1" style={{height: '100%'}}>
-                      {/* Panel de Diapositivas - Superior */}
-                      <Panel defaultSize={70} minSize={30} className="h-full">
-                        <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
-                          <SlidePanel
-                            fragment={fragment}
-                            fragmentIndex={currentFragmentIndex}
-                            totalFragments={totalFragments}
-                            onNavigateFragment={navigateToFragment}
-                          />
-                        </div>
-                      </Panel>
-                      <PanelResizeHandle className="resize-handle-horizontal bg-gray-300 h-2" />
-                      {/* Panel de Música - Inferior */}
-                      <Panel defaultSize={30} minSize={20} className="h-full">
-                        <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
-                          <MusicPanel />
-                        </div>
-                      </Panel>
-                    </PanelGroup>
-                  </Panel>
-                  <PanelResizeHandle className="resize-handle-vertical bg-gray-300 w-2" />
-                  {/* Panel de Notas - Derecha */}
-                  <Panel defaultSize={30} minSize={20} className="h-full">
-                    <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
-                      <NotesPanel
-                        lesson={currentLesson}
+                  )}
+                  {activePanel === 'slides' && (
+                    <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+                      <SlidePanel
                         fragment={fragment}
+                        fragmentIndex={currentFragmentIndex}
+                        totalFragments={totalFragments}
+                        onNavigateFragment={navigateToFragment}
                       />
                     </div>
-                  </Panel>
-                </PanelGroup>
+                  )}
+                  {activePanel === 'music' && (
+                    <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+                      <MusicPanel />
+                    </div>
+                  )}
+                  {activePanel === 'notes' && (
+                    <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden pb-24">
+                      <NotesPanel lesson={currentLesson} fragment={fragment} />
+                    </div>
+                  )}
+                </>
               )}
               {activePanel === 'reading' && (
                 <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">

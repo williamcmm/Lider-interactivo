@@ -119,30 +119,32 @@ export function MusicPanel() {
         <div className="flex items-center justify-between">
           {/* Controles de reproducción */}
           <div className="flex items-center space-x-3">
-            <button 
-              onClick={prevTrack}
-              className="p-2 bg-gray-300 rounded-full hover:bg-gray-400 transition shadow-lg"
-            >
-              <FiSkipBack className="w-4 h-4 text-gray-600" />
-            </button>
-            
-            <button 
-              onClick={togglePlay}
-              className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full hover:from-blue-600 hover:to-purple-700 transition shadow-xl"
-            >
-              {isPlaying ? (
-                <FiPause className="w-5 h-5 text-white" />
-              ) : (
-                <FiPlay className="w-5 h-5 text-white" />
-              )}
-            </button>
-            
-            <button 
-              onClick={nextTrack}
-              className="p-2 bg-gray-300 rounded-full hover:bg-gray-400 transition shadow-lg"
-            >
-              <FiSkipForward className="w-4 h-4 text-gray-600" />
-            </button>
+              <button 
+                onClick={prevTrack}
+                className="p-2 bg-gray-300 rounded-full hover:bg-gray-400 transition shadow-lg"
+              >
+                <FiSkipBack className="w-4 h-4 text-gray-600" />
+              </button>
+
+              <button 
+                onClick={togglePlay}
+                className={`p-3 rounded-full transition shadow-xl
+                  bg-gray-300 hover:bg-gray-400
+                  ${isPlaying ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+              >
+                {isPlaying ? (
+                  <FiPause className="w-5 h-5 text-white" />
+                ) : (
+                  <FiPlay className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+
+              <button 
+                onClick={nextTrack}
+                className="p-2 bg-gray-300 rounded-full hover:bg-gray-400 transition shadow-lg"
+              >
+                <FiSkipForward className="w-4 h-4 text-gray-600" />
+              </button>
           </div>
 
           {/* Botón Bluetooth */}
