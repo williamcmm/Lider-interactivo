@@ -216,7 +216,7 @@ export function MusicPanel() {
       {/* Track List with Scroll */}
       <div className="flex-grow flex flex-col min-h-0">
         <h3 className="text-sm font-semibold text-gray-700 mb-2 flex-shrink-0">Lista de Reproducción</h3>
-        <div className="flex-grow overflow-y-auto custom-scrollbar bg-gray-50 rounded-lg p-2">
+      <div className="h-full max-h-full overflow-y-auto custom-scrollbar bg-gray-50 rounded-lg p-2">
           <div className="space-y-1">
             {sampleTracks.map((track, index) => (
               <div

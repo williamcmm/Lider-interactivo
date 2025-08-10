@@ -38,7 +38,7 @@ export function SlidePanel({ fragment, fragmentIndex, totalFragments, onNavigate
 
       {/* Contenido de la diapositiva */}
       <div className="flex-grow bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-inner relative min-h-0 border border-blue-200">
-        <div className="w-full h-full bg-gradient-to-br from-white/80 to-blue-50/80 rounded-lg flex items-center justify-center overflow-auto">
+      <div className="w-full h-full max-h-full bg-gradient-to-br from-white/80 to-blue-50/80 rounded-lg flex items-center justify-center overflow-auto">
           <div className="w-full h-full p-8 flex items-center justify-center">
             <div className="text-center max-w-4xl">
               {getSlideContent()}

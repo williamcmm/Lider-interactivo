@@ -15,7 +15,49 @@ import { initializeSharedNotes } from '@/data/sharedNotes';
 import { initializeTestData } from '@/data/testData';
 
 export function StudyApp() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Escuchar evento para abrir la barra desde el botón hamburguesa inferior (solo una vez)
+  useEffect(() => {
+    const openSidebarMobile = () => setIsSidebarOpen(true);
+    window.addEventListener('openSidebarMobile', openSidebarMobile);
+    return () => window.removeEventListener('openSidebarMobile', openSidebarMobile);
+  }, []);
+  // Estado para orientación
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  useEffect(() => {
+    const checkOrientation = () => {
+      setOrientation(window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+  // Detectar si es móvil para mostrar hamburguesa
+  const [isMobile, setIsMobile] = useState(false);
+  // Estado para contraer/expandir sidebar escritorio, inicializado fijo y sincronizado en useEffect
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarCollapsed');
+      if (saved !== null) setIsSidebarCollapsed(saved === 'true');
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebarCollapsed', isSidebarCollapsed ? 'true' : 'false');
+    }
+  }, [isSidebarCollapsed]);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  // Estado para abrir/cerrar sidebar, siempre cerrado por defecto
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => false);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [seminars, setSeminars] = useState<Seminar[]>([]);
@@ -93,16 +135,15 @@ export function StudyApp() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768 && isSidebarOpen) {
+      if (window.innerWidth >= 768 && isSidebarOpen) {
         setIsSidebarOpen(false);
       }
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isSidebarOpen]);
 
-  return (
+    return (
     <div className="h-screen w-screen overflow-hidden bg-gray-100 text-gray-900 font-sans flex flex-col">
       {/* Barra Superior */}
       <TopBar 
@@ -112,24 +153,60 @@ export function StudyApp() {
         activePanel={activePanel}
         setActivePanel={setActivePanel}
       />
+      {/* Sidebar siempre visible en escritorio, hamburguesa en móvil */}
+      <div className="flex-1 h-full flex">
+        {/* Sidebar escritorio con colapsado */}
+        {!isMobile && (
+          <div className={`transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-10' : 'w-[300px]'} relative h-full`}>
+            {/* Flecha para expandir/cerrar */}
+            {isSidebarCollapsed ? (
+              <button
+                className="absolute top-4 left-0 z-30 bg-gray-300 hover:bg-gray-400 rounded-r-full p-1 shadow"
+                style={{ width: 32, height: 58 }}
+                onClick={() => { setIsSidebarCollapsed(false); setIsSidebarOpen(true); }}
+                aria-label="Expandir biblioteca"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            ) : (
+              <button
+                className="absolute top-4 right-0 z-30 bg-gray-300 hover:bg-gray-400 rounded-l-full p-1 shadow"
+                style={{ width: 32, height: 58 }}
+                onClick={() => { setIsSidebarCollapsed(true); setIsSidebarOpen(false); }}
+                aria-label="Contraer biblioteca"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+            )}
+            {/* Sidebar solo si expandido y abierto */}
+            {!isSidebarCollapsed && isSidebarOpen && (
+              <Sidebar
+                isOpen={true}
+                onClose={() => { setIsSidebarOpen(false); setIsSidebarCollapsed(true); }}
+                containers={allContainers}
+                onSelectLesson={selectLesson}
+              />
+            )}
+          </div>
+        )}
+        {/* Sidebar móvil solo se abre desde el botón hamburguesa en la barra inferior */}
+        {isMobile && isSidebarOpen && (
+          <Sidebar
+            isOpen={true}
+            onClose={toggleSidebar}
+            containers={allContainers}
+            onSelectLesson={selectLesson}
+          />
+        )}
 
-      {/* Contenedor Principal - altura fija calculada */}
-      <div className="flex flex-row flex-1 w-full relative" style={{ height: 'calc(100vh - 52px)' }}>
-        {/* Barra de Iconos */}
-        <IconBar onToggleSidebar={toggleSidebar} />
-
-        {/* Sidebar Desplegable */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={toggleSidebar}
-          containers={allContainers}
-          onSelectLesson={selectLesson}
-        />
-
-        {/* Paneles Principales Redimensionables */}
+        {/* Paneles principales: forzar 3 columnas en móvil vertical */}
         <div className="flex-1 h-full p-2">
-          {activePanel === 'all' ? (
-            <PanelGroup direction="horizontal" className="h-full flex-1" style={{height: '100%'}}>
+          {activePanel === 'all' && (
+            <PanelGroup
+              direction="horizontal"
+              className={`h-full flex-1${isMobile ? ' min-w-[750px] overflow-x-auto' : ''}`}
+              style={isMobile ? { height: '100%', minWidth: '750px', overflowX: 'auto' } : { height: '100%' }}
+            >
               {/* Panel de Lectura - Izquierda */}
               <Panel defaultSize={35} minSize={20} className="h-full">
                 <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
@@ -170,59 +247,44 @@ export function StudyApp() {
               {/* Panel de Notas - Derecha */}
               <Panel defaultSize={30} minSize={20} className="h-full">
                 <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
-                  <NotesPanel fragment={fragment} lesson={currentLesson} />
+                  <NotesPanel lesson={currentLesson} fragment={fragment} />
                 </div>
               </Panel>
             </PanelGroup>
-          ) : (
-            <PanelGroup direction="horizontal" className="h-full">
-              {/* Solo el panel correspondiente en vistas individuales */}
-              {activePanel === 'reading' && (
-                <Panel defaultSize={100} minSize={20} className="h-full">
-                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                    <ReadingPanel 
-                      lesson={currentLesson} 
-                      fragment={fragment}
-                      fragmentIndex={currentFragmentIndex}
-                      totalFragments={totalFragments}
-                      onNavigateFragment={navigateToFragment}
-                    />
-                  </div>
-                </Panel>
-              )}
-              {activePanel === 'slides' && (
-                <Panel defaultSize={100} minSize={20} className="h-full">
-                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                    <SlidePanel
-                      fragment={fragment}
-                      fragmentIndex={currentFragmentIndex}
-                      totalFragments={totalFragments}
-                      onNavigateFragment={navigateToFragment}
-                    />
-                  </div>
-                </Panel>
-              )}
-              {activePanel === 'music' && (
-                <Panel defaultSize={100} minSize={20} className="h-full">
-                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                    <MusicPanel />
-                  </div>
-                </Panel>
-              )}
-              {activePanel === 'notes' && (
-                <Panel defaultSize={100} minSize={20} className="h-full">
-                  <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-                    <NotesPanel fragment={fragment} lesson={currentLesson} />
-                  </div>
-                </Panel>
-              )}
-            </PanelGroup>
+          )}
+          {activePanel === 'reading' && (
+            <div className="h-full flex-1 bg-white shadow-xl rounded-lg overflow-hidden">
+              <ReadingPanel 
+                lesson={currentLesson} 
+                fragment={fragment}
+                fragmentIndex={currentFragmentIndex}
+                totalFragments={totalFragments}
+                onNavigateFragment={navigateToFragment}
+              />
+            </div>
+          )}
+          {activePanel === 'slides' && (
+            <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+              <SlidePanel
+                fragment={fragment}
+                fragmentIndex={currentFragmentIndex}
+                totalFragments={totalFragments}
+                onNavigateFragment={navigateToFragment}
+              />
+            </div>
+          )}
+          {activePanel === 'music' && (
+            <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+              <MusicPanel />
+            </div>
+          )}
+          {activePanel === 'notes' && (
+            <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
+              <NotesPanel lesson={currentLesson} fragment={fragment} />
+            </div>
           )}
         </div>
       </div>
-
-      {/* Barra Inferior */}
-      <div className="h-1 bg-gradient-to-r from-gray-300 via-gray-400 to-gray-300 shadow-inner flex-shrink-0" />
     </div>
   );
 }

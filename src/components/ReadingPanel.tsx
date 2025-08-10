@@ -131,18 +131,12 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
       {/* Header con navegación */}
       <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center justify-between flex-1">
-            <h1 className="text-xl font-bold text-gray-900">
-              {lesson ? lesson.title : 'Seleccione una lección'}
-            </h1>
-            {lesson && (
-              <div className="flex items-center space-x-4">
-                <CompactAudioPlayer audioFile={fragment?.narrationAudio || null} />
-              </div>
-            )}
-          </div>
-          {lesson && totalFragments > 1 && (
-            <div className="flex items-center space-x-2 text-sm">
+          <h1 className="text-xl font-bold text-gray-900">
+            {lesson ? lesson.title : 'Seleccione una lección'}
+          </h1>
+          {lesson && (
+            <div className="flex items-center space-x-4">
+              <CompactAudioPlayer audioFile={fragment?.narrationAudio || null} />
               <button
                 onClick={() => onNavigateFragment('prev')}
                 disabled={fragmentIndex === 0}
@@ -175,7 +169,7 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
       {/* Contenido principal */}
       <div 
         ref={contentRef}
-        className="flex-grow p-6 overflow-y-auto custom-scrollbar select-text"
+        className="flex-grow h-full max-h-full p-6 overflow-y-auto custom-scrollbar select-text"
       >
         <div className="text-base text-gray-700 space-y-4">
           {getDisplayContent()}

@@ -10,6 +10,14 @@ interface NotesPanelProps {
 }
 
 export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
+  // Detectar si es móvil para ajustar el espacio inferior
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [activeTab, setActiveTab] = useState<TabType>('notas');
   const [fragmentNotes, setFragmentNotes] = useState<Note[]>([]);
   const [sharedNotes, setSharedNotes] = useState<SharedNote[]>([]);
@@ -187,15 +195,15 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
   };
 
   const deleteNote = (noteId: string) => {
-    if (!fragment) return;
-
+    if (!fragment || !fragment.id) return;
     try {
-      const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
+      const key = `notes_${fragment.id}`;
+      const existingNotes = localStorage.getItem(key);
       if (existingNotes) {
         const notes: Note[] = JSON.parse(existingNotes);
         const updatedNotes = notes.filter(note => note.id !== noteId);
-        localStorage.setItem(`notes_${fragment.id}`, JSON.stringify(updatedNotes));
-        setFragmentNotes(prev => prev.filter(note => note.id !== noteId));
+        localStorage.setItem(key, JSON.stringify(updatedNotes));
+        setFragmentNotes(updatedNotes);
       }
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -239,7 +247,7 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
     { id: 'compartir' as TabType, label: 'Compartir' },
   ];
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full max-h-full flex flex-col p-4 overflow-y-auto custom-scrollbar">
       {/* Pestañas de navegación */}
       <div className="flex justify-around border-b border-gray-300 mb-4 flex-shrink-0">
         {tabs.map((tab) => (
@@ -316,13 +324,13 @@ export function NotesPanel({ fragment, lesson }: NotesPanelProps) {
               {!isAddingNote ? (
                 <button
                   onClick={() => setIsAddingNote(true)}
-                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+                  className={`w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center${isMobile ? ' mb-20' : ''}`}
                 >
                   <FiPlus className="w-5 h-5 mr-2" />
                   Agregar nota rápida
                 </button>
               ) : (
-                <div className="bg-white border border-gray-300 rounded-lg p-4">
+                <div className={`bg-white border border-gray-300 rounded-lg p-4${isMobile ? ' mb-20' : ''}`}>
                   <textarea
                     value={newNoteText}
                     onChange={(e) => setNewNoteText(e.target.value)}
