@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
 import { LocalStorage } from '@/lib/storage';
+import { NotesProvider } from '@/context/NotesContext';
+import { NotesPanel } from '@/components/NotesPanel';
 
 export default function PresentationPage() {
   const searchParams = useSearchParams();
@@ -71,45 +73,50 @@ export default function PresentationPage() {
   }
 
   return (
-    <div className="h-screen w-screen bg-black flex flex-col text-white overflow-hidden">
-      {/* Header con información de la lección */}
-      <div className="bg-gray-900 p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{lesson.title}</h1>
-        <div className="text-lg">
-          Fragmento {currentFragmentIndex + 1} de {lesson.fragments.length}
+    <NotesProvider>
+      <div className="h-screen w-screen bg-black flex flex-col text-white overflow-hidden">
+        {/* Header con información de la lección */}
+        <div className="bg-gray-900 p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <div className="text-lg">
+            Fragmento {currentFragmentIndex + 1} de {lesson.fragments.length}
+          </div>
         </div>
-      </div>
 
-      {/* Contenido de la diapositiva */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full h-full bg-white text-black rounded-lg shadow-2xl overflow-hidden">
-          {currentFragment.slide ? (
-            <div 
-              className="w-full h-full p-8 flex items-center justify-center text-center"
-              dangerouslySetInnerHTML={{ __html: currentFragment.slide }}
-            />
-          ) : (
-            <div className="w-full h-full p-8 flex items-center justify-center">
-              <div className="text-center">
-                <h2 className="text-4xl font-bold mb-6 text-gray-800">{lesson.title}</h2>
-                <h3 className="text-2xl text-gray-600 mb-4">Fragmento {currentFragment.order}</h3>
-                <div className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-                  {currentFragment.readingMaterial ? (
-                    <div dangerouslySetInnerHTML={{ __html: currentFragment.readingMaterial }} />
-                  ) : (
-                    <p>Material de estudio en progreso...</p>
-                  )}
+        {/* Contenido de la diapositiva */}
+        <div className="flex-1 flex items-center justify-center p-8 gap-8">
+          <div className="w-2/3 h-full bg-white text-black rounded-lg shadow-2xl overflow-hidden">
+            {currentFragment.slide ? (
+              <div 
+                className="w-full h-full p-8 flex items-center justify-center text-center"
+                dangerouslySetInnerHTML={{ __html: currentFragment.slide }}
+              />
+            ) : (
+              <div className="w-full h-full p-8 flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-4xl font-bold mb-6 text-gray-800">{lesson.title}</h2>
+                  <h3 className="text-2xl text-gray-600 mb-4">Fragmento {currentFragment.order}</h3>
+                  <div className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
+                    {currentFragment.readingMaterial ? (
+                      <div dangerouslySetInnerHTML={{ __html: currentFragment.readingMaterial }} />
+                    ) : (
+                      <p>Material de estudio en progreso...</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="w-1/3 h-full">
+            <NotesPanel fragment={currentFragment} lesson={lesson} />
+          </div>
+        </div>
+
+        {/* Footer con controles básicos */}
+        <div className="bg-gray-900 p-2 text-center text-sm">
+          Presentación • Líder Interactivo CMM
         </div>
       </div>
-
-      {/* Footer con controles básicos */}
-      <div className="bg-gray-900 p-2 text-center text-sm">
-        Presentación • Líder Interactivo CMM
-      </div>
-    </div>
+    </NotesProvider>
   );
 }
