@@ -131,12 +131,14 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
       {/* Header con navegación */}
       <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-xl font-bold text-gray-900">
-            {lesson ? lesson.title : 'Seleccione una lección'}
-          </h1>
+          <div className="flex items-center w-full">
+            <h1 className="text-xl font-bold text-gray-900 flex-1">
+              {lesson ? lesson.title : 'Seleccione una lección'}
+            </h1>
+            <CompactAudioPlayer audioFile={fragment?.narrationAudio || null} />
+          </div>
           {lesson && (
             <div className="flex items-center space-x-4">
-              <CompactAudioPlayer audioFile={fragment?.narrationAudio || null} />
               <button
                 onClick={() => onNavigateFragment('prev')}
                 disabled={fragmentIndex === 0}

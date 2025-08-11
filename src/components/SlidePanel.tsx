@@ -1,5 +1,6 @@
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Fragment } from '@/types';
+import { CompactAudioPlayer } from './CompactAudioPlayer';
 
 interface SlidePanelProps {
   fragment: Fragment | null;
@@ -36,6 +37,8 @@ export function SlidePanel({ fragment, fragmentIndex, totalFragments, onNavigate
         )}
       </div>
 
+  {/* Eliminado contenido duplicado: botón play/pause y texto extra */}
+
       {/* Contenido de la diapositiva */}
       <div className="flex-grow bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-inner relative min-h-0 border border-blue-200">
       <div className="w-full h-full max-h-full bg-gradient-to-br from-white/80 to-blue-50/80 rounded-lg flex items-center justify-center overflow-auto">
@@ -47,31 +50,28 @@ export function SlidePanel({ fragment, fragmentIndex, totalFragments, onNavigate
         </div>
         
         {/* Navegación de fragmentos - CONTROLES PRINCIPALES */}
-        {totalFragments > 1 && (
-          <div className="absolute bottom-6 left-0 right-0 flex justify-center items-center space-x-6 z-10">
-            <button 
-              onClick={() => onNavigateFragment('prev')}
-              disabled={fragmentIndex === 0}
-              className="bg-white/95 hover:bg-white text-gray-800 p-3 rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/95 disabled:transform-none border-2 border-gray-300"
-              title="Fragmento anterior"
-            >
-              <FiChevronLeft className="w-5 h-5" />
-            </button>
-            
-            <div className="text-gray-800 font-bold text-lg">
-              Fragmento {fragmentIndex + 1} de {totalFragments}
-            </div>
-            
-            <button 
-              onClick={() => onNavigateFragment('next')}
-              disabled={fragmentIndex === totalFragments - 1}
-              className="bg-white/95 hover:bg-white text-gray-800 p-3 rounded-full shadow-xl hover:shadow-2xl transition-all transform hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/95 disabled:transform-none border-2 border-gray-300"
-              title="Fragmento siguiente"
-            >
-              <FiChevronRight className="w-5 h-5" />
-            </button>
+        {/* Botones de navegación SIEMPRE visibles, en gris y más bajos */}
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center items-center space-x-6 z-10">
+          <button 
+            onClick={() => onNavigateFragment('prev')}
+            disabled={fragmentIndex === 0}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-600 p-3 rounded-full shadow transition-all transform hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-200 disabled:transform-none border border-gray-300"
+            title="Fragmento anterior"
+          >
+            <FiChevronLeft className="w-6 h-6" />
+          </button>
+          <div className="text-gray-500 font-semibold text-base">
+            Fragmento {fragmentIndex + 1} de {totalFragments}
           </div>
-        )}
+          <button 
+            onClick={() => onNavigateFragment('next')}
+            disabled={fragmentIndex === totalFragments - 1}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-600 p-3 rounded-full shadow transition-all transform hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-200 disabled:transform-none border border-gray-300"
+            title="Fragmento siguiente"
+          >
+            <FiChevronRight className="w-6 h-6" />
+          </button>
+        </div>
       </div>
     </div>
   );
