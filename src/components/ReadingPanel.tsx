@@ -73,7 +73,6 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
       const newNote: Note = {
         id: `selection_${fragment.id}_${Date.now()}`,
         content: noteContent.trim(),
-        lessonId: lesson.id,
         fragmentId: fragment.id,
         userId: 'current-user',
         isShared: false,
