@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
 import { LocalStorage } from '@/lib/storage';
-// import { realtimeDb } from '@/lib/firebase';
-// import { ref, onValue } from 'firebase/database';
+// Preparado para Firestore
+// import { firestore } from '@/lib/firebase';
 
 export default function SharedSlidePage() {
   const searchParams = useSearchParams();
@@ -19,54 +19,80 @@ export default function SharedSlidePage() {
   const [showNotes, setShowNotes] = useState(false);
 
   useEffect(() => {
-    const lessonId = searchParams.get('lesson');
-    const fragmentIndex = parseInt(searchParams.get('fragment') || '0');
-    const typeParam = searchParams.get('type') || '';
-    const types = typeParam.split(',');
-    setShowReading(types.includes('reading'));
-    setShowSlide(types.includes('slide'));
-    setShowAids(types.includes('aids'));
-    setShowNotes(types.includes('notes'));
-
-    if (lessonId) {
-      // Buscar la lección en seminarios y series
-      const seminars = LocalStorage.getSeminars();
-      const series = LocalStorage.getSeries();
-      let foundLesson = null;
-      // Buscar en seminarios
-      for (const seminar of seminars) {
-        foundLesson = seminar.lessons.find(l => l.id === lessonId);
-        if (foundLesson) break;
-      }
-      // Buscar en series si no se encontró en seminarios
-      if (!foundLesson) {
-        for (const serie of series) {
-          foundLesson = serie.lessons.find(l => l.id === lessonId);
+    // Si existe session, usar Firestore; si no, usar parámetros normales
+    const sessionId = searchParams.get('session');
+    if (sessionId) {
+      // --- SINCRONIZACIÓN EN TIEMPO REAL ---
+      // Descomentar cuando Firestore esté activo
+      /*
+      const unsubscribe = firestore.collection('sharedSessions').doc(sessionId)
+        .onSnapshot(doc => {
+          const data = doc.data();
+          if (!data) return;
+          setShowReading(data.types.includes('reading'));
+          setShowSlide(data.types.includes('slide'));
+          setShowAids(data.types.includes('aids'));
+          setShowNotes(data.types.includes('notes'));
+          setIsConnected(data.active);
+          // Buscar la lección
+          const lessonId = data.lessonId;
+          const fragmentIndex = data.fragmentIndex;
+          const seminars = LocalStorage.getSeminars();
+          const series = LocalStorage.getSeries();
+          let foundLesson = null;
+          for (const seminar of seminars) {
+            foundLesson = seminar.lessons.find(l => l.id === lessonId);
+            if (foundLesson) break;
+          }
+          if (!foundLesson) {
+            for (const serie of series) {
+              foundLesson = serie.lessons.find(l => l.id === lessonId);
+              if (foundLesson) break;
+            }
+          }
+          if (foundLesson) {
+            setLesson(foundLesson);
+            setCurrentFragmentIndex(fragmentIndex);
+            setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
+          }
+        });
+      return () => unsubscribe();
+      */
+    } else {
+      // --- MODO ESTÁTICO ---
+      const lessonId = searchParams.get('lesson');
+      const fragmentIndex = parseInt(searchParams.get('fragment') || '0');
+      const typeParam = searchParams.get('type') || '';
+      const types = typeParam.split(',');
+      setShowReading(types.includes('reading'));
+      setShowSlide(types.includes('slide'));
+      setShowAids(types.includes('aids'));
+      setShowNotes(types.includes('notes'));
+      if (lessonId) {
+        const seminars = LocalStorage.getSeminars();
+        const series = LocalStorage.getSeries();
+        let foundLesson = null;
+        for (const seminar of seminars) {
+          foundLesson = seminar.lessons.find(l => l.id === lessonId);
           if (foundLesson) break;
         }
-      }
-      if (foundLesson) {
-        setLesson(foundLesson);
-        setCurrentFragmentIndex(fragmentIndex);
-        setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
-        setIsConnected(true);
-
-  // Sincronización en tiempo real desactivada para desarrollo local
+        if (!foundLesson) {
+          for (const serie of series) {
+            foundLesson = serie.lessons.find(l => l.id === lessonId);
+            if (foundLesson) break;
+          }
+        }
+        if (foundLesson) {
+          setLesson(foundLesson);
+          setCurrentFragmentIndex(fragmentIndex);
+          setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
+          setIsConnected(true);
+        }
       }
     }
   }, [searchParams]);
 
-  // Simular actualizaciones en tiempo real (en una implementación real usarías WebSockets)
-  useEffect(() => {
-    if (!lesson) return;
-
-    const pollForUpdates = setInterval(() => {
-      // En una implementación real, consultarías un servidor para actualizaciones
-      // Por ahora, mantenemos el fragmento inicial
-    }, 5000);
-
-    return () => clearInterval(pollForUpdates);
-  }, [lesson]);
+  // El efecto de polling se elimina, ya que Firestore lo manejará en tiempo real
 
   if (!lesson || !currentFragment) {
     return (

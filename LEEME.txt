@@ -1,56 +1,16 @@
-# Instrucciones para activar Firebase y sincronización en producción
-
-Este proyecto está preparado para funcionar tanto en local (sin Firebase) como en producción (con Firebase y sincronización en tiempo real).
-
-## ¿Cómo activar Firebase?
-
-1. **Descomenta las líneas relacionadas con Firebase**
-   - En los archivos:
-     - `src/lib/firebase.ts`
-     - `src/components/StudyApp.tsx`
-     - `src/components/ShareModal.tsx`
-     - `src/app/shared-slide/page.tsx`
-   - Busca las líneas que están comentadas con `// import { ... }` y quita el `//`.
-   - Reactiva las funciones que usan `realtimeDb`, `ref`, `set`, `onValue`, etc.
-
-2. **Agrega tu configuración de Firebase**
-   - En `src/lib/firebase.ts`, reemplaza la configuración de ejemplo por tus credenciales reales de Firebase.
-   - Ejemplo:
-     ```ts
-     const firebaseConfig = {
-       apiKey: "TU_API_KEY",
-       authDomain: "TU_AUTH_DOMAIN",
-       projectId: "TU_PROJECT_ID",
-       storageBucket: "TU_STORAGE_BUCKET",
-       messagingSenderId: "TU_MESSAGING_SENDER_ID",
-       appId: "TU_APP_ID",
-       databaseURL: "TU_DATABASE_URL"
-     };
-     ```
-
-3. **Instala dependencias necesarias**
-   - Ejecuta en la terminal:
-     ```sh
-     npm install firebase
-     ```
-
-4. **Verifica que todo funciona**
-   - Inicia el servidor con `npm run dev`.
-   - Accede a la página y prueba las funciones de compartir, login y sincronización.
-
-## Guía completa para activar la sincronización en tiempo real y compartir contenido
+# LEEME - Guía de instalación y activación de sincronización en tiempo real
 
 Este proyecto está listo para que cualquier persona pueda compartir un enlace y que los demás vean el contenido en tiempo real, usando Firebase/Firestore. Solo sigue estos pasos y recomendaciones:
 
-### 1. ¿Qué está implementado?
-- **Botón Compartir**: Permite seleccionar qué contenido compartir (lectura, diapositiva, ayudas, notas).
-- **Creación de sesión compartida**: Al compartir, se crea una sesión en Firestore (`sharedSessions`) con los datos seleccionados y se genera un enlace único.
-- **Enlace compartido**: El enlace incluye el ID de la sesión. Los participantes que abran ese enlace verán el contenido sincronizado en tiempo real.
-- **Página `shared-slide`**: Está preparada para leer el ID de sesión y conectarse a Firestore. Cuando el presentador cambie el contenido, todos los participantes verán el cambio automáticamente (sin recargar).
+## 1. ¿Qué está implementado?
+- Botón Compartir: Permite seleccionar qué contenido compartir (lectura, diapositiva, ayudas, notas).
+- Creación de sesión compartida: Al compartir, se crea una sesión en Firestore (`sharedSessions`) con los datos seleccionados y se genera un enlace único.
+- Enlace compartido: El enlace incluye el ID de la sesión. Los participantes que abran ese enlace verán el contenido sincronizado en tiempo real.
+- Página `shared-slide`: Está preparada para leer el ID de sesión y conectarse a Firestore. Cuando el presentador cambie el contenido, todos los participantes verán el cambio automáticamente (sin recargar).
 
-### 2. ¿Qué debes hacer para que funcione en producción?
+## 2. ¿Qué debes hacer para que funcione en producción?
 
-#### Activar Firebase/Firestore
+### Activar Firebase/Firestore
 1. Instala el paquete:
    ```sh
    npm install firebase
@@ -83,22 +43,22 @@ Este proyecto está listo para que cualquier persona pueda compartir un enlace y
      });
    ```
 
-### 3. ¿Cómo funciona el flujo de compartir?
+## 3. ¿Cómo funciona el flujo de compartir?
 - El presentador selecciona el contenido y comparte el enlace.
 - Se crea una sesión en Firestore y se genera un enlace único.
 - Los participantes abren el enlace y ven el contenido en tiempo real.
 - Si el presentador cambia el fragmento o el tipo de contenido, todos los participantes ven el cambio al instante.
 
-### 4. ¿Qué NO es solo un comentario?
+## 4. ¿Qué NO es solo un comentario?
 - Todo el flujo de compartir, crear sesión, generar enlace y sincronizar está implementado y listo para funcionar.
 - Los comentarios solo indican dónde activar la conexión con Firebase/Firestore, pero el resto del código ya está preparado y funcional.
 
-### 5. ¿Qué sucede al subir la página y activar Firebase?
+## 5. ¿Qué sucede al subir la página y activar Firebase?
 - El presentador comparte el enlace.
 - Los participantes abren el enlace y ven el contenido en tiempo real.
 - Si el presentador cambia el fragmento o el tipo de contenido, todos los participantes ven el cambio al instante.
 
-### 6. Notas adicionales
+## 6. Notas adicionales
 - Si tienes dudas, revisa los archivos mencionados y busca las secciones comentadas.
 - Puedes alternar entre modo local y producción simplemente comentando/descomentando las líneas de Firebase.
 - Si necesitas ayuda, consulta la documentación oficial de Firebase: https://firebase.google.com/docs
