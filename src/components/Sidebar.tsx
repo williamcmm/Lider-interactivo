@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FiChevronLeft, FiBook, FiList } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiBook, FiList } from 'react-icons/fi';
 import { Seminar, Series, Lesson } from '@/types';
 
 interface SidebarProps {
@@ -7,11 +7,23 @@ interface SidebarProps {
   onClose: () => void;
   containers: Array<(Seminar | Series) & { type: 'seminar' | 'series' }>;
   onSelectLesson: (lesson: Lesson) => void;
+  isDesktop?: boolean; // Nueva prop para determinar si está en modo desktop
 }
 
-export function Sidebar({ isOpen, onClose, containers, onSelectLesson }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop = false }: SidebarProps) {
   // Estado de colapsado por id
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  // Estado para detectar móvil
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]);
@@ -19,24 +31,27 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson }: Sidebar
 
   return (
     <>
-      {/* Fondo semitransparente para enfoque en móvil */}
-      {isOpen && (
+      {/* Fondo semitransparente solo para móvil */}
+      {isOpen && !isDesktop && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-10 transition-opacity duration-300 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-30 z-10 transition-opacity duration-300"
           onClick={onClose}
         />
       )}
+      
       <div 
-        className={`fixed top-0 left-0 h-full w-[300px] bg-gray-200 shadow-2xl transform transition-transform duration-500 ease-in-out z-20 p-4 flex flex-col overflow-y-auto ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`
+          fixed top-0 left-0 h-full w-[400px] 
+          bg-gray-200 shadow-2xl p-4 flex flex-col overflow-y-auto
+          transform transition-transform duration-500 ease-in-out
+          ${isDesktop ? 'z-30' : 'z-20'}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${!isDesktop && isMobile ? 'w-full' : 'w-[300px]'}
+        `}
       >
         {/* Encabezado del panel lateral desplegable */}
-        <div className="flex items-center justify-between pb-4 border-b border-gray-300 flex-shrink-0">
+        <div className="flex items-center pb-4 border-b border-gray-300 flex-shrink-0">
           <h2 className="text-xl font-bold whitespace-nowrap text-gray-900">Biblioteca</h2>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
-            <FiChevronLeft className="w-6 h-6" />
-          </button>
         </div>
       
         {/* Lista de seminarios y series */}

@@ -105,6 +105,25 @@ export class LocalStorage {
     localStorage.removeItem(STORAGE_KEYS.SERIES);
   }
 
+  static resetAndReinitialize(): void {
+    console.log('🔄 Reiniciando aplicación...');
+    this.clearAllData();
+    this.initializeWithMockData(true);
+    console.log('✅ Aplicación reiniciada con datos frescos');
+  }
+
+  // ============== MÉTODO PARA DESARROLLO ==============
+  
+  static devReset(): void {
+    if (typeof window !== 'undefined') {
+      console.log('🛠️ DESARROLLO: Limpiando y reinicializando datos...');
+      this.resetAndReinitialize();
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    }
+  }
+
   // ============== LIMPIAR AYUDAS DE ESTUDIO ==============
   
   static clearAllStudyAids(): void {
@@ -165,12 +184,14 @@ export class LocalStorage {
 
   // ============== DATOS MOCK INICIALES ==============
   
-  static initializeWithMockData(): void {
-    // Solo inicializar si no hay datos existentes
+  static initializeWithMockData(force = true): void {
+    // Siempre reinicializar por defecto, a menos que se especifique lo contrario
     const existingSeminars = this.getSeminars();
     const existingSeries = this.getSeries();
     
-    if (existingSeminars.length === 0 && existingSeries.length === 0) {
+    if ((existingSeminars.length === 0 && existingSeries.length === 0) || force) {
+      console.log('🚀 Inicializando datos de la aplicación...');
+      
       // Definir los seminarios reales con sus lecciones específicas
       const realSeminars = [
         {
@@ -292,7 +313,15 @@ export class LocalStorage {
               id: `fragment-sem-${i + 1}-${j + 1}-1`,
               order: 1,
               readingMaterial: '<p>Material de lectura por desarrollar...</p>',
-              slide: '<p>Diapositiva por crear...</p>',
+              slide: `<div class="h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-white p-8">
+                <div class="text-center space-y-6">
+                  <h1 class="text-4xl font-bold">${lessonTitle}</h1>
+                  <p class="text-xl opacity-90">${seminar.title}</p>
+                  <div class="mt-8 p-4 bg-white bg-opacity-20 rounded-lg">
+                    <p class="text-lg text-gray-600" style="color: rgb(75, 85, 99);">Lección ${j + 1} de ${seminar.lessons.length}</p>
+                  </div>
+                </div>
+              </div>`,
               studyAids: '',
               isCollapsed: false
             }
@@ -305,6 +334,27 @@ export class LocalStorage {
 
       this.saveSeminars(mockSeminars);
       this.saveSeries(mockSeries);
+      
+      console.log(`✅ ${mockSeminars.length} seminarios inicializados con ${mockSeminars.reduce((total, s) => total + s.lessons.length, 0)} lecciones totales`);
+      console.log('📊 Primer seminario:', mockSeminars[0].title);
+      console.log('🎯 Primera lección:', mockSeminars[0].lessons[0].title);
+      console.log('📝 Template de diapositiva verificado:', mockSeminars[0].lessons[0].fragments[0].slide.includes('bg-gradient-to-br') ? '✅ Correcto' : '❌ Incorrecto');
+    }
+  }
+
+  // ============== INICIALIZACIÓN AUTOMÁTICA ==============
+  
+  static autoInitialize(): void {
+    if (typeof window !== 'undefined') {
+      console.log('🔄 Auto-inicializando datos de la aplicación...');
+      
+      // Limpiar localStorage primero
+      this.clearAllData();
+      console.log('🗑️ localStorage limpiado');
+      
+      // Forzar inicialización
+      this.initializeWithMockData(true);
+      console.log('✅ Datos mock inicializados correctamente');
     }
   }
 }

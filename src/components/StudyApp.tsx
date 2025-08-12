@@ -14,11 +14,20 @@ import { NotesProvider } from '../context/NotesContext';
 import { Seminar, Series, Lesson } from '@/types';
 import { LocalStorage } from '@/lib/storage';
 import { initializeSharedNotes } from '@/data/sharedNotes';
-import { initializeTestData } from '@/data/testData';
+import { useSidebarStore } from '@/store/sidebarStore';
 // import { realtimeDb } from '@/lib/firebase';
 // import { ref, set } from 'firebase/database';
 
 export function StudyApp() {
+  // Zustand store para sidebar  
+  const { 
+    isSidebarOpen, 
+    isMobile,
+    closeSidebar, 
+    toggleSidebar,
+    setIsMobile
+  } = useSidebarStore();
+
   // Panel por defecto: 'all' en escritorio/tablet, 'reading' en móvil vertical
   const [activePanel, setActivePanel] = useState<string>('all');
   // Estado para mostrar aviso en móvil vertical en 'Ver todo'
@@ -64,12 +73,20 @@ export function StudyApp() {
   const deleteNote = (id: string) => {
     setFragmentNotes(fragmentNotes.filter(note => note.id !== id));
   };
-  // Escuchar evento para abrir la barra desde el botón hamburguesa inferior (solo una vez)
+  // Inicializar detección de móvil
   useEffect(() => {
-    const openSidebarMobile = () => setIsSidebarOpen(true);
-    window.addEventListener('openSidebarMobile', openSidebarMobile);
-    return () => window.removeEventListener('openSidebarMobile', openSidebarMobile);
-  }, []);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [setIsMobile]);
+
+  // Remover listeners de eventos antiguos ya que ahora usamos Zustand
+  // useEffect(() => {
+  //   const openSidebarMobile = () => setIsSidebarOpen(true);
+  //   window.addEventListener('openSidebarMobile', openSidebarMobile);
+  //   return () => window.removeEventListener('openSidebarMobile', openSidebarMobile);
+  // }, []);
   // Estado para orientación
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   useEffect(() => {
@@ -85,28 +102,7 @@ export function StudyApp() {
     };
   }, []);
   // Detectar si es móvil para mostrar hamburguesa
-  const [isMobile, setIsMobile] = useState(false);
-  // Estado para contraer/expandir sidebar escritorio, inicializado fijo y sincronizado en useEffect
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarCollapsed');
-      if (saved !== null) setIsSidebarCollapsed(saved === 'true');
-    }
-  }, []);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sidebarCollapsed', isSidebarCollapsed ? 'true' : 'false');
-    }
-  }, [isSidebarCollapsed]);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-  // Estado para abrir/cerrar sidebar, siempre cerrado por defecto
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => false);
+  // Removido porque ahora usamos Zustand
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [seminars, setSeminars] = useState<Seminar[]>([]);
@@ -139,13 +135,11 @@ export function StudyApp() {
     // Inicializar notas compartidas de ejemplo
     initializeSharedNotes();
     
-    // Inicializar datos de prueba si no hay seminarios
-    const existingSeminars = LocalStorage.getSeminars();
-    if (existingSeminars.length === 0) {
-      initializeTestData();
-    }
+    // SIEMPRE inicializar datos mock (recargar cada vez que inicia la app)
+    console.log('🔄 Recargando datos mock en cada inicio...');
+    LocalStorage.autoInitialize();
     
-    // Cargar datos existentes
+    // Cargar datos desde localStorage
     const storedSeminars = LocalStorage.getSeminars();
     const storedSeries = LocalStorage.getSeries();
     
@@ -166,16 +160,12 @@ export function StudyApp() {
     ...series.map(s => ({ ...s, type: 'series' as const }))
   ].sort((a, b) => a.order - b.order);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   const selectLesson = (lesson: Lesson) => {
     setCurrentLesson(lesson);
     setCurrentFragmentIndex(0); // Resetear al primer fragmento
     // Cerrar sidebar en móvil después de seleccionar
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
+    if (isMobile) {
+      closeSidebar();
     }
   };
 
@@ -200,12 +190,12 @@ export function StudyApp() {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768 && isSidebarOpen) {
-        setIsSidebarOpen(false);
+        closeSidebar();
       }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, closeSidebar]);
 
     return (
       <NotesProvider>
@@ -220,47 +210,47 @@ export function StudyApp() {
           />
           {/* Sidebar siempre visible en escritorio, hamburguesa en móvil */}
           <div className="flex-1 h-full flex">
-            {/* Sidebar escritorio con colapsado */}
+            {/* Botón de toggle para desktop - siempre visible */}
             {!isMobile && (
-              <div className={`transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-10' : 'w-[300px]'} relative h-full`}>
-                {/* Flecha para expandir/cerrar */}
-                {isSidebarCollapsed ? (
-                  <button
-                    className="absolute top-4 left-0 z-30 bg-gray-300 hover:bg-gray-400 rounded-r-full p-1 shadow"
-                    style={{ width: 32, height: 58 }}
-                    onClick={() => { setIsSidebarCollapsed(false); setIsSidebarOpen(true); }}
-                    aria-label="Expandir biblioteca"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
+              <button
+                className={`fixed top-16 left-0 z-40 bg-gray-300 hover:bg-gray-400 rounded-r-full p-1 shadow transition-all duration-500 ease-in-out ${
+                  isSidebarOpen ? 'translate-x-[400px]' : 'translate-x-0'
+                }`}
+                style={{ width: 32, height: 58 }}
+                onClick={toggleSidebar}
+                aria-label={isSidebarOpen ? "Cerrar biblioteca" : "Abrir biblioteca"}
+              >
+                {isSidebarOpen ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
                 ) : (
-                  <button
-                    className="absolute top-4 right-0 z-30 bg-gray-300 hover:bg-gray-400 rounded-l-full p-1 shadow"
-                    style={{ width: 32, height: 58 }}
-                    onClick={() => { setIsSidebarCollapsed(true); setIsSidebarOpen(false); }}
-                    aria-label="Contraer biblioteca"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                  </button>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 )}
-                {/* Sidebar solo si expandido y abierto */}
-                {!isSidebarCollapsed && isSidebarOpen && (
-                  <Sidebar
-                    isOpen={true}
-                    onClose={() => { setIsSidebarOpen(false); setIsSidebarCollapsed(true); }}
-                    containers={allContainers}
-                    onSelectLesson={selectLesson}
-                  />
-                )}
-              </div>
+              </button>
             )}
-            {/* Sidebar móvil solo se abre desde el botón hamburguesa en la barra inferior */}
-            {isMobile && isSidebarOpen && (
+
+            {/* Sidebar desktop - overlay */}
+            {!isMobile && (
               <Sidebar
-                isOpen={true}
-                onClose={toggleSidebar}
+                isOpen={isSidebarOpen}
+                onClose={closeSidebar}
                 containers={allContainers}
                 onSelectLesson={selectLesson}
+                isDesktop={true}
+              />
+            )}
+
+            {/* Sidebar móvil solo se abre desde el botón hamburguesa */}
+            {isMobile && (
+              <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={closeSidebar}
+                containers={allContainers}
+                onSelectLesson={selectLesson}
+                isDesktop={false}
               />
             )}
 

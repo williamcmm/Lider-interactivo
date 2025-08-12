@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlay, FiShare2, FiSettings, FiBookOpen, FiMonitor, FiMusic, FiEdit } from 'react-icons/fi';
+import { FiPlay, FiShare2, FiSettings, FiBookOpen, FiMonitor, FiMusic, FiEdit, FiX } from 'react-icons/fi';
 import { TbCast } from 'react-icons/tb';
 import Link from 'next/link';
 import { Fragment, Lesson } from '../types';
 import { ShareModal } from './ShareModal';
+import { useSidebarStore } from '../store/sidebarStore';
 interface TopBarProps {
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
@@ -20,7 +21,9 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
     { key: 'notes', icon: <FiEdit className="w-5 h-5" /> }
   ];
 
-  const [isMobile, setIsMobile] = useState(false);
+  // Zustand store
+  const { isSidebarOpen, isMobile, toggleSidebar, setIsMobile } = useSidebarStore();
+
   const [isLandscape, setIsLandscape] = useState(false);
   const [isCasting, setIsCasting] = useState(false);
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
@@ -32,7 +35,8 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile); // Actualizar Zustand
       setIsLandscape(window.innerWidth > window.innerHeight);
     };
     checkMobile();
@@ -42,7 +46,7 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
       window.removeEventListener('resize', checkMobile);
       window.removeEventListener('orientationchange', checkMobile);
     };
-  }, []);
+  }, [setIsMobile]);
 
   const handleFullscreen = () => {
     const elem = document.documentElement;
@@ -111,11 +115,31 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
 
   return (
     <>
-      {!isMobile && (
-        <div className="w-full min-h-[48px] h-12 bg-white flex items-center justify-between px-2 md:px-4 shadow-lg flex-shrink-0 z-30">
-          <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors whitespace-nowrap">
-            Líder Interactivo CMM
-          </Link>
+      {/* TopBar visible en todas las resoluciones */}
+      <div className="w-full min-h-[48px] h-12 bg-white flex items-center justify-between px-2 md:px-4 shadow-lg flex-shrink-0 z-30">
+        {/* Botón hamburguesa solo en móvil */}
+        {isMobile && (
+          <button
+            onClick={toggleSidebar}
+            className="flex items-center justify-center p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors mr-2"
+            aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
+          >
+            {isSidebarOpen ? (
+              <FiX className="w-6 h-6" />
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        )}
+
+        <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors whitespace-nowrap">
+          Líder Interactivo CMM
+        </Link>
+        
+        {/* Botones de panel solo en escritorio */}
+        {!isMobile && (
           <div className="flex items-center space-x-1 md:space-x-2">
             <div className="flex items-center space-x-0.5 md:space-x-1 mr-2 md:mr-4">
               {/* Botón de Login y Admin juntos al inicio */}
@@ -197,18 +221,37 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
               <FiShare2 className="w-5 h-5" />
             </button>
           </div>
-          {/* Modal de Compartir */}
-          {showShareModal && currentLesson && currentFragment && (
-            <ShareModal
-              isOpen={showShareModal}
-              onClose={() => setShowShareModal(false)}
-              lesson={currentLesson}
-              fragment={currentFragment}
-              fragmentIndex={fragmentIndex || 0}
-            />
-          )}
-        </div>
-      )}
+        )}
+
+        {/* Botones móviles compactos */}
+        {isMobile && (
+          <div className="flex items-center space-x-1">
+            {/* Navegación de paneles para móvil */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              {panelOptions.map(panel => (
+                <button
+                  key={panel.key}
+                  className={`p-1.5 rounded transition-colors duration-150 ${activePanel === panel.key ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                  onClick={() => setActivePanel(panel.key)}
+                >
+                  {panel.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Compartir */}
+        {showShareModal && currentLesson && currentFragment && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            lesson={currentLesson}
+            fragment={currentFragment}
+            fragmentIndex={fragmentIndex || 0}
+          />
+        )}
+      </div>
     </>
   );
 }
