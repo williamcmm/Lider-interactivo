@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlay, FiShare2, FiSettings, FiBookOpen, FiMonitor, FiMusic, FiEdit, FiX } from 'react-icons/fi';
+import { FiPlay, FiShare2, FiSettings, FiBookOpen, FiMonitor, FiMusic, FiEdit, FiX, FiLogIn } from 'react-icons/fi';
 import { TbCast } from 'react-icons/tb';
 import Link from 'next/link';
 import { Fragment, Lesson } from '../types';
@@ -116,7 +116,7 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
   return (
     <>
       {/* TopBar visible en todas las resoluciones */}
-      <div className="w-full min-h-[48px] h-12 bg-white flex items-center justify-between px-2 md:px-4 shadow-lg flex-shrink-0 z-30">
+      <div className="w-full min-h-[4rem] h-12 bg-white flex items-center justify-between px-2 md:px-4 shadow-lg flex-shrink-0 z-30">
         {/* Botón hamburguesa solo en móvil */}
         {isMobile && (
           <button
@@ -134,23 +134,26 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
           </button>
         )}
 
-        <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors whitespace-nowrap">
-          Líder Interactivo CMM
-        </Link>
+        {/* Título solo visible en desktop */}
+        {!isMobile && (
+          <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors whitespace-nowrap">
+            Líder Interactivo CMM
+          </Link>
+        )}
         
         {/* Botones de panel solo en escritorio */}
         {!isMobile && (
           <div className="flex items-center space-x-1 md:space-x-2">
-            <div className="flex items-center space-x-0.5 md:space-x-1 mr-2 md:mr-4">
+            <div className="flex items-center space-x-0.5 md:space-x-1 mr-2 md:mr-4 gap-2">
               {/* Botón de Login y Admin juntos al inicio */}
               <button
-                className="flex items-center p-2 text-white bg-gray-600 rounded-md hover:bg-gray-700 transition duration-150"
+                className="flex items-center p-2 text-white bg-blue-600 rounded-md hover:bg-gray-700 transition duration-150"
                 onClick={() => {
                   const email = window.prompt('Ingresa tu correo de Gmail para acceder:');
                   if (email) { setUserEmail(email.trim().toLowerCase()); }
                 }}
               >
-                <FiSettings className="w-5 h-5 mr-0 md:mr-2" />
+                <FiLogIn className="w-5 h-5 mr-0 md:mr-2" />
                 <span className="hidden md:inline">Login</span>
               </button>
               {isSuperAdmin && (
@@ -223,9 +226,29 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
           </div>
         )}
 
-        {/* Botones móviles compactos */}
+        {/* Botones móviles compactos - Todas las opciones */}
         {isMobile && (
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-1 justify-end">
+            {/* Botones de Login y Admin para móvil */}
+            <button
+              className="flex items-center p-1.5 text-white bg-blue-600 rounded-md hover:bg-gray-700 transition duration-150"
+              onClick={() => {
+                const email = window.prompt('Ingresa tu correo de Gmail para acceder:');
+                if (email) { setUserEmail(email.trim().toLowerCase()); }
+              }}
+            >
+              <FiLogIn className="w-4 h-4" />
+            </button>
+            
+            {isSuperAdmin && (
+              <Link 
+                href="/admin"
+                className="flex items-center p-1.5 text-white bg-green-700 rounded-md hover:bg-green-800 transition duration-150"
+              >
+                <FiSettings className="w-4 h-4" />
+              </Link>
+            )}
+
             {/* Navegación de paneles para móvil */}
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               {panelOptions.map(panel => (
@@ -237,7 +260,52 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
                   {panel.icon}
                 </button>
               ))}
+              {/* Botón "All" para móvil */}
+              <button
+                className={`p-1.5 rounded transition-colors duration-150 ${activePanel === 'all' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                onClick={() => setActivePanel('all')}
+              >
+                <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="24" height="24" rx="6" fill={activePanel === 'all' ? '#2563eb' : '#e5e7eb'} stroke="#cbd5e1" strokeWidth={2} />
+                  <line x1={10} y1={4} x2={10} y2={24} stroke={activePanel === 'all' ? '#fff' : '#94a3b8'} strokeWidth={2.2} />
+                  <line x1={18} y1={4} x2={18} y2={24} stroke={activePanel === 'all' ? '#fff' : '#94a3b8'} strokeWidth={2.2} />
+                </svg>
+              </button>
             </div>
+
+            {/* Botones de acción para móvil */}
+            <button
+              className="p-1.5 rounded-full flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 transition duration-150"
+              onClick={handleFullscreen}
+            >
+              <FiPlay className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={startCasting}
+              disabled={!currentLesson || !currentFragment}
+              className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
+                isCasting 
+                  ? 'bg-green-500 hover:bg-green-600' 
+                  : currentLesson && currentFragment
+                    ? 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <TbCast className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={shareSlide}
+              disabled={!currentLesson || !currentFragment}
+              className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
+                currentLesson && currentFragment
+                  ? 'bg-green-500 hover:bg-green-600'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <FiShare2 className="w-4 h-4" />
+            </button>
           </div>
         )}
 
