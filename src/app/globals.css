@@ -97,3 +97,32 @@ body {
 .resize-handle-horizontal:hover {
   background-color: #9ca3af;
 }
+
+/* Animación marquesina para texto largo */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  20% {
+    transform: translateX(0%);
+  }
+  80% {
+    transform: translateX(calc(-100% + 100px));
+  }
+  100% {
+    transform: translateX(calc(-100% + 100px));
+  }
+}
+
+.animate-marquee {
+  animation: marquee 8s infinite ease-in-out;
+  animation-delay: 1s;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animation-paused {
+  animation-play-state: paused;
+}

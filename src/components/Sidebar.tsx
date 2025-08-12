@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FiBook, FiList } from 'react-icons/fi';
 import { Seminar, Series, Lesson } from '@/types';
 
@@ -27,6 +27,42 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]);
+  };
+
+  // Componente para texto con marquesina
+  const MarqueeText = ({ text, className = "" }: { text: string; className?: string }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [shouldAnimate, setShouldAnimate] = useState(false);
+
+    useEffect(() => {
+      const checkOverflow = () => {
+        if (containerRef.current && textRef.current) {
+          const containerWidth = containerRef.current.offsetWidth;
+          const textWidth = textRef.current.scrollWidth;
+          setShouldAnimate(textWidth > containerWidth);
+        }
+      };
+
+      checkOverflow();
+      window.addEventListener('resize', checkOverflow);
+      return () => window.removeEventListener('resize', checkOverflow);
+    }, [text]);
+
+    return (
+      <div ref={containerRef} className={`overflow-hidden ${className}`}>
+        <span 
+          ref={textRef}
+          className={`block whitespace-nowrap ${
+            shouldAnimate 
+              ? 'animate-marquee hover:animation-paused' 
+              : ''
+          }`}
+        >
+          {text}
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -61,25 +97,36 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop
             return (
               <div key={container.id} className="container-item">
                 <button
-                  className="flex items-center w-full text-left py-2 px-3 rounded-xl bg-gray-100 mb-1 focus:outline-none"
+                  className="flex items-center w-full text-left py-2 px-3 rounded-xl bg-gray-100 mb-1 focus:outline-none hover:bg-gray-200 transition-colors duration-150"
                   onClick={() => toggleExpand(container.id)}
                 >
-                  {container.type === 'seminar' ? (
-                    <FiBook className="w-5 h-5 mr-3 text-gray-500" />
-                  ) : (
-                    <FiList className="w-5 h-5 mr-3 text-gray-500" />
-                  )}
-                  <div className="flex flex-col flex-1">
-                    <span className="whitespace-nowrap font-medium">{container.title}</span>
-                    <span className="text-xs text-gray-500">
-                      {container.type === 'seminar' ? 'Seminario' : 'Serie'} • {container.lessons.length} lecciones
-                    </span>
+                  {/* Icono con ancho fijo */}
+                  <div className="w-6 h-6 mr-3 flex-shrink-0 flex items-center justify-center">
+                    {container.type === 'seminar' ? (
+                      <FiBook className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <FiList className="w-5 h-5 text-gray-500" />
+                    )}
                   </div>
-                  <span className="ml-2">
+                  
+                  {/* Contenido de texto con marquesina */}
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <MarqueeText 
+                      text={container.title} 
+                      className="font-medium text-gray-900" 
+                    />
+                    <MarqueeText 
+                      text={`${container.type === 'seminar' ? 'Seminario' : 'Serie'} • ${container.lessons.length} lecciones`}
+                      className="text-xs text-gray-500 mt-0.5"
+                    />
+                  </div>
+                  
+                  {/* Icono de expansión con ancho fijo */}
+                  <div className="w-6 h-6 ml-2 flex-shrink-0 flex items-center justify-center">
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d={expanded ? 'M6 12L12 6' : 'M6 6L12 12'} stroke="#555" strokeWidth="2" strokeLinecap="round" />
                     </svg>
-                  </span>
+                  </div>
                 </button>
                 {expanded && (
                   <div className="ml-8 mt-2 space-y-1">
@@ -87,9 +134,20 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop
                       <button
                         key={lesson.id}
                         onClick={() => onSelectLesson(lesson)}
-                        className="block w-full text-left py-1.5 px-3 rounded-lg hover:bg-gray-300 transition duration-150 text-gray-800 text-sm"
+                        className="flex items-center w-full text-left py-1.5 px-3 rounded-lg hover:bg-gray-300 transition duration-150 text-gray-800 text-sm group"
                       >
-                        <span className="font-medium">{lesson.order}.</span> {lesson.title}
+                        {/* Número de orden con ancho fijo */}
+                        <span className="font-medium mr-2 flex-shrink-0 w-6 text-gray-600">
+                          {lesson.order}.
+                        </span>
+                        
+                        {/* Título de la lección con marquesina */}
+                        <div className="flex-1 min-w-0">
+                          <MarqueeText 
+                            text={lesson.title}
+                            className="text-gray-800 group-hover:text-gray-900"
+                          />
+                        </div>
                       </button>
                     ))}
                   </div>
