@@ -14,6 +14,7 @@ export default function NotesPanel() {
     activeTab,
     setActiveTab,
     fragmentNotes,
+    currentFragmentId,
     shareEmail,
     setShareEmail,
     isAddingNote,
@@ -58,7 +59,7 @@ export default function NotesPanel() {
                     <span className="flex-1">{note.content}</span>
                     <button
                       className="text-red-500 ml-2 hover:text-red-700"
-                      onClick={() => deleteNote(note.id)}
+                      onClick={() => deleteNote(note.id, currentFragmentId)}
                       title="Eliminar nota"
                     >
                       <FiTrash2/>

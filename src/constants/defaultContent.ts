@@ -1,0 +1,12 @@
+// Contenido por defecto para mostrar cuando no hay lección o fragmento específico
+export const defaultContentHtml = `
+  <p><b>A continuación, encontrará un texto de ejemplo. Puede hacer scroll para leerlo completo.</b></p>
+  <p>La Biblia, la colección de libros sagrados en el cristianismo y el judaísmo, ha sido una fuente de inspiración y estudio durante milenios. Su influencia se extiende a la teología, la literatura, el arte, la música y el derecho, impactando profundamente la civilización occidental.</p>
+  <p>El primer libro, el Génesis, narra la creación del mundo, la historia de Adán y Eva, el diluvio universal y el pacto de Dios con Abraham. Estos relatos establecen los fundamentos de la fe en un creador todopoderoso y en un plan divino para la humanidad.</p>
+  <p>A lo largo de los libros proféticos, encontramos mensajes de advertencia, esperanza y redención. Profetas como Isaías, Jeremías y Daniel registraron visiones y mensajes divinos que hablaban tanto a su tiempo como al futuro. Sus escritos son una rica fuente de sabiduría y un testimonio de la fidelidad de Dios.</p>
+  <p>El Nuevo Testamento se centra en la vida, muerte y resurrección de Jesucristo. Los Evangelios de Mateo, Marcos, Lucas y Juan documentan su ministerio, sus enseñanzas y los milagros que realizó. Estos textos son la base del cristianismo, presentando a Jesús como el Mesías prometido y el Hijo de Dios.</p>
+  <p>Las Epístolas, escritas por apóstoles como Pablo, Pedro y Juan, son cartas que explican la doctrina cristiana, dan instrucciones para la vida en comunidad y ofrecen aliento a los creyentes. Son documentos fundamentales para entender la fe y la práctica de la iglesia primitiva.</p>
+  <p>El libro del Apocalipsis, el último de la Biblia, es una visión profética del fin de los tiempos y la victoria final de Dios sobre el mal. Aunque a menudo se interpreta de diversas maneras, su mensaje central es de esperanza y la promesa de un nuevo cielo y una nueva tierra para los fieles.</p>
+  <p>El estudio de la Biblia es un viaje personal y espiritual. Requiere dedicación, meditación y, a menudo, la guía de otros creyentes. Con herramientas como esta aplicación, el acceso al material de estudio y la capacidad de tomar notas y compartir descubrimientos pueden enriquecer enormemente esta experiencia.</p>
+  <p>Esta es solo una pequeña introducción. En esta aplicación, podrás explorar cada seminario en detalle, con lecciones dedicadas a cada libro, profeta, y tema de estudio. ¡Te animamos a comenzar tu viaje!</p>
+`.trim();
