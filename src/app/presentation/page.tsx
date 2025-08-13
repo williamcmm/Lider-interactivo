@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
 import { LocalStorage } from '@/lib/storage';
-import { NotesProvider } from '@/context/NotesContext';
 import NotesPanel from '@/components/NotesSection/NotesPanel';
+import { useNotesStore } from '@/store/notesStore';
 
 export default function PresentationPage() {
   const searchParams = useSearchParams();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   const [currentFragment, setCurrentFragment] = useState<Fragment | null>(null);
+  
+  // Hook del store de notas para esta página de presentación
+  const { setCurrentFragmentId } = useNotesStore();
 
   useEffect(() => {
     const lessonId = searchParams.get('lesson');
@@ -41,7 +44,13 @@ export default function PresentationPage() {
       if (foundLesson) {
         setLesson(foundLesson);
         setCurrentFragmentIndex(fragmentIndex);
-        setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
+        const selectedFragment = foundLesson.fragments[fragmentIndex] || null;
+        setCurrentFragment(selectedFragment);
+        
+        // Establecer el fragmento actual en el store de notas
+        if (selectedFragment) {
+          setCurrentFragmentId(selectedFragment.id);
+        }
       }
     }
   }, [searchParams]);
@@ -52,14 +61,18 @@ export default function PresentationPage() {
       if (event.data.type === 'update-slide') {
         setCurrentFragmentIndex(event.data.fragmentIndex);
         if (lesson && lesson.fragments[event.data.fragmentIndex]) {
-          setCurrentFragment(lesson.fragments[event.data.fragmentIndex]);
+          const newFragment = lesson.fragments[event.data.fragmentIndex];
+          setCurrentFragment(newFragment);
+          
+          // Actualizar también el store de notas
+          setCurrentFragmentId(newFragment.id);
         }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [lesson]);
+  }, [lesson, setCurrentFragmentId]);
 
   if (!lesson || !currentFragment) {
     return (
@@ -73,8 +86,7 @@ export default function PresentationPage() {
   }
 
   return (
-    <NotesProvider>
-      <div className="h-screen w-screen bg-black flex flex-col text-white overflow-hidden">
+    <div className="h-screen w-screen bg-black flex flex-col text-white overflow-hidden">
         {/* Header con información de la lección */}
         <div className="bg-gray-900 p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{lesson.title}</h1>
@@ -117,6 +129,5 @@ export default function PresentationPage() {
           Presentación • Líder Interactivo CMM
         </div>
       </div>
-    </NotesProvider>
   );
 }
