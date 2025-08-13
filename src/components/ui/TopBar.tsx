@@ -146,16 +146,13 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
           <div className="flex items-center space-x-1 md:space-x-2">
             <div className="flex items-center space-x-0.5 md:space-x-1 mr-2 md:mr-4 gap-2">
               {/* Botón de Login y Admin juntos al inicio */}
-              <button
-                className="flex items-center p-2 text-white bg-blue-600 rounded-md hover:bg-gray-700 transition duration-150"
-                onClick={() => {
-                  const email = window.prompt('Ingresa tu correo de Gmail para acceder:');
-                  if (email) { setUserEmail(email.trim().toLowerCase()); }
-                }}
+              <Link
+                href="/login"
+                className="flex items-center p-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150"
               >
                 <FiLogIn className="w-5 h-5 mr-0 md:mr-2" />
                 <span className="hidden md:inline">Login</span>
-              </button>
+              </Link>
               {isSuperAdmin && (
                 <Link 
                   href="/admin"
@@ -230,15 +227,12 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
         {isMobile && (
           <div className="flex items-center space-x-1 flex-1 justify-end">
             {/* Botones de Login y Admin para móvil */}
-            <button
-              className="flex items-center p-1.5 text-white bg-blue-600 rounded-md hover:bg-gray-700 transition duration-150"
-              onClick={() => {
-                const email = window.prompt('Ingresa tu correo de Gmail para acceder:');
-                if (email) { setUserEmail(email.trim().toLowerCase()); }
-              }}
+            <Link
+              href="/login"
+              className="flex items-center p-1.5 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150"
             >
               <FiLogIn className="w-4 h-4" />
-            </button>
+            </Link>
             
             {isSuperAdmin && (
               <Link 
