@@ -20,11 +20,12 @@ model User {
   name      String
   email     String   @unique
   role      Role     @default(USER)
+  password  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relaciones
-  notes     Note[]
+  notes       Note[]
   sharedNotes SharedNote[]
 
   @@map("users")
@@ -32,55 +33,55 @@ model User {
 
 // Modelo para seminarios
 model Seminar {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
-  order       Int       @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  order       Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relaciones
-  lessons     Lesson[]
-  audioFiles  AudioFile[]
+  lessons    Lesson[]
+  audioFiles AudioFile[]
 
   @@map("seminars")
 }
 
 // Modelo para series
 model Series {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
-  order       Int       @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  order       Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relaciones
-  lessons     Lesson[]
-  audioFiles  AudioFile[]
+  lessons    Lesson[]
+  audioFiles AudioFile[]
 
   @@map("series")
 }
 
 // Modelo para lecciones
 model Lesson {
-  id            String      @id @default(cuid())
+  id            String        @id @default(cuid())
   title         String
-  content       String      @db.Text
+  content       String        @db.Text
   containerType ContainerType
   order         Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relaciones con contenedores
-  seminarId     String?
-  seriesId      String?
-  seminar       Seminar?    @relation(fields: [seminarId], references: [id], onDelete: Cascade)
-  series        Series?     @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  seminarId String?
+  seriesId  String?
+  seminar   Seminar? @relation(fields: [seminarId], references: [id], onDelete: Cascade)
+  series    Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
 
   // Relaciones
-  fragments     Fragment[]
-  notes         Note[]
+  fragments Fragment[]
+  notes     Note[]
 
   // Índices únicos por contenedor
   @@unique([seminarId, order], name: "unique_seminar_lesson_order")
@@ -94,21 +95,21 @@ model Fragment {
   order           Int
   readingMaterial String   @db.Text
   slide           String   @db.Text
-  studyAids       String   @db.Text @default("")
+  studyAids       String   @default("") @db.Text
   isCollapsed     Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relación con lección
-  lessonId        String
-  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   // Audio de narración opcional
   narrationAudioId String?
   narrationAudio   AudioFile? @relation(fields: [narrationAudioId], references: [id])
 
   // Relaciones
-  notes           Note[]
+  notes Note[]
 
   @@unique([lessonId, order], name: "unique_lesson_fragment_order")
   @@map("fragments")
@@ -126,8 +127,8 @@ model AudioFile {
   // Relaciones con contenedores
   seminarId String?
   seriesId  String?
-  seminar   Seminar?  @relation(fields: [seminarId], references: [id], onDelete: Cascade)
-  series    Series?   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  seminar   Seminar? @relation(fields: [seminarId], references: [id], onDelete: Cascade)
+  series    Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
 
   // Relación con fragmentos (para narración)
   fragmentNarrations Fragment[]
@@ -137,29 +138,29 @@ model AudioFile {
 
 // Modelo para notas
 model Note {
-  id           String   @id @default(cuid())
-  content      String   @db.Text
-  contentHtml  String?  @db.Text
-  isShared     Boolean  @default(false)
-  type         NoteType @default(DIRECT)
-  selectedText String?  @db.Text
+  id            String   @id @default(cuid())
+  content       String   @db.Text
+  contentHtml   String?  @db.Text
+  isShared      Boolean  @default(false)
+  type          NoteType @default(DIRECT)
+  selectedText  String?  @db.Text
   positionStart Int?
   positionEnd   Int?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relaciones
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  lessonId     String?
-  lesson       Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
-  fragmentId   String?
-  fragment     Fragment? @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  fragmentId String?
+  fragment   Fragment? @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
 
   // Relación con notas compartidas
-  sharedNotes  SharedNote[]
+  sharedNotes SharedNote[]
 
   @@map("notes")
 }
@@ -177,11 +178,11 @@ model SharedNote {
   sharedAt      DateTime @default(now())
 
   // Relaciones
-  noteId        String
-  note          Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  
-  authorId      String
-  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  noteId String
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("shared_notes")
 }
