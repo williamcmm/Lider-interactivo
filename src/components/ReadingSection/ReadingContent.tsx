@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Lesson, Fragment, TextSelectionPopup as TextSelectionPopupType } from '@/types';
 import { TextSelectionPopup } from '../ui/TextSelectionPopup';
-import { useNotes } from '../../context/NotesContext';
+import { useNotesStore } from '../../store/notesStore';
 import { defaultContentHtml } from '../../constants/defaultContent';
 
 interface ReadingContentProps {
@@ -36,8 +36,8 @@ interface ReadingContentProps {
  * - Limpieza de selección después de crear nota
  */
 export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
-  // Hooks del contexto de notas para gestión global
-  const { fragmentNotes, setFragmentNotes, setCurrentFragmentId } = useNotes();
+  // Hooks del store de notas para gestión global
+  const { fragmentNotes, setCurrentFragmentId, addNote } = useNotesStore();
   
   /** Referencia al contenedor principal para scroll y manipulación */
   const contentRef = useRef<HTMLDivElement>(null);
@@ -54,46 +54,12 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
   });
 
   /**
-   * Effect para cargar notas existentes cuando cambia el fragmento
-   * Se encarga de sincronizar las notas desde localStorage al contexto global
-   * y establecer el fragmento actual en el contexto
+   * Effect para establecer el fragmento actual en el store
+   * El store automáticamente carga las notas cuando cambia el fragmento
    */
   useEffect(() => {
-    if (fragment) {
-      // Establecer el fragmento actual en el contexto
-      setCurrentFragmentId(fragment.id);
-      
-      try {
-        // Intentar cargar notas existentes desde localStorage
-        const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
-        if (existingNotes) {
-          const localNotes = JSON.parse(existingNotes);
-          
-          // Convertir las notas locales al formato del contexto
-          const contextNotes = localNotes.map((note: any) => ({
-            id: note.id,
-            content: note.content,
-            fragmentId: note.fragmentId,
-            selectedText: note.selectedText,
-            contentHtml: note.contentHtml
-          }));
-          
-          // Actualizar el contexto global con las notas cargadas
-          setFragmentNotes(contextNotes);
-        } else {
-          // Si no hay notas, limpiar el contexto
-          setFragmentNotes([]);
-        }
-      } catch (error) {
-        console.error('Error loading notes:', error);
-        setFragmentNotes([]);
-      }
-    } else {
-      // Limpiar el fragmento actual si no hay fragmento
-      setCurrentFragmentId(undefined);
-      setFragmentNotes([]);
-    }
-  }, [fragment, setFragmentNotes, setCurrentFragmentId]);
+    setCurrentFragmentId(fragment?.id);
+  }, [fragment?.id, setCurrentFragmentId]);
 
   /**
    * Effect para manejar la selección de texto del usuario
@@ -172,7 +138,7 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
 
   /**
    * Maneja el guardado de una nueva nota basada en texto seleccionado
-   * Actualiza tanto el contexto global como el localStorage
+   * Usa el store de Zustand para agregar la nota con persistencia automática
    * 
    * @param noteContent - El contenido de la nota a guardar
    */
@@ -183,39 +149,13 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
       return;
     }
     
-    // Crear nueva nota con ID único
-    const newNote = {
-      id: `selection_${fragment.id}_${Date.now()}`,
+    // Usar el store para agregar la nota (persistencia automática)
+    addNote({
       content: noteContent.trim(),
       fragmentId: fragment.id,
       selectedText: textSelectionPopup.selectedText,
       contentHtml: undefined
-    };
-    
-    // Agregar la nota al contexto (sincronización automática con NotesPanel)
-    setFragmentNotes([...fragmentNotes, newNote]);
-    
-    // Persistir en localStorage con metadatos adicionales
-    try {
-      const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
-      let localNotes: any[] = existingNotes ? JSON.parse(existingNotes) : [];
-      
-      // Agregar la nueva nota con metadatos completos
-      localNotes.push({
-        ...newNote,
-        userId: 'current-user',
-        isShared: false,
-        type: 'selection',
-        position: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      
-      // Guardar en localStorage
-      localStorage.setItem(`notes_${fragment.id}`, JSON.stringify(localNotes));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
+    });
     
     // Limpiar la selección de texto
     window.getSelection()?.removeAllRanges();

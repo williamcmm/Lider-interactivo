@@ -1,5 +1,5 @@
 import React from "react";
-import { useNotes } from '../../context/NotesContext';
+import { useNotesStore } from '../../store/notesStore';
 import { FiTrash2 } from "react-icons/fi";
 
 const TABS = [
@@ -24,7 +24,7 @@ export default function NotesPanel() {
     saveNewNote,
     deleteNote,
     handleShare
-  } = useNotes();
+  } = useNotesStore();
 
   // Renderizado de contenido por pestaña
   let tabContent;

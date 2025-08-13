@@ -8,12 +8,12 @@ import { ReadingPanel } from './ReadingSection/ReadingPanel';
 import { SlidePanel } from './ui/SlidePanel';
 import { MusicPanel } from './MusicSection/MusicPanel';
 import NotesPanel from './NotesSection/NotesPanel';
-import { NotesProvider } from '../context/NotesContext';
 // ...existing code...
 import { Seminar, Series, Lesson } from '@/types';
 import { LocalStorage } from '@/lib/storage';
 import { initializeSharedNotes } from '@/data/sharedNotes';
 import { useSidebarStore } from '@/store/sidebarStore';
+import { useNotesStore } from '@/store/notesStore';
 
 export function StudyApp() {
   // Zustand store para sidebar  
@@ -24,6 +24,9 @@ export function StudyApp() {
     toggleSidebar,
     setIsMobile
   } = useSidebarStore();
+  
+  // Zustand store para notas - inicializar en el componente principal
+  const { setSharedUsers } = useNotesStore();
 
   // Panel por defecto: 'all' en escritorio/tablet, 'reading' en móvil vertical
   const [activePanel, setActivePanel] = useState<string>('all');
@@ -41,35 +44,8 @@ export function StudyApp() {
       setShowRotateMessage(false);
     }
   }, [activePanel]);
-  // Estados y handlers para NotesPanel
-  const [activeTab, setActiveTab] = useState<'ayuda' | 'notas' | 'compartidas' | 'compartir'>('notas');
-  const [fragmentNotes, setFragmentNotes] = useState<any[]>([]);
-  const [sharedUsers, setSharedUsers] = useState<string[]>([]);
-  const [selectedSharedUser, setSelectedSharedUser] = useState<string | undefined>(undefined);
-  const [sharedUserNotes, setSharedUserNotes] = useState<any[]>([]);
-  const [shareEmail, setShareEmail] = useState('');
-  const [shareStatus, setShareStatus] = useState('');
-  const [isAddingNote, setIsAddingNote] = useState(false);
-  const [newNoteText, setNewNoteText] = useState('');
-
-  // Handlers básicos
-  const handleShare = () => {
-    setShareStatus('Notas compartidas correctamente');
-  };
-  const handleSelectSharedUser = (email: string) => {
-    setSelectedSharedUser(email);
-    setSharedUserNotes([]); // Aquí deberías cargar las notas compartidas reales
-  };
-  const saveNewNote = () => {
-    if (newNoteText.trim()) {
-      setFragmentNotes([...fragmentNotes, { id: Date.now().toString(), content: newNoteText }]);
-      setNewNoteText('');
-      setIsAddingNote(false);
-    }
-  };
-  const deleteNote = (id: string) => {
-    setFragmentNotes(fragmentNotes.filter(note => note.id !== id));
-  };
+  // Estados para la aplicación principal
+  
   // Inicializar detección de móvil
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -132,6 +108,9 @@ export function StudyApp() {
     // Inicializar notas compartidas de ejemplo
     initializeSharedNotes();
     
+    // Inicializar usuarios compartidos en el store
+    setSharedUsers(['usuario1@email.com', 'usuario2@email.com']);
+    
     // SIEMPRE inicializar datos mock (recargar cada vez que inicia la app)
     console.log('🔄 Recargando datos mock en cada inicio...');
     LocalStorage.autoInitialize();
@@ -149,7 +128,7 @@ export function StudyApp() {
     } else if (storedSeries.length > 0 && storedSeries[0].lessons.length > 0) {
       setCurrentLesson(storedSeries[0].lessons[0]);
     }
-  }, []);
+  }, [setSharedUsers]);
 
   // Combinar seminarios y series para la navegación
   const allContainers = [
@@ -195,7 +174,6 @@ export function StudyApp() {
   }, [isSidebarOpen, closeSidebar]);
 
     return (
-      <NotesProvider>
         <div className="h-screen w-screen overflow-hidden bg-gray-100 text-gray-900 font-sans flex flex-col">
           {/* Barra Superior */}
             <TopBar 
@@ -423,6 +401,5 @@ export function StudyApp() {
             </div>
           </div>
         </div>
-      </NotesProvider>
   );
 }
