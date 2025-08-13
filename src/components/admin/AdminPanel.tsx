@@ -37,9 +37,6 @@ export function AdminPanel({}: AdminPanelProps) {
     
     setSeminars(storedSeminars);
     setSeries(storedSeries);
-    
-    // Log para verificar estado
-    console.log('Datos cargados:', { seminars: storedSeminars.length, series: storedSeries.length });
   }, []);
 
   const currentData = activeTab === 'seminars' ? seminars : series;

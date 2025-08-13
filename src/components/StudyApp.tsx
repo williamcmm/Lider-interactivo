@@ -11,7 +11,6 @@ import NotesPanel from './NotesSection/NotesPanel';
 // ...existing code...
 import { Seminar, Series, Lesson } from '@/types';
 import { LocalStorage } from '@/lib/storage';
-import { initializeSharedNotes } from '@/data/sharedNotes';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { useNotesStore } from '@/store/notesStore';
 
@@ -105,14 +104,10 @@ export function StudyApp() {
 
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
-    // Inicializar notas compartidas de ejemplo
-    initializeSharedNotes();
-    
     // Inicializar usuarios compartidos en el store
     setSharedUsers(['usuario1@email.com', 'usuario2@email.com']);
     
     // SIEMPRE inicializar datos mock (recargar cada vez que inicia la app)
-    console.log('🔄 Recargando datos mock en cada inicio...');
     LocalStorage.autoInitialize();
     
     // Cargar datos desde localStorage

@@ -105,19 +105,17 @@ export class LocalStorage {
     localStorage.removeItem(STORAGE_KEYS.SERIES);
   }
 
+  // Reiniciar aplicación
   static resetAndReinitialize(): void {
-    console.log('🔄 Reiniciando aplicación...');
-    this.clearAllData();
-    this.initializeWithMockData(true);
-    console.log('✅ Aplicación reiniciada con datos frescos');
+    localStorage.clear();
+    window.location.reload();
   }
 
   // ============== MÉTODO PARA DESARROLLO ==============
   
   static devReset(): void {
     if (typeof window !== 'undefined') {
-      console.log('🛠️ DESARROLLO: Limpiando y reinicializando datos...');
-      this.resetAndReinitialize();
+      this.autoInitialize();
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -156,8 +154,6 @@ export class LocalStorage {
     
     this.saveSeminars(cleanedSeminars);
     this.saveSeries(cleanedSeries);
-    
-    console.log('Todas las ayudas de estudio han sido eliminadas');
   }
 
   static preserveLesson1StudyAids(lesson1Aids: { [fragmentId: string]: string }): void {
@@ -178,7 +174,6 @@ export class LocalStorage {
       updatedSeminars[0] = firstSeminar;
       
       this.saveSeminars(updatedSeminars);
-      console.log('Ayudas personalizadas de la lección 1 preservadas');
     }
   }
 
@@ -190,9 +185,7 @@ export class LocalStorage {
     const existingSeries = this.getSeries();
     
     if ((existingSeminars.length === 0 && existingSeries.length === 0) || force) {
-      console.log('🚀 Inicializando datos de la aplicación...');
-      
-      // Definir los seminarios reales con sus lecciones específicas
+      // Generar datos mock
       const realSeminars = [
         {
           title: "SEMINARIO DE SANACIÓN INTERIOR Y LIBERACIÓN",
@@ -334,11 +327,6 @@ export class LocalStorage {
 
       this.saveSeminars(mockSeminars);
       this.saveSeries(mockSeries);
-      
-      console.log(`✅ ${mockSeminars.length} seminarios inicializados con ${mockSeminars.reduce((total, s) => total + s.lessons.length, 0)} lecciones totales`);
-      console.log('📊 Primer seminario:', mockSeminars[0].title);
-      console.log('🎯 Primera lección:', mockSeminars[0].lessons[0].title);
-      console.log('📝 Template de diapositiva verificado:', mockSeminars[0].lessons[0].fragments[0].slide.includes('bg-gradient-to-br') ? '✅ Correcto' : '❌ Incorrecto');
     }
   }
 
@@ -346,15 +334,11 @@ export class LocalStorage {
   
   static autoInitialize(): void {
     if (typeof window !== 'undefined') {
-      console.log('🔄 Auto-inicializando datos de la aplicación...');
-      
       // Limpiar localStorage primero
       this.clearAllData();
-      console.log('🗑️ localStorage limpiado');
       
       // Forzar inicialización
       this.initializeWithMockData(true);
-      console.log('✅ Datos mock inicializados correctamente');
     }
   }
 }

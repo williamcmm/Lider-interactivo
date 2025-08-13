@@ -28,27 +28,23 @@ export function useBluetooth() {
         optionalServices: ['battery_service', 'device_information']
       });
 
-      console.log('✅ Dispositivo seleccionado:', device.name);
       setBluetoothDevice(device);
       
       // Intentar conectar
       const server = await device.gatt?.connect();
       if (server) {
         setIsBluetoothConnected(true);
-        console.log('🔵 Conectado exitosamente a:', device.name);
       }
 
       // Manejar desconexión
       device.addEventListener('gattserverdisconnected', () => {
         setIsBluetoothConnected(false);
-        console.log('🔴 Dispositivo desconectado:', device.name);
       });
 
     } catch (error: any) {
       console.error('❌ Error de Bluetooth:', error);
       if (error.name === 'NotFoundError') {
         // Usuario canceló la selección - esto es normal
-        console.log('⚪ Selección de dispositivo cancelada por el usuario');
       } else if (error.name === 'SecurityError') {
         console.warn('🔒 Error de seguridad - asegurate de estar en HTTPS en producción');
       } else {

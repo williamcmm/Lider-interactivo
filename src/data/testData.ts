@@ -33,11 +33,13 @@ export const testData = {
   series: []
 };
 
-// Función para inicializar datos de prueba
-export function initializeTestData() {
+// Función de inicialización (se ejecuta automáticamente)
+function initializeTestData() {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('seminars', JSON.stringify(testData.seminars));
-    localStorage.setItem('series', JSON.stringify(testData.series));
-    console.log('Datos de prueba inicializados');
+    const existing = localStorage.getItem('studyApp_seminars');
+    if (!existing) {
+      localStorage.setItem('studyApp_seminars', JSON.stringify(testData.seminars));
+      localStorage.setItem('studyApp_series', JSON.stringify(testData.series));
+    }
   }
 }

@@ -106,8 +106,6 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
               },
               fragmentId: fragment.id
             });
-            
-            console.log('Popup de selección mostrado:', selectedText);
           } catch (e) {
             // Error al obtener el rango de selección
             setTextSelectionPopup(prev => ({ ...prev, isVisible: false }));

@@ -26,8 +26,6 @@ export function TextSelectionPopup({ popup, onSaveNote, onClose }: TextSelection
 
   if (!popup.isVisible) return null;
 
-  console.log('Popup should be visible:', popup); // Debug
-
   // Calcular posición del popup basado en la posición del texto
   const getPopupStyle = () => {
     const { x, y } = popup.position;
