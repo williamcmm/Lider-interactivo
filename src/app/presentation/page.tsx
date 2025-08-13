@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
-import { LocalStorage } from '@/lib/storage';
+import { LocalStorageManager } from '@/lib/storage';
 import NotesPanel from '@/components/NotesSection/NotesPanel';
 import { useNotesStore } from '@/store/notesStore';
 
@@ -22,8 +22,8 @@ export default function PresentationPage() {
 
     if (lessonId) {
       // Buscar la lección en seminarios y series
-      const seminars = LocalStorage.getSeminars();
-      const series = LocalStorage.getSeries();
+      const seminars = LocalStorageManager.getSeminars();
+      const series = LocalStorageManager.getSeries();
       
       let foundLesson = null;
       

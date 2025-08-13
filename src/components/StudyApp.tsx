@@ -10,7 +10,7 @@ import { MusicPanel } from './MusicSection/MusicPanel';
 import NotesPanel from './NotesSection/NotesPanel';
 // ...existing code...
 import { Seminar, Series, Lesson } from '@/types';
-import { LocalStorage } from '@/lib/storage';
+import { LocalStorageManager } from '@/lib/storage';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { useNotesStore } from '@/store/notesStore';
 
@@ -107,21 +107,21 @@ export function StudyApp() {
     // Inicializar usuarios compartidos en el store
     setSharedUsers(['usuario1@email.com', 'usuario2@email.com']);
     
-    // SIEMPRE inicializar datos mock (recargar cada vez que inicia la app)
-    LocalStorage.autoInitialize();
-    
-    // Cargar datos desde localStorage
-    const storedSeminars = LocalStorage.getSeminars();
-    const storedSeries = LocalStorage.getSeries();
+    // Cargar datos desde localStorage (solo si existen)
+    const storedSeminars = LocalStorageManager.getSeminars();
+    const storedSeries = LocalStorageManager.getSeries();
     
     setSeminars(storedSeminars);
     setSeries(storedSeries);
     
-    // Seleccionar la primera lección disponible por defecto
+    // Seleccionar la primera lección disponible por defecto (solo si hay datos)
     if (storedSeminars.length > 0 && storedSeminars[0].lessons.length > 0) {
       setCurrentLesson(storedSeminars[0].lessons[0]);
     } else if (storedSeries.length > 0 && storedSeries[0].lessons.length > 0) {
       setCurrentLesson(storedSeries[0].lessons[0]);
+    } else {
+      // No hay datos, mantener currentLesson como null
+      setCurrentLesson(null);
     }
   }, [setSharedUsers]);
 

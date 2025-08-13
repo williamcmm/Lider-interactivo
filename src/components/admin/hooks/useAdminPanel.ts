@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { Seminar, Series, StudyContainer, Fragment, AudioFile } from '@/types';
-import { LocalStorage } from '@/lib/storage';
+import { LocalStorageManager } from '@/lib/storage';
 import { AdminPanelState, CreationForm, ActiveTab } from '../types';
 
 export function useAdminPanel() {
@@ -27,8 +27,8 @@ export function useAdminPanel() {
 
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
-    const storedSeminars = LocalStorage.getSeminars();
-    const storedSeries = LocalStorage.getSeries();
+    const storedSeminars = LocalStorageManager.getSeminars();
+    const storedSeries = LocalStorageManager.getSeries();
     
     setSeminars(storedSeminars);
     setSeries(storedSeries);
@@ -158,11 +158,11 @@ export function useAdminPanel() {
     if (state.activeTab === 'seminars') {
       const updatedSeminars = [...seminars, newContainer as Seminar];
       setSeminars(updatedSeminars);
-      LocalStorage.saveSeminars(updatedSeminars);
+      LocalStorageManager.saveSeminars(updatedSeminars);
     } else {
       const updatedSeries = [...series, newContainer as Series];
       setSeries(updatedSeries);
-      LocalStorage.saveSeries(updatedSeries);
+      LocalStorageManager.saveSeries(updatedSeries);
     }
 
     setState(prev => ({ ...prev, isCreatingContainer: false }));
@@ -213,11 +213,11 @@ export function useAdminPanel() {
     if (state.activeTab === 'seminars') {
       const updatedSeminars = seminars.filter(s => s.id !== id);
       setSeminars(updatedSeminars);
-      LocalStorage.saveSeminars(updatedSeminars);
+      LocalStorageManager.saveSeminars(updatedSeminars);
     } else {
       const updatedSeries = series.filter(s => s.id !== id);
       setSeries(updatedSeries);
-      LocalStorage.saveSeries(updatedSeries);
+      LocalStorageManager.saveSeries(updatedSeries);
     }
   };
 
@@ -275,13 +275,13 @@ export function useAdminPanel() {
         s.id === updatedContainer.id ? updatedContainer : s
       );
       setSeminars(updatedSeminars);
-      LocalStorage.saveSeminars(updatedSeminars);
+      LocalStorageManager.saveSeminars(updatedSeminars);
     } else {
       const updatedSeries = series.map(s => 
         s.id === updatedContainer.id ? updatedContainer : s
       );
       setSeries(updatedSeries);
-      LocalStorage.saveSeries(updatedSeries);
+      LocalStorageManager.saveSeries(updatedSeries);
     }
 
     setState(prev => ({ ...prev, editingContainer: updatedContainer }));

@@ -161,7 +161,7 @@ export function SlidePanel({
           
           {/* Controles de contenido - Posición fija en la parte inferior */}
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-white/95 to-transparent p-4 pt-2">
-            {currentMode === "slides" && totalSlides > 1 && (
+            {currentMode === "slides" && (
               <div className="flex items-center justify-center space-x-4">
                 <button
                   onClick={() =>

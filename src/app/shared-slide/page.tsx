@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
-import { LocalStorage } from '@/lib/storage';
+import { LocalStorageManager } from '@/lib/storage';
 // Preparado para Firestore
 // import { firestore } from '@/lib/firebase';
 
@@ -69,8 +69,8 @@ export default function SharedSlidePage() {
       setShowAids(types.includes('aids'));
       setShowNotes(types.includes('notes'));
       if (lessonId) {
-        const seminars = LocalStorage.getSeminars();
-        const series = LocalStorage.getSeries();
+        const seminars = LocalStorageManager.getSeminars();
+        const series = LocalStorageManager.getSeries();
         let foundLesson = null;
         for (const seminar of seminars) {
           foundLesson = seminar.lessons.find(l => l.id === lessonId);

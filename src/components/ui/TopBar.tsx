@@ -150,7 +150,7 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
             <div className="flex items-center space-x-0.5 md:space-x-1 mr-2 md:mr-4 gap-2">
               {/* Botón de Login y Admin juntos al inicio */}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="flex items-center p-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150"
               >
                 <FiLogIn className="w-5 h-5 mr-0 md:mr-2" />

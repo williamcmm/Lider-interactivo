@@ -6,18 +6,20 @@ import { LessonEditor } from './components/LessonEditor';
 import { CreationForm } from './components/CreationForm';
 import { ContainerCard } from './components/ContainerCard';
 import { CreationForm as CreationFormType } from './types';
+import { initializeSeedData } from '@/data/seed-data';
+import { useRouter } from 'next/navigation';
 
 
 interface AdminPanelProps {}
 
 export function AdminPanel({}: AdminPanelProps) {
   const { state, actions } = useAdminPanel();
+  const router = useRouter()
 
   const initializeMockData = () => {
-    // Lógica para inicializar datos mock
     if (confirm('¿Estás seguro de que quieres generar datos de ejemplo? Esto sobrescribirá los datos existentes.')) {
-      // Aquí podrías llamar a una función para generar datos mock
-      window.location.reload();
+      initializeSeedData();
+      router.refresh();
     }
   };
 
