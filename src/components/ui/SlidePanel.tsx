@@ -1,6 +1,6 @@
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Fragment } from '@/types';
-import { CompactAudioPlayer } from './CompactAudioPlayer';
+import { CompactAudioPlayer } from '../MusicSection/CompactAudioPlayer';
 
 interface SlidePanelProps {
   fragment: Fragment | null;

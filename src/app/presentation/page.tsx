@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
 import { LocalStorage } from '@/lib/storage';
 import { NotesProvider } from '@/context/NotesContext';
-import { NotesPanel } from '@/components/NotesPanel';
+import NotesPanel from '@/components/NotesSection/NotesPanel';
 
 export default function PresentationPage() {
   const searchParams = useSearchParams();
@@ -108,7 +108,7 @@ export default function PresentationPage() {
             )}
           </div>
           <div className="w-1/3 h-full">
-            <NotesPanel fragment={currentFragment} lesson={lesson} />
+            <NotesPanel />
           </div>
         </div>
 

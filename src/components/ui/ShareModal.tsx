@@ -1,4 +1,5 @@
-import { Fragment, Lesson } from '../types';
+
+import { Fragment, Lesson } from '@/types';
 import React, { useState } from 'react';
 
 interface ShareModalProps {
@@ -23,7 +24,7 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
 
   // Firestore
   // @ts-ignore
-  const { firestore } = require('../lib/firebase');
+  const { firestore } = require('../../lib/firebase');
   // Generar parámetros según selección
   const selectedTypes = [
     shareReading ? 'reading' : null,

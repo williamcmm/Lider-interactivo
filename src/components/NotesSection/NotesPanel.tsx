@@ -1,31 +1,29 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNotes } from '../../context/NotesContext';
+import { FiTrash2 } from "react-icons/fi";
 
 const TABS = [
   { key: "ayuda", label: "Ayuda" },
   { key: "notas", label: "Notas" },
   { key: "compartidas", label: "Compartidas" },
   { key: "compartir", label: "Compartir" },
-];
+] as const;
 
 export default function NotesPanel() {
-  const [activeTab, setActiveTab] = useState("ayuda");
-  const [notes, setNotes] = useState<string[]>([]);
-  const [noteContent, setNoteContent] = useState("");
-  const [shareEmail, setShareEmail] = useState("");
-  const [showNoteInput, setShowNoteInput] = useState(false);
-
-  // Función para agregar una nota
-  const handleAddNote = () => {
-    if (noteContent.trim()) {
-      setNotes([...notes, noteContent]);
-      setNoteContent("");
-    }
-  };
-
-  // Función para eliminar una nota
-  const handleDeleteNote = (idx: number) => {
-    setNotes(notes.filter((_, i) => i !== idx));
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    fragmentNotes,
+    shareEmail,
+    setShareEmail,
+    isAddingNote,
+    setIsAddingNote,
+    newNoteText,
+    setNewNoteText,
+    saveNewNote,
+    deleteNote,
+    handleShare
+  } = useNotes();
 
   // Renderizado de contenido por pestaña
   let tabContent;
@@ -45,60 +43,64 @@ export default function NotesPanel() {
       break;
     case "notas":
       tabContent = (
-        <div className="p-4 flex flex-col h-full">
-          {/* Eliminado título redundante */}
-
-          {/* Lista de notas, la nota nueva aparece arriba */}
-          <ul className="space-y-2 flex-1 overflow-y-auto mb-2">
-            {/* Sin mensaje ni comentario si no hay notas */}
-            {notes.slice().reverse().map((note, idx) => (
-              <li key={notes.length - 1 - idx} className="flex justify-between items-center bg-gray-100 p-2 rounded">
-                <span>{note}</span>
-                <button
-                  className="text-red-500 ml-2"
-                  onClick={() => handleDeleteNote(notes.length - 1 - idx)}
-                  title="Eliminar nota"
-                >
-                  🗑️
-                </button>
-              </li>
-            ))}
-          </ul>
-          {/* Botón + y cuadro para agregar nota solo en la parte inferior, separado 1cm */}
-          <div style={{ marginBottom: '1cm' }}>
-            {!showNoteInput && (
+        <div className="flex flex-col h-full">
+          {/* Lista de notas con scroll */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <ul className="space-y-2">
+              {fragmentNotes.slice().reverse().map((note, idx) => (
+                <li key={note.id} className="flex flex-col bg-gray-100 p-3 rounded">
+                  {note.selectedText && (
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-400">
+                      <strong>Texto seleccionado:</strong> "{note.selectedText}"
+                    </div>
+                  )}
+                  <div className="flex justify-between items-start">
+                    <span className="flex-1">{note.content}</span>
+                    <button
+                      className="text-red-500 ml-2 hover:text-red-700"
+                      onClick={() => deleteNote(note.id)}
+                      title="Eliminar nota"
+                    >
+                      <FiTrash2/>
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* Área fija para agregar notas */}
+          <div className="border-t bg-white p-4 flex-shrink-0">
+            {!isAddingNote && (
               <button
                 className="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full"
-                onClick={() => setShowNoteInput(true)}
+                onClick={() => setIsAddingNote(true)}
               >
                 + Agregar nota
               </button>
             )}
-            {showNoteInput && (
-              <div className="mt-2 flex flex-col items-stretch">
+            {isAddingNote && (
+              <div className="flex flex-col items-stretch">
                 <textarea
-                  className="w-full border rounded p-1 text-sm"
+                  className="w-full border rounded p-2 text-sm mb-2"
                   rows={2}
-                  value={noteContent}
-                  onChange={e => setNoteContent(e.target.value)}
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
                   placeholder="Escribe una nota..."
                   autoFocus
                 />
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-2">
                   <button
                     className="bg-green-500 text-white px-2 py-1 rounded text-xs"
-                    onClick={() => {
-                      handleAddNote();
-                      setShowNoteInput(false);
-                    }}
+                    onClick={saveNewNote}
                   >
                     Guardar
                   </button>
                   <button
                     className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs"
                     onClick={() => {
-                      setNoteContent("");
-                      setShowNoteInput(false);
+                      setNewNoteText("");
+                      setIsAddingNote(false);
                     }}
                   >
                     Cancelar
@@ -137,7 +139,7 @@ export default function NotesPanel() {
           />
           <button
             className="bg-green-500 text-white px-3 py-1 rounded"
-            onClick={() => alert("Función de compartir en desarrollo")}
+            onClick={handleShare}
           >
             Compartir
           </button>

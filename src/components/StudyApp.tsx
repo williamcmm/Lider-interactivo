@@ -2,21 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { TopBar } from './TopBar';
-import { IconBar } from './IconBar';
-import { Sidebar } from './Sidebar';
-import { ReadingPanel } from './ReadingPanel';
-import { SlidePanel } from './SlidePanel';
-import { MusicPanel } from './MusicPanel';
-import NotesPanel from './NotesPanel';
+import { TopBar } from './ui/TopBar';
+import { Sidebar } from './ui/Sidebar';
+import { ReadingPanel } from './ReadingSection/ReadingPanel';
+import { SlidePanel } from './ui/SlidePanel';
+import { MusicPanel } from './MusicSection/MusicPanel';
+import NotesPanel from './NotesSection/NotesPanel';
 import { NotesProvider } from '../context/NotesContext';
 // ...existing code...
 import { Seminar, Series, Lesson } from '@/types';
 import { LocalStorage } from '@/lib/storage';
 import { initializeSharedNotes } from '@/data/sharedNotes';
 import { useSidebarStore } from '@/store/sidebarStore';
-// import { realtimeDb } from '@/lib/firebase';
-// import { ref, set } from 'firebase/database';
 
 export function StudyApp() {
   // Zustand store para sidebar  

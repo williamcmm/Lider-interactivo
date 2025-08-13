@@ -1,10 +1,10 @@
 // ...existing code...
 // ...existing code...
-import { useState, useRef, useEffect } from 'react';
-import { Lesson, Fragment, Note, TextSelectionPopup as TextSelectionPopupType } from '@/types';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { CompactAudioPlayer } from './CompactAudioPlayer';
-import { TextSelectionPopup } from './TextSelectionPopup';
+import React, { useState, useEffect, useRef } from 'react';
+import { Lesson, Fragment, TextSelectionPopup as TextSelectionPopupType } from '@/types';
+import { FiChevronLeft, FiChevronRight, FiPlay, FiPause } from 'react-icons/fi';
+import { TextSelectionPopup } from '../ui/TextSelectionPopup';
+import { useNotes } from '../../context/NotesContext';
 
 interface ReadingPanelProps {
   lesson: Lesson | null;
@@ -15,6 +15,8 @@ interface ReadingPanelProps {
 }
 
 export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, onNavigateFragment }: ReadingPanelProps) {
+  const { fragmentNotes, setFragmentNotes } = useNotes();
+  
   const [textSelectionPopup, setTextSelectionPopup] = useState<TextSelectionPopupType>({
     isVisible: false,
     selectedText: '',
@@ -22,7 +24,45 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
     fragmentId: ''
   });
   
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Cargar notas cuando cambie el fragmento
+  useEffect(() => {
+    if (fragment) {
+      // Reset play state cuando cambie fragmento
+      setIsPlaying(false);
+      
+      // Pausar audio si está reproduciendo
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      
+      try {
+        const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
+        if (existingNotes) {
+          const localNotes = JSON.parse(existingNotes);
+          // Convertir las notas locales al formato del contexto
+          const contextNotes = localNotes.map((note: any) => ({
+            id: note.id,
+            content: note.content,
+            fragmentId: note.fragmentId,
+            selectedText: note.selectedText,
+            contentHtml: note.contentHtml
+          }));
+          setFragmentNotes(contextNotes);
+        } else {
+          setFragmentNotes([]);
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        setFragmentNotes([]);
+      }
+    }
+  }, [fragment, setFragmentNotes]);
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -62,34 +102,106 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
     };
   }, [fragment]);
 
+  // Función para manejar el play/pause con audio real
+  const handlePlayPause = async () => {
+    if (!fragment?.narrationAudio || !audioRef.current) {
+      alert('No hay audio de narración disponible para este fragmento');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      if (isPlaying) {
+        // Pausar
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        // Reproducir
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error al reproducir audio:', error);
+      alert('Error al reproducir el audio de narración. Verifica que el archivo sea válido.');
+      setIsPlaying(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Manejar eventos del audio
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    setIsLoading(false);
+  };
+
+  const handleAudioError = (error: any) => {
+    console.error('Error de audio:', error);
+    setIsPlaying(false);
+    setIsLoading(false);
+    alert('Error al cargar el audio de narración. Verifica la URL o el archivo.');
+  };
+
+  const handleAudioLoadStart = () => {
+    setIsLoading(true);
+  };
+
+  const handleAudioCanPlay = () => {
+    setIsLoading(false);
+  };
+
+  // Obtener URL del audio
+  const getAudioSrc = () => {
+    if (!fragment?.narrationAudio) return '';
+    
+    const audioFile = fragment.narrationAudio;
+    if (audioFile.type === 'remote') {
+      return audioFile.url;
+    } else if (audioFile.file) {
+      return URL.createObjectURL(audioFile.file);
+    }
+    return '';
+  };
+
   const handleSaveSelectionNote = (noteContent: string) => {
     if (!lesson || !fragment || !noteContent.trim() || !textSelectionPopup.selectedText) {
       alert('Debes seleccionar texto y escribir una nota.');
       return;
     }
+    
+    // Crear nueva nota usando el contexto
+    const newNote = {
+      id: `selection_${fragment.id}_${Date.now()}`,
+      content: noteContent.trim(),
+      fragmentId: fragment.id,
+      selectedText: textSelectionPopup.selectedText,
+      contentHtml: undefined
+    };
+    
+    // Agregar la nota al contexto (esto automáticamente la muestra en NotesPanel)
+    setFragmentNotes([...fragmentNotes, newNote]);
+    
+    // También guardar en localStorage para persistencia
     try {
       const existingNotes = localStorage.getItem(`notes_${fragment.id}`);
-      let notes: Note[] = existingNotes ? JSON.parse(existingNotes) : [];
-      const newNote: Note = {
-        id: `selection_${fragment.id}_${Date.now()}`,
-        content: noteContent.trim(),
-        fragmentId: fragment.id,
+      let localNotes: any[] = existingNotes ? JSON.parse(existingNotes) : [];
+      localNotes.push({
+        ...newNote,
         userId: 'current-user',
         isShared: false,
         type: 'selection',
-        selectedText: textSelectionPopup.selectedText,
         position: undefined,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
-      notes.push(newNote);
-      localStorage.setItem(`notes_${fragment.id}`, JSON.stringify(notes));
-      window.dispatchEvent(new CustomEvent('noteAdded', { detail: { fragmentId: fragment.id } }));
-      window.getSelection()?.removeAllRanges();
+      });
+      localStorage.setItem(`notes_${fragment.id}`, JSON.stringify(localNotes));
     } catch (error) {
-      alert('Error guardando la nota de selección.');
-      console.error('Error saving selection note:', error);
+      console.error('Error saving to localStorage:', error);
     }
+    
+    // Limpiar selección
+    window.getSelection()?.removeAllRanges();
   };
 
   const handleClosePopup = () => {
@@ -134,10 +246,36 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
             <h1 className="text-xl font-bold text-gray-900 flex-1">
               {lesson ? lesson.title : 'Seleccione una lección'}
             </h1>
-            <CompactAudioPlayer audioFile={fragment?.narrationAudio || null} />
+            {/* Botón de play con narración real */}
+            <button
+              onClick={handlePlayPause}
+              disabled={!fragment?.narrationAudio || isLoading}
+              className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200 ${
+                fragment?.narrationAudio && !isLoading
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              title={
+                !fragment?.narrationAudio
+                  ? 'Sin audio disponible'
+                  : isLoading
+                  ? 'Cargando audio...'
+                  : isPlaying
+                  ? 'Pausar narración'
+                  : 'Reproducir narración'
+              }
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : isPlaying ? (
+                <FiPause className="w-4 h-4" />
+              ) : (
+                <FiPlay className="w-4 h-4 ml-0.5" />
+              )}
+            </button>
           </div>
           {lesson && (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => onNavigateFragment('prev')}
                 disabled={fragmentIndex === 0}
@@ -146,9 +284,9 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
               >
                 <FiChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs text-gray-500 px-2">
+              <div className="text-xs text-gray-500 flex items-center justify-center whitespace-nowrap">
                 {fragmentIndex + 1} de {totalFragments}
-              </span>
+              </div>
               <button
                 onClick={() => onNavigateFragment('next')}
                 disabled={fragmentIndex === totalFragments - 1}
@@ -183,6 +321,20 @@ export function ReadingPanel({ lesson, fragment, fragmentIndex, totalFragments, 
         onSaveNote={handleSaveSelectionNote}
         onClose={handleClosePopup}
       />
+
+      {/* Elemento de audio para la narración */}
+      {fragment?.narrationAudio && (
+        <audio
+          ref={audioRef}
+          src={getAudioSrc()}
+          onEnded={handleAudioEnded}
+          onError={handleAudioError}
+          onLoadStart={handleAudioLoadStart}
+          onCanPlay={handleAudioCanPlay}
+          preload="metadata"
+          className="hidden"
+        />
+      )}
     </div>
   );
 }

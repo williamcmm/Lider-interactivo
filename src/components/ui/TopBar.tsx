@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FiPlay, FiShare2, FiSettings, FiBookOpen, FiMonitor, FiMusic, FiEdit, FiX, FiLogIn } from 'react-icons/fi';
 import { TbCast } from 'react-icons/tb';
 import Link from 'next/link';
-import { Fragment, Lesson } from '../types';
+import { Fragment, Lesson } from '../../types';
+import { useSidebarStore } from '../../store/sidebarStore';
 import { ShareModal } from './ShareModal';
-import { useSidebarStore } from '../store/sidebarStore';
 interface TopBarProps {
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
