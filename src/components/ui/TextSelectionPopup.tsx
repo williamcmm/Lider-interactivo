@@ -65,7 +65,7 @@ export function TextSelectionPopup({ popup, onSaveNote, onClose }: TextSelection
   };
 
   return (
-    <div style={getPopupStyle()}>
+    <div style={getPopupStyle()} data-popup="text-selection">
       <div className="bg-white border border-gray-300 rounded-lg shadow-lg p-4 w-80">
         {/* Texto seleccionado */}
         <div className="mb-3">

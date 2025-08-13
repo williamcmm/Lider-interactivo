@@ -1,22 +1,8 @@
-/**
- * @fileoverview ReadingPanel - Componente principal orquestador para la sección de lectura
- * 
- * Este componente actúa como el contenedor principal que combina y coordina
- * el encabezado de navegación y el contenido de lectura. Es responsable de
- * mantener la estructura de layout y pasar las props necesarias a sus 
- * componentes hijos.
- */
-
 import React from 'react';
 import { Lesson, Fragment } from '@/types';
 import { ReadingHeader } from './ReadingHeader';
 import { ReadingContent } from './ReadingContent';
 
-/**
- * Props para el componente ReadingPanel
- * 
- * @interface ReadingPanelProps
- */
 interface ReadingPanelProps {
   /** La lección actual seleccionada o null si no hay ninguna */
   lesson: Lesson | null;
@@ -48,17 +34,6 @@ export type { ReadingPanelProps };
  *
  * @param props - Las propiedades del componente
  * @returns JSX.Element - El panel de lectura completo
- * 
- * @example
- * ```tsx
- * <ReadingPanel
- *   lesson={currentLesson}
- *   fragment={currentFragment}
- *   fragmentIndex={2}
- *   totalFragments={10}
- *   onNavigateFragment={(direction) => handleNavigation(direction)}
- * />
- * ```
  */
 export function ReadingPanel({ 
   lesson, 

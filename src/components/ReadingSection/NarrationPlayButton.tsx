@@ -1,25 +1,7 @@
-/**
- * @fileoverview AudioPlayButton - Componente de botón de reproducción de audio
- * 
- * Este componente maneja exclusivamente la reproducción de audio de narración
- * de fragmentos, incluyendo:
- * - Control de reproducción/pausa
- * - Estados de carga y error
- * - Gestión del elemento HTML5 Audio
- * - Soporte para archivos locales y URLs remotas
- * - Reinicio automático al cambiar de fragmento
- * - Indicadores visuales de estado
- */
-
 import React, { useRef, useState, useEffect } from 'react';
 import { Fragment } from '@/types';
 import { FiPlay, FiPause } from 'react-icons/fi';
 
-/**
- * Props para el componente AudioPlayButton
- * 
- * @interface NarrationPlayButtonProps
- */
 interface NarrationPlayButtonProps {
   /** El fragmento actual que puede contener audio de narración */
   fragment: Fragment | null;
@@ -45,14 +27,6 @@ interface NarrationPlayButtonProps {
  * - Manejo de errores con notificaciones al usuario
  * - Animación de loading durante la carga
  * - Accesibilidad con títulos descriptivos
- * 
- * @param props - Las propiedades del componente
- * @returns JSX.Element - El botón de reproducción con funcionalidad completa
- * 
- * @example
- * ```tsx
- * <AudioPlayButton fragment={currentFragment} />
- * ```
  */
 export function NarrationPlayButton({ fragment }: NarrationPlayButtonProps) {
   // Estados locales para el control del audio

@@ -1,13 +1,3 @@
-/**
- * @fileoverview ReadingHeader - Componente de encabezado para la sección de lectura
- * 
- * Este componente maneja la parte superior del panel de lectura, incluyendo:
- * - Título de la lección actual
- * - Integración del botón de reproducción de audio
- * - Navegación entre fragmentos de la lección
- * - Indicador de progreso (fragmento actual / total)
- */
-
 import React from 'react';
 import { Lesson, Fragment } from '@/types';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
@@ -44,20 +34,6 @@ interface ReadingHeaderProps {
  * - Gestión de audio: delegada a AudioPlayButton
  * - Estados de reproducción: manejados en AudioPlayButton
  * - Lógica de audio HTML5: encapsulada en AudioPlayButton
- * 
- * @param props - Las propiedades del componente
- * @returns JSX.Element - El encabezado de lectura con navegación y audio
- * 
- * @example
- * ```tsx
- * <ReadingHeader
- *   lesson={currentLesson}
- *   fragment={currentFragment}
- *   fragmentIndex={2}
- *   totalFragments={10}
- *   onNavigateFragment={(direction) => navigate(direction)}
- * />
- * ```
  */
 export function ReadingHeader({ 
   lesson, 

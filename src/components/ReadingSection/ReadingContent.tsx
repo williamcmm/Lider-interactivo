@@ -1,15 +1,3 @@
-/**
- * @fileoverview ReadingContent - Componente de contenido principal para la sección de lectura
- * 
- * Este componente maneja el área de contenido principal de la sección de lectura, incluyendo:
- * - Visualización del contenido de las lecciones y fragmentos
- * - Sistema de selección de texto interactivo
- * - Gestión de notas vinculadas a texto seleccionado
- * - Integración con el contexto de notas globales
- * - Persistencia de notas en localStorage
- * - Popup de creación de notas con posicionamiento dinámico
- */
-
 import { useRef, useState, useEffect } from 'react';
 import { Lesson, Fragment, TextSelectionPopup as TextSelectionPopupType } from '@/types';
 import { TextSelectionPopup } from '../ui/TextSelectionPopup';
@@ -116,7 +104,13 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
      * Handler para el evento mouseup que detecta selecciones de texto
      * Implementa debounce y validaciones antes de mostrar el popup
      */
-    const handleMouseUp = () => {
+    const handleMouseUp = (event: MouseEvent) => {
+      // Si el click fue dentro del popup, no hacer nada
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-popup="text-selection"]')) {
+        return;
+      }
+      
       // Debounce de 150ms para evitar activaciones accidentales
       setTimeout(() => {
         const selection = window.getSelection();
@@ -154,8 +148,15 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
             console.error('No se pudo obtener el rango de selección:', e);
           }
         } else {
-          // No hay selección válida, ocultar popup
-          setTextSelectionPopup(prev => ({ ...prev, isVisible: false }));
+          // No hay selección válida, ocultar popup solo si no está ya visible
+          // o si el click fue fuera del popup
+          if (textSelectionPopup.isVisible) {
+            // Solo ocultar si el click no fue dentro del popup
+            const target = event.target as HTMLElement;
+            if (!target.closest('[data-popup="text-selection"]')) {
+              setTextSelectionPopup(prev => ({ ...prev, isVisible: false }));
+            }
+          }
         }
       }, 150);
     };
@@ -167,7 +168,7 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [fragment]);
+  }, [fragment, textSelectionPopup.isVisible]);
 
   /**
    * Maneja el guardado de una nueva nota basada en texto seleccionado
