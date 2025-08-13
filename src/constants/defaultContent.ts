@@ -10,3 +10,27 @@ export const defaultContentHtml = `
   <p>El estudio de la Biblia es un viaje personal y espiritual. Requiere dedicación, meditación y, a menudo, la guía de otros creyentes. Con herramientas como esta aplicación, el acceso al material de estudio y la capacidad de tomar notas y compartir descubrimientos pueden enriquecer enormemente esta experiencia.</p>
   <p>Esta es solo una pequeña introducción. En esta aplicación, podrás explorar cada seminario en detalle, con lecciones dedicadas a cada libro, profeta, y tema de estudio. ¡Te animamos a comenzar tu viaje!</p>
 `.trim();
+
+// Diapositiva por defecto
+export const defaultSlideHtml = `
+  <div class="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-12 rounded-lg h-full flex items-center justify-center">
+    <div class="text-center">
+      <h1 class="text-6xl font-bold mb-6">Bienvenido</h1>
+      <p class="text-2xl opacity-90">Selecciona una lección para comenzar</p>
+      <div class="mt-8">
+        <div class="w-16 h-1 bg-white opacity-50 mx-auto"></div>
+      </div>
+    </div>
+  </div>
+`;
+
+// Videos por defecto
+export const defaultVideos = [
+  {
+    id: 'default-video-1',
+    title: 'Video Introductorio',
+    youtubeId: 'dQw4w9WgXcQ',
+    description: 'Video de bienvenida al sistema de estudio',
+    order: 1
+  }
+];

@@ -88,9 +88,12 @@ export function TopBar({ currentLesson, currentFragment, fragmentIndex, activePa
         setIsCasting(true);
         setPresentationRequest(request);
         if (currentFragment) {
+          const slideContent = currentFragment.slides && currentFragment.slides.length > 0 
+            ? currentFragment.slides[0].content 
+            : '';
           connection.send(JSON.stringify({
             type: 'update-slide',
-            slide: currentFragment.slide,
+            slide: slideContent,
             fragmentIndex: fragmentIndex,
             lessonTitle: currentLesson?.title
           }));

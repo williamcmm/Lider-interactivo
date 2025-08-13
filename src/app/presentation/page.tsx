@@ -98,10 +98,10 @@ export default function PresentationPage() {
         {/* Contenido de la diapositiva */}
         <div className="flex-1 flex items-center justify-center p-8 gap-8">
           <div className="w-2/3 h-full bg-white text-black rounded-lg shadow-2xl overflow-hidden">
-            {currentFragment.slide ? (
+            {currentFragment.slides && currentFragment.slides.length > 0 ? (
               <div 
                 className="w-full h-full p-8 flex items-center justify-center text-center"
-                dangerouslySetInnerHTML={{ __html: currentFragment.slide }}
+                dangerouslySetInnerHTML={{ __html: currentFragment.slides[0].content }}
               />
             ) : (
               <div className="w-full h-full p-8 flex items-center justify-center">

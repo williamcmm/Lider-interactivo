@@ -70,7 +70,7 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop
       {/* Fondo semitransparente solo para móvil */}
       {isOpen && !isDesktop && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-10 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/10 bg-opacity-30 z-10 transition-opacity duration-300"
           onClick={onClose}
         />
       )}

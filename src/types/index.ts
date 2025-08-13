@@ -7,12 +7,30 @@ export interface AudioFile {
   type: 'local' | 'remote';   // Tipo de fuente
 }
 
+// Tipos para diapositivas
+export interface Slide {
+  id: string;
+  title: string;
+  content: string;      // Contenido HTML de la diapositiva
+  order: number;
+}
+
+// Tipos para videos embebidos de YouTube
+export interface Video {
+  id: string;
+  title: string;
+  youtubeId: string;    // ID del video de YouTube (ej: "dQw4w9WgXcQ")
+  description?: string;
+  order: number;
+}
+
 // Fragmento: unidad básica de contenido dentro de una lección
 export interface Fragment {
   id: string;
   order: number;
   readingMaterial: string;    // Material de lectura/estudio
-  slide: string;              // URL o contenido de la diapositiva
+  slides: Slide[];            // Array de diapositivas
+  videos: Video[];            // Array de videos embebidos
   studyAids: string;          // Ayudas y materiales de apoyo
   narrationAudio?: AudioFile; // Audio de narración para este fragmento
   isCollapsed?: boolean;      // Para el estado de colapso visual
@@ -126,6 +144,7 @@ export interface LessonFormData {
 
 export interface FragmentFormData {
   readingMaterial: string;
-  slide: string;
+  slides: Slide[];
+  videos: Video[];
   studyAids: string;
 }

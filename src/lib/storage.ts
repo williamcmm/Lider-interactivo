@@ -306,15 +306,47 @@ export class LocalStorage {
               id: `fragment-sem-${i + 1}-${j + 1}-1`,
               order: 1,
               readingMaterial: '<p>Material de lectura por desarrollar...</p>',
-              slide: `<div class="h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-white p-8">
-                <div class="text-center space-y-6">
-                  <h1 class="text-4xl font-bold">${lessonTitle}</h1>
-                  <p class="text-xl opacity-90">${seminar.title}</p>
-                  <div class="mt-8 p-4 bg-white bg-opacity-20 rounded-lg">
-                    <p class="text-lg text-gray-600" style="color: rgb(75, 85, 99);">Lección ${j + 1} de ${seminar.lessons.length}</p>
-                  </div>
-                </div>
-              </div>`,
+              slides: [
+                {
+                  id: `slide-sem-${i + 1}-${j + 1}-1`,
+                  title: `Diapositiva 1`,
+                  content: `<div class="h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-white p-8">
+                    <div class="text-center space-y-6">
+                      <h1 class="text-4xl font-bold">${lessonTitle}</h1>
+                      <p class="text-xl opacity-90">${seminar.title}</p>
+                      <div class="mt-8 p-4 bg-white bg-opacity-20 rounded-lg">
+                        <p class="text-lg">Lección ${j + 1} de ${seminar.lessons.length}</p>
+                      </div>
+                    </div>
+                  </div>`,
+                  order: 1
+                },
+                {
+                  id: `slide-sem-${i + 1}-${j + 1}-2`,
+                  title: `Diapositiva 2`,
+                  content: `<div class="h-full flex items-center justify-center bg-gradient-to-br from-green-500 to-green-700 text-white p-8">
+                    <div class="text-center space-y-6">
+                      <h1 class="text-4xl font-bold">Diapositiva 2</h1>
+                      <p class="text-xl opacity-90">${lessonTitle}</p>
+                      <ul class="text-lg mt-6 space-y-2">
+                        <li>• Punto importante 1</li>
+                        <li>• Punto importante 2</li>
+                        <li>• Punto importante 3</li>
+                      </ul>
+                    </div>
+                  </div>`,
+                  order: 2
+                }
+              ],
+              videos: [
+                {
+                  id: `video-sem-${i + 1}-${j + 1}-1`,
+                  title: `Video de ${lessonTitle}`,
+                  youtubeId: 'dQw4w9WgXcQ',
+                  description: `Video explicativo de la lección: ${lessonTitle}`,
+                  order: 1
+                }
+              ],
               studyAids: '',
               isCollapsed: false
             }

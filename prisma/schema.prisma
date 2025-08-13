@@ -94,7 +94,6 @@ model Fragment {
   id              String   @id @default(cuid())
   order           Int
   readingMaterial String   @db.Text
-  slide           String   @db.Text
   studyAids       String   @default("") @db.Text
   isCollapsed     Boolean  @default(false)
   createdAt       DateTime @default(now())
@@ -108,11 +107,48 @@ model Fragment {
   narrationAudioId String?
   narrationAudio   AudioFile? @relation(fields: [narrationAudioId], references: [id])
 
-  // Relaciones
-  notes Note[]
+  // Relaciones con diapositivas y videos
+  slides Slide[]
+  videos Video[]
+  notes  Note[]
 
   @@unique([lessonId, order], name: "unique_lesson_fragment_order")
   @@map("fragments")
+}
+
+// Modelo para diapositivas
+model Slide {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relación con fragmento
+  fragmentId String
+  fragment   Fragment @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
+
+  @@unique([fragmentId, order], name: "unique_fragment_slide_order")
+  @@map("slides")
+}
+
+// Modelo para videos embebidos
+model Video {
+  id          String   @id @default(cuid())
+  title       String
+  youtubeId   String
+  description String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relación con fragmento
+  fragmentId String
+  fragment   Fragment @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
+
+  @@unique([fragmentId, order], name: "unique_fragment_video_order")
+  @@map("videos")
 }
 
 // Modelo para archivos de audio

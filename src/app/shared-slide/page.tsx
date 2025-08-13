@@ -129,10 +129,10 @@ export default function SharedSlidePage() {
       {/* Contenido compartido según selección */}
       <div className="mx-4 my-4 rounded-lg shadow-2xl overflow-hidden bg-white" style={{minHeight: 'calc(100vh - 120px)'}}>
         <div className="p-8 flex flex-col gap-8">
-          {showSlide && currentFragment.slide && (
+          {showSlide && currentFragment.slides && currentFragment.slides.length > 0 && (
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Diapositiva</h2>
-              <div className="w-full text-center" dangerouslySetInnerHTML={{ __html: currentFragment.slide }} />
+              <div className="w-full text-center" dangerouslySetInnerHTML={{ __html: currentFragment.slides[0].content }} />
             </div>
           )}
           {showReading && currentFragment.readingMaterial && (

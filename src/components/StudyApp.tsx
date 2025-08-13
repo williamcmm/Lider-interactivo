@@ -5,7 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { TopBar } from './ui/TopBar';
 import { Sidebar } from './ui/Sidebar';
 import { ReadingPanel } from './ReadingSection/ReadingPanel';
-import { SlidePanel } from './ui/SlidePanel';
+import { SlidePanel } from './SlideSection/SlidePanel';
 import { MusicPanel } from './MusicSection/MusicPanel';
 import NotesPanel from './NotesSection/NotesPanel';
 // ...existing code...
