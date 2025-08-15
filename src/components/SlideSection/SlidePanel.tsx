@@ -113,20 +113,10 @@ export function SlidePanel({
 
   return (
     <div className="h-full flex flex-col p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header y botones alineados */}
+      <div className="flex items-center mb-4 gap-4">
         <h2 className="text-xl font-bold text-gray-900">Presentación</h2>
-        {fragment && totalFragments > 0 && (
-          <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            Fragmento {fragment.order} de {totalFragments}
-          </div>
-        )}
-      </div>
-
-      {/* Controles de modo */}
-      <div className="mb-4 space-y-3">
-        {/* Selector de modo */}
-        <div className="flex items-center justify-center space-x-2">
+        <div className="flex items-center space-x-2">
           <button
             onClick={() => setCurrentMode("slides")}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
@@ -150,6 +140,7 @@ export function SlidePanel({
             <span>Videos</span>
           </button>
         </div>
+  {/* Eliminado Fragmento {fragment.order} de {totalFragments} para evitar redundancia visual */}
       </div>
 
       {/* Contenido de la diapositiva/video */}
