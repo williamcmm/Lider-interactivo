@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import { authenticate } from '@/actions/auth/login';
-import { submitAlert } from '@/utils/alerts';
-import { useRouter } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
-import { useActionState } from 'react';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { authenticate } from "@/actions/auth/login";
+import { submitAlert } from "@/utils/alerts";
+import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useActionState } from "react";
+import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 
 export function CredentialsForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
 
   const [state, formAction, isPending] = useActionState(
@@ -17,16 +19,52 @@ export function CredentialsForm() {
     undefined
   );
 
+  // Prefill once from localStorage on mount
+  useEffect(() => {
+    const raw =
+      typeof window !== "undefined"
+        ? localStorage.getItem("auth.remember")
+        : null;
+    if (raw) {
+      const stored = JSON.parse(raw) as { email?: string; remember?: boolean };
+      if (stored?.email) setEmail(stored.email);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Handle post-auth result
   useEffect(() => {
     if (!state) return;
     if (state.ok) {
+      // Persist or clear remembered email on successful auth
+
+      if (rememberMe && email) {
+        localStorage.setItem(
+          "auth.remember",
+          JSON.stringify({ email, remember: true })
+        );
+      } else {
+        localStorage.removeItem("auth.remember");
+      }
+
       router.push("/");
       window.location.reload();
     } else {
       submitAlert(state.message, "error");
     }
-  }, [state, submitAlert]);
+  }, [state, rememberMe, email, router]);
 
+  // Keep localStorage in sync when user toggles remember or edits email
+  useEffect(() => {
+    if (rememberMe && email) {
+      localStorage.setItem(
+        "auth.remember",
+        JSON.stringify({ email, remember: true })
+      );
+    } else {
+      localStorage.removeItem("auth.remember");
+    }
+  }, [rememberMe, email]);
   return (
     <>
       {/* Divisor */}
@@ -35,15 +73,20 @@ export function CredentialsForm() {
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-gray-500">O continúa con email</span>
+          <span className="px-4 bg-white text-gray-500">
+            O continúa con email
+          </span>
         </div>
       </div>
 
       {/* Formulario de credenciales */}
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} className="space-y-4" autoComplete="on">
         {/* Campo de email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Correo electrónico
           </label>
           <div className="relative">
@@ -55,6 +98,9 @@ export function CredentialsForm() {
               name="email"
               type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email username"
               className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="tu@ejemplo.com"
             />
@@ -63,7 +109,10 @@ export function CredentialsForm() {
 
         {/* Campo de contraseña */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Contraseña
           </label>
           <div className="relative">
@@ -73,8 +122,11 @@ export function CredentialsForm() {
             <input
               id="password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="Ingresa tu contraseña"
             />
@@ -103,14 +155,19 @@ export function CredentialsForm() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="cursor-pointer h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Recordarme
             </label>
           </div>
           <button
             type="button"
             className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium"
-            onClick={() => alert('Funcionalidad de recuperación de contraseña próximamente')}
+            onClick={() =>
+              alert("Funcionalidad de recuperación de contraseña próximamente")
+            }
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -128,7 +185,7 @@ export function CredentialsForm() {
               Iniciando sesión...
             </>
           ) : (
-            'Iniciar sesión'
+            "Iniciar sesión"
           )}
         </button>
       </form>
