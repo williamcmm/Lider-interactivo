@@ -2,6 +2,7 @@
 
 import { authenticate } from '@/actions/auth/login';
 import { submitAlert } from '@/utils/alerts';
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { useActionState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
@@ -9,14 +10,19 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 export function CredentialsForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+  const router = useRouter();
+
   const [state, formAction, isPending] = useActionState(
     authenticate,
     undefined
   );
 
   useEffect(() => {
-    if (state && !state.ok) {
+    if (!state) return;
+    if (state.ok) {
+      router.push("/");
+      window.location.reload();
+    } else {
       submitAlert(state.message, "error");
     }
   }, [state, submitAlert]);
@@ -74,7 +80,7 @@ export function CredentialsForm() {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="cursor-pointer absolute inset-y-0 right-0 pr-3 flex items-center"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
@@ -95,7 +101,7 @@ export function CredentialsForm() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="cursor-pointer h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
               Recordarme
@@ -103,7 +109,7 @@ export function CredentialsForm() {
           </div>
           <button
             type="button"
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium"
             onClick={() => alert('Funcionalidad de recuperación de contraseña próximamente')}
           >
             ¿Olvidaste tu contraseña?
@@ -114,7 +120,7 @@ export function CredentialsForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 font-medium hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 font-medium hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? (
             <>

@@ -169,7 +169,7 @@ export function StudyApp() {
   }, [isSidebarOpen, closeSidebar]);
 
     return (
-        <div className="h-screen w-screen overflow-hidden bg-gray-100 text-gray-900 font-sans flex flex-col">
+        <div className="h-screen w-screen overflow-auto bg-gray-100 text-gray-900 font-sans flex flex-col">
           {/* Barra Superior */}
             <TopBar 
             currentLesson={currentLesson}

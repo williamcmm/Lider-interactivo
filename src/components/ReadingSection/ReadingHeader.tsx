@@ -51,7 +51,7 @@ export function ReadingHeader({
         <div className="flex items-center justify-between mb-2">
           {/* Sección izquierda: Título y botón de audio */}
           <div className="flex items-center w-full">
-            <h1 className="text-xl font-bold text-gray-900 flex-1 ml-8">
+            <h1 className="text-xl font-bold text-gray-900 flex-1 md:ml-8">
               {lesson ? lesson.title : 'Seleccione una lección'}
             </h1>
             

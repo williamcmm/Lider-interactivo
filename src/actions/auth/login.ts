@@ -16,9 +16,13 @@ export async function authenticate(
   try {
     await signIn("credentials", {
       ...Object.fromEntries(formData),
-      redirect: true,
-      redirectTo: "/dashboard",
+      redirect: false,
     });
+    return {
+      status: 200,
+      message: "Autenticado",
+      ok: true,
+    } satisfies Response;
   } catch (error) {
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") {
