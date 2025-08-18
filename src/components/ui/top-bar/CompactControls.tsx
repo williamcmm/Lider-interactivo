@@ -33,73 +33,6 @@ export function CompactControls({
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  const handleFullscreen = () => {
-    const elem = document.documentElement;
-    if (!isFullscreen) {
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if ((elem as any).webkitRequestFullscreen) {
-        (elem as any).webkitRequestFullscreen();
-      } else if ((elem as any).msRequestFullscreen) {
-        (elem as any).msRequestFullscreen();
-      }
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if ((document as any).webkitExitFullscreen) {
-        (document as any).webkitExitFullscreen();
-      } else if ((document as any).msExitFullscreen) {
-        (document as any).msExitFullscreen();
-      }
-      setIsFullscreen(false);
-    }
-  };
-
-  const startCasting = async () => {
-    try {
-      if ("presentation" in navigator) {
-        const presentationUrl = `${window.location.origin}/presentation?lesson=${currentLesson?.id}&fragment=${fragmentIndex}`;
-        const request = new (window as any).PresentationRequest([
-          presentationUrl,
-        ]);
-        const connection = await request.start();
-        setIsCasting(true);
-        setPresentationRequest(request);
-        if (currentFragment) {
-          const slideContent =
-            currentFragment.slides && currentFragment.slides.length > 0
-              ? currentFragment.slides[0].content
-              : "";
-          connection.send(
-            JSON.stringify({
-              type: "update-slide",
-              slide: slideContent,
-              fragmentIndex: fragmentIndex,
-              lessonTitle: currentLesson?.title,
-            })
-          );
-        }
-      } else {
-        const presentationUrl = `${window.location.origin}/presentation?lesson=${currentLesson?.id}&fragment=${fragmentIndex}`;
-        window.open(presentationUrl, "_blank", "width=1280,height=720");
-      }
-    } catch (error) {
-      console.error("Error al iniciar presentación:", error);
-      alert(
-        "No se pudo conectar a una pantalla externa. Asegúrate de que haya dispositivos compatibles disponibles."
-      );
-    }
-  };
-
-  const shareSlide = () => {
-    if (!currentLesson || !currentFragment) {
-      alert("No hay una lección o fragmento seleccionado para compartir.");
-      return;
-    }
-    setShowShareModal(true);
-  };
-
   return (
     <div className="flex items-center space-x-1 flex-1 justify-end">
       {/* Botones de Login y Admin para móvil */}
@@ -135,12 +68,11 @@ export function CompactControls({
 
       {/* Botones de acción para móvil */}
       <ActionButtonsMobile
-        isCasting={isCasting}
         canCast={canCast}
         canShare={canShare}
-        onFullscreenAction={handleFullscreen}
-        onCastAction={startCasting}
-        onShareAction={shareSlide}
+        currentFragment={currentFragment}
+        currentLesson={currentLesson}
+        fragmentIndex={fragmentIndex}
       />
       <AuthButton compact />
     </div>
