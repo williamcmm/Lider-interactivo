@@ -15,7 +15,6 @@ interface CompactControlsProps {
   fragmentIndex?: number;
   canCast: boolean;
   canShare: boolean;
-  onShareAction: () => void;
   setActivePanelAction: (panel: string) => void;
 }
 
@@ -28,11 +27,11 @@ export function CompactControls({
   canCast,
   canShare,
   setActivePanelAction,
-  onShareAction,
 }: CompactControlsProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isCasting, setIsCasting] = useState(false);
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const handleFullscreen = () => {
     const elem = document.documentElement;
@@ -93,6 +92,14 @@ export function CompactControls({
     }
   };
 
+  const shareSlide = () => {
+    if (!currentLesson || !currentFragment) {
+      alert("No hay una lección o fragmento seleccionado para compartir.");
+      return;
+    }
+    setShowShareModal(true);
+  };
+
   return (
     <div className="flex items-center space-x-1 flex-1 justify-end">
       {/* Botones de Login y Admin para móvil */}
@@ -133,7 +140,7 @@ export function CompactControls({
         canShare={canShare}
         onFullscreenAction={handleFullscreen}
         onCastAction={startCasting}
-        onShareAction={onShareAction}
+        onShareAction={shareSlide}
       />
       <AuthButton compact />
     </div>

@@ -22,8 +22,6 @@ export function TopBar({
 }: TopBarProps) {
   // Detección de móvil client-side mínima
   const [isMobile, setIsMobile] = useState(false);
-  const [isCasting, setIsCasting] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -44,14 +42,6 @@ export function TopBar({
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
-
-  const shareSlide = () => {
-    if (!currentLesson || !currentFragment) {
-      alert("No hay una lección o fragmento seleccionado para compartir.");
-      return;
-    }
-    setShowShareModal(true);
-  };
 
   return (
     <>
@@ -89,7 +79,6 @@ export function TopBar({
             setActivePanelAction={setActivePanel}
             canCast={!!currentLesson && !!currentFragment}
             canShare={!!currentLesson && !!currentFragment}
-            onShareAction={shareSlide}
           />
         )}
 

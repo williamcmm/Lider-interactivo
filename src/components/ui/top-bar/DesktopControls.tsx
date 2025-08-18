@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FiBookOpen, FiEdit, FiGrid, FiMonitor, FiMusic } from "react-icons/fi";
+import { FiGrid } from "react-icons/fi";
 import { Fragment, Lesson } from "@/types";
 import { AuthButton } from "./AuthButton";
 import { AdminButton } from "./AdminButton";

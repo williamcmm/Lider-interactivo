@@ -50,7 +50,9 @@ export function ActionButtons({
           onClick={onShareAction}
           disabled={!canShare}
           className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
-            canShare ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"
+            canShare
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-gray-400 cursor-not-allowed"
           }`}
         >
           <FiShare2 className="w-4 h-4" />
@@ -63,14 +65,24 @@ export function ActionButtons({
     <>
       <button
         className="m-1 rounded-full flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 transition duration-150"
-  onClick={onFullscreenAction}
-        style={{ width: 48, height: 48, minWidth: 48, minHeight: 48, aspectRatio: "1/1", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+        onClick={onFullscreenAction}
+        style={{
+          width: 48,
+          height: 48,
+          minWidth: 48,
+          minHeight: 48,
+          aspectRatio: "1/1",
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <FiPlay className="w-5 h-5" />
       </button>
 
       <button
-  onClick={onCastAction}
+        onClick={onCastAction}
         disabled={!canCast}
         className={`m-1 rounded-full flex items-center justify-center text-white transition duration-150 ${
           isCasting
@@ -79,18 +91,40 @@ export function ActionButtons({
             ? "bg-blue-500 hover:bg-blue-600"
             : "bg-gray-400 cursor-not-allowed"
         }`}
-        style={{ width: 48, height: 48, minWidth: 48, minHeight: 48, aspectRatio: "1/1", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{
+          width: 48,
+          height: 48,
+          minWidth: 48,
+          minHeight: 48,
+          aspectRatio: "1/1",
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <TbCast className="w-5 h-5" />
       </button>
 
       <button
-  onClick={onShareAction}
+        onClick={onShareAction}
         disabled={!canShare}
         className={`m-1 rounded-full flex items-center justify-center text-white transition duration-150 ${
-          canShare ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"
+          canShare
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-gray-400 cursor-not-allowed"
         }`}
-        style={{ width: 48, height: 48, minWidth: 48, minHeight: 48, aspectRatio: "1/1", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{
+          width: 48,
+          height: 48,
+          minWidth: 48,
+          minHeight: 48,
+          aspectRatio: "1/1",
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <FiShare2 className="w-5 h-5" />
       </button>
