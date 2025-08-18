@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { CurrentTrackInfo } from './CurrentTrackInfo';
-import { PlaybackControls } from './PlaybackControls';
-import { BluetoothControls } from './BluetoothControls';
-import { TrackList } from './TrackList';
-import { useBluetooth } from '../../hooks/useBluetooth';
-import { sampleTracks } from '../../data/musicTracks';
+import { useState } from "react";
+import { CurrentTrackInfo } from "./CurrentTrackInfo";
+import { PlaybackControls } from "./PlaybackControls";
+import { BluetoothControls } from "./BluetoothControls";
+import { TrackList } from "./TrackList";
+import { useBluetooth } from "../../hooks/useBluetooth";
+import { sampleTracks } from "../../data/musicTracks";
 
 /**
  * MusicPanel - Componente principal del panel de música
- * 
+ *
  * Orquesta todos los componentes relacionados con la reproducción de música:
  * - Información de pista actual
  * - Controles de reproducción
@@ -18,14 +18,14 @@ import { sampleTracks } from '../../data/musicTracks';
 export function MusicPanel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
-  
+
   // Hook personalizado para funcionalidad Bluetooth
   const {
     bluetoothDevice,
     isBluetoothConnected,
     isBluetoothSupported,
     connectBluetooth,
-    disconnectBluetooth
+    disconnectBluetooth,
   } = useBluetooth();
 
   const togglePlay = () => {
@@ -42,11 +42,13 @@ export function MusicPanel() {
   };
 
   const prevTrack = () => {
-    setCurrentTrack((prev) => (prev - 1 + sampleTracks.length) % sampleTracks.length);
+    setCurrentTrack(
+      (prev) => (prev - 1 + sampleTracks.length) % sampleTracks.length
+    );
   };
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full flex flex-col min-h-0 p-4 overflow-hidden">
       {/* Información de pista actual */}
       <CurrentTrackInfo track={sampleTracks[currentTrack]} />
 
@@ -59,7 +61,7 @@ export function MusicPanel() {
             onPrevTrack={prevTrack}
             onNextTrack={nextTrack}
           />
-          
+
           <BluetoothControls
             isBluetoothSupported={isBluetoothSupported}
             isBluetoothConnected={isBluetoothConnected}

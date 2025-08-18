@@ -98,7 +98,7 @@ export function SlidePanel({
       return (
         <div className="w-full h-full py-10">
           <div
-            className="w-full h-full"
+            className="w-full h-full slide-html prose max-w-full break-words overflow-x-hidden"
             dangerouslySetInnerHTML={{ __html: slide.content }}
           />
         </div>
@@ -114,7 +114,7 @@ export function SlidePanel({
   return (
     <div className="h-full flex flex-col p-4">
       {/* Header y botones alineados */}
-      <div className="flex items-center mb-4 gap-4">
+      <div className="xl:flex items-center mb-4 gap-4">
         <h2 className="text-xl font-bold text-gray-900">Presentación</h2>
         <div className="flex items-center space-x-2">
           <button
@@ -140,7 +140,6 @@ export function SlidePanel({
             <span>Videos</span>
           </button>
         </div>
-  {/* Eliminado Fragmento {fragment.order} de {totalFragments} para evitar redundancia visual */}
       </div>
 
       {/* Contenido de la diapositiva/video */}
@@ -149,7 +148,7 @@ export function SlidePanel({
           <div className="w-full h-full p-4">
             <div className="w-full h-auto min-h-full">{getSlideContent()}</div>
           </div>
-          
+
           {/* Controles de contenido - Posición fija en la parte inferior */}
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-white/95 to-transparent p-4 pt-2">
             {currentMode === "slides" && (

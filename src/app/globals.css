@@ -115,3 +115,32 @@ body {
 .animation-paused {
   animation-play-state: paused;
 }
+
+/* Prevent slide HTML content from overflowing horizontally */
+.slide-html {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.slide-html img,
+.slide-html video,
+.slide-html canvas,
+.slide-html svg,
+.slide-html table,
+.slide-html iframe,
+.slide-html embed,
+.slide-html object {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto;
+}
+.slide-html table {
+  display: block;
+  overflow-x: auto;
+}
+.slide-html pre,
+.slide-html code,
+.slide-html .code-block {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
