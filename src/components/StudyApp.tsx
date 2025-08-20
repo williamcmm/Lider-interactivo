@@ -9,7 +9,7 @@ import DesktopSeparateView from "./layouts/separate/DesktopSeparateView";
 import MobileSeparateView from "./layouts/separate/MobileSeparateView";
 // ...existing code...
 import { Seminar, Series, Lesson, Fragment } from "@/types";
-import { LocalStorageManager } from "@/lib/storage";
+// Eliminado LocalStorage fallback
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useNotesStore } from "@/store/notesStore";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -155,30 +155,11 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
     ? currentLesson.fragments.length
     : 0;
 
-  // Cargar datos desde localStorage al montar el componente como fallback si no hay data del servidor
+  // Cargar datos iniciales desde props
   useEffect(() => {
     // Inicializar usuarios compartidos en el store
     setSharedUsers(["usuario1@email.com", "usuario2@email.com"]);
-
-    const hasServerData = (initialSeminars?.length ?? 0) > 0 || (initialSeries?.length ?? 0) > 0;
-    if (!hasServerData) {
-      // Cargar datos desde localStorage (solo si existen)
-      const storedSeminars = LocalStorageManager.getSeminars();
-      const storedSeries = LocalStorageManager.getSeries();
-      setSeminars(storedSeminars);
-      setSeries(storedSeries);
-      // Selección por defecto desde almacenamiento local
-      if (storedSeminars.length > 0 && storedSeminars[0].lessons.length > 0) {
-        setCurrentLesson(storedSeminars[0].lessons[0]);
-      } else if (storedSeries.length > 0 && storedSeries[0].lessons.length > 0) {
-        setCurrentLesson(storedSeries[0].lessons[0]);
-      } else {
-        setCurrentLesson(null);
-      }
-      return;
-    }
-
-    // Si hay data del servidor, seleccionar la primera lección disponible
+    // Seleccionar la primera lección disponible de datos del servidor
     if (initialSeminars.length > 0 && initialSeminars[0].lessons.length > 0) {
       setCurrentLesson(initialSeminars[0].lessons[0]);
     } else if (initialSeries.length > 0 && initialSeries[0].lessons.length > 0) {

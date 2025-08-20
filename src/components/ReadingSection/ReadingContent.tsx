@@ -19,7 +19,7 @@ interface ReadingContentProps {
  * - Renderizar el contenido de lecciones y fragmentos usando dangerouslySetInnerHTML
  * - Detectar selecciones de texto del usuario
  * - Mostrar popup contextual para crear notas sobre texto seleccionado
- * - Gestionar la persistencia de notas en localStorage y contexto global
+ * - Gestionar la persistencia de notas con Server Actions y contexto global
  * - Cargar y sincronizar notas existentes al cambiar de fragmento
  * - Proporcionar fallbacks de contenido cuando no hay datos específicos
  * 
@@ -32,7 +32,7 @@ interface ReadingContentProps {
  * Sistema de notas:
  * - Creación de notas vinculadas a texto específico
  * - Sincronización bidireccional con contexto global
- * - Persistencia automática en localStorage
+ * - Persistencia en servidor
  * - Limpieza de selección después de crear nota
  */
 export function ReadingContent({ lesson, fragment }: ReadingContentProps) {

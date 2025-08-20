@@ -1,3 +1,4 @@
+import { getNotesForFragment } from '@/actions/notes/crud';
 import { create } from 'zustand';
 
 // Tipos principales
@@ -59,7 +60,7 @@ interface NotesState {
  * Store de Zustand para el manejo de notas
  * 
  * Centraliza todo el estado relacionado con notas:
- * - Notas por fragmento con persistencia en localStorage
+ * - Notas por fragmento persistidas en servidor (Server Actions)
  * - Sistema de pestañas y navegación
  * - Notas compartidas entre usuarios
  * - Funcionalidades de compartir y colaborar
@@ -135,81 +136,48 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   /**
    * Agregar una nueva nota al fragmento actual
    */
-  addNote: (noteData: Omit<Note, 'id'>) => {
+  addNote: async (noteData: Omit<Note, 'id'>) => {
     const { fragmentNotes, currentFragmentId } = get();
-    
-    const newNote: Note = {
-      id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      ...noteData,
-      fragmentId: currentFragmentId || noteData.fragmentId
+    const fragmentId = currentFragmentId || noteData.fragmentId;
+    const payload = {
+      content: noteData.content,
+      contentHtml: noteData.contentHtml,
+      selectedText: noteData.selectedText,
+      fragmentId,
     };
-    
-    const updatedNotes = [...fragmentNotes, newNote];
-    set({ fragmentNotes: updatedNotes });
-    
-    // Persistir en localStorage
-    if (newNote.fragmentId) {
-      try {
-        const existingNotes = localStorage.getItem(`notes_${newNote.fragmentId}`);
-        const localNotes = existingNotes ? JSON.parse(existingNotes) : [];
-        
-        localNotes.push({
-          ...newNote,
-          userId: 'current-user',
-          isShared: false,
-          type: noteData.selectedText ? 'selection' : 'manual',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-        
-        localStorage.setItem(`notes_${newNote.fragmentId}`, JSON.stringify(localNotes));
-      } catch (error) {
-        console.error('Error saving note to localStorage:', error);
+    try {
+      const { createNote } = await import("@/actions/notes/crud");
+      const res = await createNote(payload);
+      if (res.ok) {
+        const created = res.note as any;
+        const mapped: Note = {
+          id: created.id,
+          content: created.content,
+          contentHtml: created.contentHtml ?? undefined,
+          selectedText: created.selectedText ?? undefined,
+          fragmentId: created.fragmentId ?? undefined,
+        };
+        set({ fragmentNotes: [...fragmentNotes, mapped] });
       }
+    } catch (error) {
+      console.error("Error creating note:", error);
     }
   },
   
   /**
-   * Eliminar una nota tanto del estado como del localStorage
+  * Eliminar una nota tanto del estado como del servidor
    */
-  deleteNote: (id: string, fragmentId?: string) => {
-    const { fragmentNotes, currentFragmentId } = get();
-    
-    // Eliminar del estado
-    const updatedNotes = fragmentNotes.filter(note => note.id !== id);
-    set({ fragmentNotes: updatedNotes });
-    
-    // Determinar el fragmentId a usar
-    const targetFragmentId = fragmentId || currentFragmentId;
-    
-    if (targetFragmentId) {
-      // Eliminar del localStorage del fragmento específico
-      try {
-        const existingNotes = localStorage.getItem(`notes_${targetFragmentId}`);
-        if (existingNotes) {
-          const localNotes = JSON.parse(existingNotes);
-          const updatedLocalNotes = localNotes.filter((note: any) => note.id !== id);
-          localStorage.setItem(`notes_${targetFragmentId}`, JSON.stringify(updatedLocalNotes));
-        }
-      } catch (error) {
-        console.error('Error deleting note from localStorage:', error);
+  deleteNote: async (id: string) => {
+    const { fragmentNotes } = get();
+    try {
+      const { deleteNote } = await import("@/actions/notes/crud");
+      const res = await deleteNote(id);
+      if (res.ok) {
+        const updatedNotes = fragmentNotes.filter((n) => n.id !== id);
+        set({ fragmentNotes: updatedNotes });
       }
-    } else {
-      // Si no tenemos fragmentId, buscar en todos los localStorage
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('notes_')) {
-            const notes = JSON.parse(localStorage.getItem(key) || '[]');
-            const updatedNotes = notes.filter((note: any) => note.id !== id);
-            if (notes.length !== updatedNotes.length) {
-              localStorage.setItem(key, JSON.stringify(updatedNotes));
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error deleting note from all localStorage keys:', error);
-      }
+    } catch (error) {
+      console.error("Error deleting note:", error);
     }
   },
   
@@ -234,26 +202,22 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
   
   /**
-   * Cargar notas desde localStorage para un fragmento específico
+  * Cargar notas desde el servidor para un fragmento específico
    */
-  loadNotesForFragment: (fragmentId: string) => {
+  loadNotesForFragment: async (fragmentId: string) => {
     try {
-      const existingNotes = localStorage.getItem(`notes_${fragmentId}`);
-      if (existingNotes) {
-        const localNotes = JSON.parse(existingNotes);
-        
-        // Convertir las notas locales al formato del store
-        const contextNotes = localNotes.map((note: any) => ({
+      
+      const res = await getNotesForFragment(fragmentId);
+      if (res.ok) {
+        const contextNotes = (res.notes as any[]).map((note) => ({
           id: note.id,
           content: note.content,
-          fragmentId: note.fragmentId,
-          selectedText: note.selectedText,
-          contentHtml: note.contentHtml
+          fragmentId: note.fragmentId ?? undefined,
+          selectedText: note.selectedText ?? undefined,
+          contentHtml: note.contentHtml ?? undefined,
         }));
-        
         set({ fragmentNotes: contextNotes });
       } else {
-        // Si no hay notas, limpiar
         set({ fragmentNotes: [] });
       }
     } catch (error) {
@@ -328,17 +292,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   /**
    * Limpiar todas las notas del fragmento actual
    */
-  clearAllNotes: () => {
+  clearAllNotes: async () => {
     const { currentFragmentId } = get();
-    
     set({ fragmentNotes: [] });
-    
-    // Limpiar del localStorage también
     if (currentFragmentId) {
       try {
-        localStorage.removeItem(`notes_${currentFragmentId}`);
+        const { clearNotesForFragment } = await import("@/actions/notes/crud");
+        await clearNotesForFragment(currentFragmentId);
       } catch (error) {
-        console.error('Error clearing notes from localStorage:', error);
+        console.error('Error clearing notes:', error);
       }
     }
   },

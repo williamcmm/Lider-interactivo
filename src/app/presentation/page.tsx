@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
-import { LocalStorageManager } from '@/lib/storage';
+import { getLessonById } from '@/actions/admin/lessons/get-lessons-by-id';
 import NotesPanel from '@/components/NotesSection/NotesPanel';
 import { useNotesStore } from '@/store/notesStore';
 
@@ -21,37 +21,34 @@ export default function PresentationPage() {
     const fragmentIndex = parseInt(searchParams.get('fragment') || '0');
 
     if (lessonId) {
-      // Buscar la lección en seminarios y series
-      const seminars = LocalStorageManager.getSeminars();
-      const series = LocalStorageManager.getSeries();
-      
-      let foundLesson = null;
-      
-      // Buscar en seminarios
-      for (const seminar of seminars) {
-        foundLesson = seminar.lessons.find(l => l.id === lessonId);
-        if (foundLesson) break;
-      }
-      
-      // Buscar en series si no se encontró en seminarios
-      if (!foundLesson) {
-        for (const serie of series) {
-          foundLesson = serie.lessons.find(l => l.id === lessonId);
-          if (foundLesson) break;
-        }
-      }
+      getLessonById(lessonId).then((res) => {
+        if (!res.ok) return;
+        const l: any = res.lesson;
+        const mapped: Lesson = {
+          id: l.id,
+          title: l.title,
+          content: l.content,
+          containerId: l.seminarId ?? l.seriesId ?? "",
+          containerType: l.containerType === 'SEMINAR' ? 'seminar' : 'series',
+          order: l.order,
+          fragments: (l.fragments ?? []).map((f: any) => ({
+            id: f.id,
+            order: f.order,
+            readingMaterial: f.readingMaterial,
+            slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
+            videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
+            studyAids: f.studyAids,
+            narrationAudio: undefined,
+            isCollapsed: f.isCollapsed ?? false,
+          }))
+        } as any;
 
-      if (foundLesson) {
-        setLesson(foundLesson);
+        setLesson(mapped);
         setCurrentFragmentIndex(fragmentIndex);
-        const selectedFragment = foundLesson.fragments[fragmentIndex] || null;
+        const selectedFragment = mapped.fragments[fragmentIndex] || null;
         setCurrentFragment(selectedFragment);
-        
-        // Establecer el fragmento actual en el store de notas
-        if (selectedFragment) {
-          setCurrentFragmentId(selectedFragment.id);
-        }
-      }
+        if (selectedFragment) setCurrentFragmentId(selectedFragment.id);
+      });
     }
   }, [searchParams]);
 

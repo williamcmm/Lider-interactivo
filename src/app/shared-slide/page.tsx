@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
-import { LocalStorageManager } from '@/lib/storage';
+import { getLessonById } from '@/actions/admin/lessons/get-lessons-by-id';
 // Preparado para Firestore
 // import { firestore } from '@/lib/firebase';
 
@@ -69,25 +69,33 @@ export default function SharedSlidePage() {
       setShowAids(types.includes('aids'));
       setShowNotes(types.includes('notes'));
       if (lessonId) {
-        const seminars = LocalStorageManager.getSeminars();
-        const series = LocalStorageManager.getSeries();
-        let foundLesson = null;
-        for (const seminar of seminars) {
-          foundLesson = seminar.lessons.find(l => l.id === lessonId);
-          if (foundLesson) break;
-        }
-        if (!foundLesson) {
-          for (const serie of series) {
-            foundLesson = serie.lessons.find(l => l.id === lessonId);
-            if (foundLesson) break;
+        getLessonById(lessonId).then((res) => {
+          if (res.ok) {
+            const l: any = res.lesson;
+            const mapped = {
+              id: l.id,
+              title: l.title,
+              content: l.content,
+              containerId: l.seminarId ?? l.seriesId ?? "",
+              containerType: l.containerType === 'SEMINAR' ? 'seminar' : 'series',
+              order: l.order,
+              fragments: (l.fragments ?? []).map((f: any) => ({
+                id: f.id,
+                order: f.order,
+                readingMaterial: f.readingMaterial,
+                slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
+                videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
+                studyAids: f.studyAids,
+                narrationAudio: undefined,
+                isCollapsed: f.isCollapsed ?? false,
+              }))
+            } as any;
+            setLesson(mapped);
+            setCurrentFragmentIndex(fragmentIndex);
+            setCurrentFragment(mapped.fragments[fragmentIndex] || null);
+            setIsConnected(true);
           }
-        }
-        if (foundLesson) {
-          setLesson(foundLesson);
-          setCurrentFragmentIndex(fragmentIndex);
-          setCurrentFragment(foundLesson.fragments[fragmentIndex] || null);
-          setIsConnected(true);
-        }
+        });
       }
     }
   }, [searchParams]);

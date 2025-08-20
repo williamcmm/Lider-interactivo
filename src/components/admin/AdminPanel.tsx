@@ -38,6 +38,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
           onRemoveFragment={actions.removeFragment}
           onSaveFragments={actions.saveFragmentsToLesson}
           onFinish={actions.handleFinishEditingLessons}
+          isSaving={state.isSavingFragments}
         />
       </div>
     );

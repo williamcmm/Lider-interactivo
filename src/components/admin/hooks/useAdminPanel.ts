@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Seminar, Series, StudyContainer, Fragment, AudioFile } from "@/types";
-import { LocalStorageManager } from "@/lib/storage";
 import { AdminPanelState, CreationForm, ActiveTab } from "../types";
 import {
   createSeminarFromAdminForm,
@@ -11,6 +10,12 @@ import {
 import { submitAlert } from "@/utils/alerts";
 import { deleteSeminarOrSerie } from "@/actions/admin/delete-seminar-or-serie";
 import Swal from "sweetalert2";
+import {
+  addFragment as addFragmentAction,
+  removeFragment as removeFragmentAction,
+  updateFragment as updateFragmentAction,
+  reorderFragments as reorderFragmentsAction,
+} from "@/actions/admin/fragments/crud";
 
 type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
 
@@ -155,18 +160,6 @@ export function useAdminPanel(init?: InitData) {
   const [isSavingFragments, setIsSavingFragments] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Cargar desde localStorage solo si no vino data del servidor
-  useEffect(() => {
-    if ((init?.initialSeminars?.length ?? 0) === 0) {
-      const storedSeminars = LocalStorageManager.getSeminars();
-      if (storedSeminars.length) setSeminars(storedSeminars);
-    }
-    if ((init?.initialSeries?.length ?? 0) === 0) {
-      const storedSeries = LocalStorageManager.getSeries();
-      if (storedSeries.length) setSeries(storedSeries);
-    }
-  }, []);
-
   const currentData = state.activeTab === "seminars" ? seminars : series;
 
   // ============== FUNCIONES PARA MANEJO DE CONTENEDORES ==============
@@ -300,10 +293,10 @@ export function useAdminPanel(init?: InitData) {
       updatedAt: new Date(),
     };
 
-  if (state.activeTab === "seminars") {
-      // Persist via Server Action (Prisma). Fallback to localStorage on error.
+    if (state.activeTab === "seminars") {
+      // Persist via Server Action (Prisma)
       try {
-    setIsSavingCreate(true);
+        setIsSavingCreate(true);
         // Sanitize non-serializable fields (File) from audioFiles
         const sanitizedForm: CreationForm = {
           ...state.creationForm,
@@ -391,8 +384,7 @@ export function useAdminPanel(init?: InitData) {
           };
           const updatedSeminars = [...seminars, prismaSeminar];
           setSeminars(updatedSeminars);
-          LocalStorageManager.saveSeminars(updatedSeminars);
-  } else {
+        } else {
           submitAlert(
             (result as any).error || "Error creando seminario",
             "error"
@@ -400,13 +392,8 @@ export function useAdminPanel(init?: InitData) {
           throw new Error((result as any).error || "Error creando seminario");
         }
       } catch (e) {
-        console.error(
-          "Fallo al crear seminario en backend, usando localStorage",
-          e
-        );
-        const updatedSeminars = [...seminars, newContainer as Seminar];
-        setSeminars(updatedSeminars);
-        LocalStorageManager.saveSeminars(updatedSeminars);
+        console.error("Error creando seminario en backend", e);
+        submitAlert("Error creando seminario", "error");
       } finally {
         setIsSavingCreate(false);
       }
@@ -499,22 +486,13 @@ export function useAdminPanel(init?: InitData) {
           };
           const updatedSeries = [...series, prismaSeries];
           setSeries(updatedSeries);
-          LocalStorageManager.saveSeries(updatedSeries);
         } else {
-          submitAlert(
-            (result as any).error || "Error creando serie",
-            "error"
-          );
+          submitAlert((result as any).error || "Error creando serie", "error");
           throw new Error((result as any).error || "Error creando serie");
         }
       } catch (e) {
-        console.error(
-          "Fallo al crear serie en backend, usando localStorage",
-          e
-        );
-        const updatedSeries = [...series, newContainer as Series];
-        setSeries(updatedSeries);
-        LocalStorageManager.saveSeries(updatedSeries);
+        console.error("Error creando serie en backend", e);
+        submitAlert("Error creando serie", "error");
       } finally {
         setIsSavingCreate(false);
       }
@@ -585,11 +563,9 @@ export function useAdminPanel(init?: InitData) {
         if (res.type === "seminar") {
           const updatedSeminars = seminars.filter((s) => s.id !== id);
           setSeminars(updatedSeminars);
-          LocalStorageManager.saveSeminars(updatedSeminars);
         } else if (res.type === "series") {
           const updatedSeries = series.filter((s) => s.id !== id);
           setSeries(updatedSeries);
-          LocalStorageManager.saveSeries(updatedSeries);
         }
 
         submitAlert("Eliminado correctamente", "success");
@@ -604,77 +580,125 @@ export function useAdminPanel(init?: InitData) {
 
   // ============== FUNCIONES PARA MANEJO DE FRAGMENTOS ==============
 
-  const addFragment = () => {
+  const addFragment = async () => {
     if (!state.editingContainer) return;
-
-    const newFragment = {
-      id: `fragment_${Date.now()}`,
-      order: state.fragmentsData.length + 1,
-      readingMaterial: "Nuevo contenido de lectura...",
-      slides: [
-        {
-          id: `slide_${Date.now()}_0`,
-          order: 1,
-          title: "Nueva Diapositiva",
-          content: "<h2>Título de la nueva diapositiva</h2><p>Contenido...</p>",
-        },
-      ],
-      videos: [],
-      studyAids: "Nuevas ayudas de estudio...",
-      narrationAudio: undefined,
-    };
-
-    const updatedFragments = [...state.fragmentsData, newFragment];
-    setState((prev) => ({ ...prev, fragmentsData: updatedFragments }));
+    const currentLesson =
+      state.editingContainer.lessons[state.selectedLessonIndex];
+    const res = await addFragmentAction(currentLesson.id);
+    if (res.ok) {
+      const f: any = res.fragment;
+      const mapped: Fragment = {
+        id: f.id,
+        order: f.order,
+        readingMaterial: f.readingMaterial,
+        slides: (f.slides ?? []).map((sl: any) => ({
+          id: sl.id,
+          title: sl.title,
+          content: sl.content,
+          order: sl.order,
+        })),
+        videos: (f.videos ?? []).map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          youtubeId: v.youtubeId,
+          description: v.description ?? undefined,
+          order: v.order,
+        })),
+        studyAids: f.studyAids,
+        narrationAudio: undefined,
+        isCollapsed: f.isCollapsed ?? false,
+      };
+      setState((prev) => ({
+        ...prev,
+        fragmentsData: [...prev.fragmentsData, mapped],
+      }));
+    } else {
+      submitAlert(
+        (res as any).error || "No se pudo agregar el fragmento",
+        "error"
+      );
+    }
   };
 
-  const removeFragment = (fragmentIndex: number) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este fragmento?"))
-      return;
-
-    const updatedFragments = state.fragmentsData.filter(
-      (_, index) => index !== fragmentIndex
-    );
-
-    // Reordenar los fragmentos restantes
-    updatedFragments.forEach((fragment, index) => {
-      fragment.order = index + 1;
+  const removeFragment = async (fragmentIndex: number) => {
+    const result = await Swal.fire({
+      title: "¿Estás seguro de que deseas eliminar este fragmento?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      confirmButtonColor: "red",
+      cancelButtonText: "Cancelar",
     });
-
-    setState((prev) => ({
-      ...prev,
-      fragmentsData: updatedFragments,
-      editingFragmentIndex: null,
-    }));
+    if (!result.isConfirmed) return;
+    const fragment = state.fragmentsData[fragmentIndex];
+    if (!fragment) return;
+    const res = await removeFragmentAction(fragment.id);
+    if (res.ok) {
+      const updatedFragments = state.fragmentsData.filter(
+        (_, index) => index !== fragmentIndex
+      );
+      // Reordenar localmente
+      updatedFragments.forEach((f, idx) => (f.order = idx + 1));
+      setState((prev) => ({
+        ...prev,
+        fragmentsData: updatedFragments,
+        editingFragmentIndex: null,
+      }));
+      // Persist reordering
+      const orderedIds = updatedFragments.map((f) => f.id);
+      const currentLesson =
+        state.editingContainer!.lessons[state.selectedLessonIndex];
+      await reorderFragmentsAction(currentLesson.id, orderedIds);
+    } else {
+      submitAlert(
+        (res as any).error || "No se pudo eliminar el fragmento",
+        "error"
+      );
+    }
   };
 
-  const saveFragmentsToLesson = () => {
+  const saveFragmentsToLesson = async () => {
     if (!state.editingContainer) return;
     setIsSavingFragments(true);
+    try {
+      // Persist updates for each fragment basic fields
+      for (const f of state.fragmentsData) {
+        await updateFragmentAction(f.id, {
+          readingMaterial: f.readingMaterial,
+          studyAids: f.studyAids,
+          isCollapsed: (f as any).isCollapsed ?? false,
+        });
+      }
+      // Persist order
+      const currentLesson =
+        state.editingContainer.lessons[state.selectedLessonIndex];
+      const orderedIds = state.fragmentsData.map((f) => f.id);
+      await reorderFragmentsAction(currentLesson.id, orderedIds);
 
-    // Actualizar los fragmentos en la lección actual
-    const updatedContainer = { ...state.editingContainer };
-    updatedContainer.lessons[state.selectedLessonIndex].fragments =
-      state.fragmentsData;
-
-    // Guardar en localStorage
-    if (state.activeTab === "seminars") {
-      const updatedSeminars = seminars.map((s) =>
-        s.id === updatedContainer.id ? updatedContainer : s
-      );
-      setSeminars(updatedSeminars);
-      LocalStorageManager.saveSeminars(updatedSeminars);
-    } else {
-      const updatedSeries = series.map((s) =>
-        s.id === updatedContainer.id ? updatedContainer : s
-      );
-      setSeries(updatedSeries);
-      LocalStorageManager.saveSeries(updatedSeries);
+      // Reflect local edit container
+      const updatedContainer = { ...state.editingContainer };
+      updatedContainer.lessons[state.selectedLessonIndex].fragments =
+        state.fragmentsData;
+      if (state.activeTab === "seminars") {
+        const updatedSeminars = seminars.map((s) =>
+          s.id === updatedContainer.id ? updatedContainer : s
+        );
+        setSeminars(updatedSeminars);
+      } else {
+        const updatedSeries = series.map((s) =>
+          s.id === updatedContainer.id ? updatedContainer : s
+        );
+        setSeries(updatedSeries);
+      }
+      setState((prev) => ({ ...prev, editingContainer: updatedContainer }));
+      submitAlert("Fragmentos guardados", "success");
+    } catch (e) {
+      console.error("Error guardando fragmentos", e);
+      submitAlert("No se pudieron guardar los fragmentos", "error");
+    } finally {
+      setIsSavingFragments(false);
     }
-
-  setState((prev) => ({ ...prev, editingContainer: updatedContainer }));
-  // Simular pequeña espera para UX y permitir ver spinner
-  setTimeout(() => setIsSavingFragments(false), 300);
   };
 
   const setActiveTab = (tab: ActiveTab) => {
@@ -687,9 +711,9 @@ export function useAdminPanel(init?: InitData) {
       seminars,
       series,
       currentData,
-  isSavingCreate,
-  isSavingFragments,
-  deletingId,
+      isSavingCreate,
+      isSavingFragments,
+      deletingId,
     },
     actions: {
       setActiveTab,
