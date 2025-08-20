@@ -1,8 +1,8 @@
-import { getNotesForFragment } from '@/actions/notes/crud';
-import { create } from 'zustand';
+import { getNotesForFragment } from "@/actions/notes/crud";
+import { create } from "zustand";
 
 // Tipos principales
-export type TabType = 'ayuda' | 'notas' | 'compartidas' | 'compartir';
+export type TabType = "ayuda" | "notas" | "compartidas" | "compartir";
 
 export interface Note {
   id: string;
@@ -17,31 +17,31 @@ interface NotesState {
   activeTab: TabType;
   isAddingNote: boolean;
   newNoteText: string;
-  
+
   // Estados de notas
   fragmentNotes: Note[];
   currentFragmentId?: string;
-  
+
   // Estados de notas compartidas
   sharedUsers: string[];
   selectedSharedUser?: string;
   sharedUserNotes: Note[];
   shareEmail: string;
   shareStatus: string;
-  
+
   // Acciones de navegación y UI
   setActiveTab: (tab: TabType) => void;
   setIsAddingNote: (isAdding: boolean) => void;
   setNewNoteText: (text: string) => void;
-  
+
   // Acciones de notas principales
   setFragmentNotes: (notes: Note[]) => void;
   setCurrentFragmentId: (id?: string) => void;
-  addNote: (note: Omit<Note, 'id'>) => void;
+  addNote: (note: Omit<Note, "id">) => void;
   deleteNote: (id: string, fragmentId?: string) => void;
   saveNewNote: () => void;
   loadNotesForFragment: (fragmentId: string) => void;
-  
+
   // Acciones de notas compartidas
   setSharedUsers: (users: string[]) => void;
   setSelectedSharedUser: (user?: string) => void;
@@ -50,7 +50,7 @@ interface NotesState {
   setShareStatus: (status: string) => void;
   handleShare: () => void;
   handleSelectSharedUser: (email: string) => void;
-  
+
   // Utilidades
   clearAllNotes: () => void;
   resetNotesState: () => void;
@@ -58,13 +58,13 @@ interface NotesState {
 
 /**
  * Store de Zustand para el manejo de notas
- * 
+ *
  * Centraliza todo el estado relacionado con notas:
  * - Notas por fragmento persistidas en servidor (Server Actions)
  * - Sistema de pestañas y navegación
  * - Notas compartidas entre usuarios
  * - Funcionalidades de compartir y colaborar
- * 
+ *
  * Beneficios sobre Context API:
  * - Mejor rendimiento (sin re-renders innecesarios)
  * - Código más limpio y mantenible
@@ -75,55 +75,55 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   // ==========================================
   // ESTADO INICIAL
   // ==========================================
-  
+
   // UI y navegación
-  activeTab: 'notas',
+  activeTab: "notas",
   isAddingNote: false,
-  newNoteText: '',
-  
+  newNoteText: "",
+
   // Notas principales
   fragmentNotes: [],
   currentFragmentId: undefined,
-  
+
   // Notas compartidas
   sharedUsers: [],
   selectedSharedUser: undefined,
   sharedUserNotes: [],
-  shareEmail: '',
-  shareStatus: '',
-  
+  shareEmail: "",
+  shareStatus: "",
+
   // ==========================================
   // ACCIONES DE UI Y NAVEGACIÓN
   // ==========================================
-  
+
   setActiveTab: (tab: TabType) => {
     set({ activeTab: tab });
   },
-  
+
   setIsAddingNote: (isAdding: boolean) => {
     set({ isAddingNote: isAdding });
     // Si se cancela la adición, limpiar el texto
     if (!isAdding) {
-      set({ newNoteText: '' });
+      set({ newNoteText: "" });
     }
   },
-  
+
   setNewNoteText: (text: string) => {
     set({ newNoteText: text });
   },
-  
+
   // ==========================================
   // ACCIONES DE NOTAS PRINCIPALES
   // ==========================================
-  
+
   setFragmentNotes: (notes: Note[]) => {
     set({ fragmentNotes: notes });
   },
-  
+
   setCurrentFragmentId: (id?: string) => {
     const state = get();
     set({ currentFragmentId: id });
-    
+
     // Auto-cargar notas cuando cambia el fragmento
     if (id && id !== state.currentFragmentId) {
       state.loadNotesForFragment(id);
@@ -132,11 +132,11 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       set({ fragmentNotes: [] });
     }
   },
-  
+
   /**
    * Agregar una nueva nota al fragmento actual
    */
-  addNote: async (noteData: Omit<Note, 'id'>) => {
+  addNote: async (noteData: Omit<Note, "id">) => {
     const { fragmentNotes, currentFragmentId } = get();
     const fragmentId = currentFragmentId || noteData.fragmentId;
     const payload = {
@@ -149,7 +149,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       const { createNote } = await import("@/actions/notes/crud");
       const res = await createNote(payload);
       if (res.ok) {
-        const created = res.note as any;
+        const created = res.note;
         const mapped: Note = {
           id: created.id,
           content: created.content,
@@ -163,9 +163,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       console.error("Error creating note:", error);
     }
   },
-  
+
   /**
-  * Eliminar una nota tanto del estado como del servidor
+   * Eliminar una nota tanto del estado como del servidor
    */
   deleteNote: async (id: string) => {
     const { fragmentNotes } = get();
@@ -180,36 +180,35 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       console.error("Error deleting note:", error);
     }
   },
-  
+
   /**
    * Guardar la nota que se está escribiendo
    */
   saveNewNote: () => {
     const { newNoteText, addNote } = get();
-    
+
     if (newNoteText.trim()) {
       addNote({
         content: newNoteText.trim(),
-        contentHtml: newNoteText.startsWith('<') ? newNoteText : undefined
+        contentHtml: newNoteText.startsWith("<") ? newNoteText : undefined,
       });
-      
+
       // Limpiar el formulario
-      set({ 
-        newNoteText: '', 
-        isAddingNote: false 
+      set({
+        newNoteText: "",
+        isAddingNote: false,
       });
     }
   },
-  
+
   /**
-  * Cargar notas desde el servidor para un fragmento específico
+   * Cargar notas desde el servidor para un fragmento específico
    */
   loadNotesForFragment: async (fragmentId: string) => {
     try {
-      
       const res = await getNotesForFragment(fragmentId);
       if (res.ok) {
-        const contextNotes = (res.notes as any[]).map((note) => ({
+        const contextNotes = res.notes.map((note) => ({
           id: note.id,
           content: note.content,
           fragmentId: note.fragmentId ?? undefined,
@@ -221,74 +220,74 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         set({ fragmentNotes: [] });
       }
     } catch (error) {
-      console.error('Error loading notes for fragment:', error);
+      console.error("Error loading notes for fragment:", error);
       set({ fragmentNotes: [] });
     }
   },
-  
+
   // ==========================================
   // ACCIONES DE NOTAS COMPARTIDAS
   // ==========================================
-  
+
   setSharedUsers: (users: string[]) => {
     set({ sharedUsers: users });
   },
-  
+
   setSelectedSharedUser: (user?: string) => {
     set({ selectedSharedUser: user });
   },
-  
+
   setSharedUserNotes: (notes: Note[]) => {
     set({ sharedUserNotes: notes });
   },
-  
+
   setShareEmail: (email: string) => {
     set({ shareEmail: email });
   },
-  
+
   setShareStatus: (status: string) => {
     set({ shareStatus: status });
   },
-  
+
   /**
    * Compartir notas con otro usuario
    */
   handleShare: () => {
     const { shareEmail, sharedUsers } = get();
-    
+
     if (shareEmail.trim()) {
       // Agregar usuario a la lista de compartidos
       const updatedUsers = [...sharedUsers, shareEmail.trim()];
-      set({ 
+      set({
         sharedUsers: updatedUsers,
-        shareStatus: 'Notas compartidas correctamente',
-        shareEmail: '' 
+        shareStatus: "Notas compartidas correctamente",
+        shareEmail: "",
       });
-      
+
       // Limpiar el estado después de 3 segundos
       setTimeout(() => {
-        set({ shareStatus: '' });
+        set({ shareStatus: "" });
       }, 3000);
     }
   },
-  
+
   /**
    * Seleccionar un usuario compartido y cargar sus notas
    */
   handleSelectSharedUser: (email: string) => {
-    set({ 
+    set({
       selectedSharedUser: email,
-      sharedUserNotes: [] // Aquí se cargarían las notas reales del usuario
+      sharedUserNotes: [], // Aquí se cargarían las notas reales del usuario
     });
-    
+
     // TODO: Implementar carga de notas compartidas reales
     // En una implementación real, aquí se haría una consulta a la base de datos
   },
-  
+
   // ==========================================
   // UTILIDADES Y RESET
   // ==========================================
-  
+
   /**
    * Limpiar todas las notas del fragmento actual
    */
@@ -300,31 +299,31 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         const { clearNotesForFragment } = await import("@/actions/notes/crud");
         await clearNotesForFragment(currentFragmentId);
       } catch (error) {
-        console.error('Error clearing notes:', error);
+        console.error("Error clearing notes:", error);
       }
     }
   },
-  
+
   /**
    * Resetear todo el estado de notas
    */
   resetNotesState: () => {
     set({
       // UI y navegación
-      activeTab: 'notas',
+      activeTab: "notas",
       isAddingNote: false,
-      newNoteText: '',
-      
+      newNoteText: "",
+
       // Notas principales
       fragmentNotes: [],
       currentFragmentId: undefined,
-      
+
       // Notas compartidas
       sharedUsers: [],
       selectedSharedUser: undefined,
       sharedUserNotes: [],
-      shareEmail: '',
-      shareStatus: ''
+      shareEmail: "",
+      shareStatus: "",
     });
-  }
+  },
 }));

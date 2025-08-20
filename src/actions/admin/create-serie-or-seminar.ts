@@ -32,10 +32,10 @@ export const createSerieOrSeminar = async (
 ) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const title = (data as any).title;
-      const description = (data as any).description ?? null;
-      const audioFiles = (data as any).audioFiles as UiAudioFile[] | undefined;
-      const lessonsInput = (data as any).lessons as
+      const title = data.title;
+      const description = data.description ?? null;
+      const audioFiles = data.audioFiles as UiAudioFile[] | undefined;
+      const lessonsInput = data.lessons as
         | Seminar["lessons"]
         | {
             title: string;
@@ -43,14 +43,17 @@ export const createSerieOrSeminar = async (
             content?: string;
             fragments?: UiFragment[];
           }[];
-  const type = (data as any).type ?? "seminar";
+  const type =
+    "type" in data && (data as { type?: "seminar" | "series" }).type
+      ? (data as { type?: "seminar" | "series" }).type
+      : "seminar";
 
       // Normalize lessons: ensure order, content, and fragments with defaults
-      const normalizedLessons = (lessonsInput ?? []).map((l, idx) => {
-        const order = (l as any).order ?? idx + 1;
-        const content = (l as any).content ?? "Contenido por defecto...";
-        const fragments = (l as any).fragments ?? [defaultFragment(1)];
-        return { title: (l as any).title, order, content, fragments };
+      const normalizedLessons = (lessonsInput ?? []).map((lesson, idx) => {
+        const order = lesson.order ?? idx + 1;
+        const content = lesson.content ?? "Contenido por defecto...";
+        const fragments = lesson.fragments ?? [defaultFragment(1)];
+        return { title: lesson.title, order, content, fragments };
       });
 
       if (type === "series") {
@@ -212,34 +215,50 @@ function mapAudioType(t: UiAudioFile["type"]) {
   return t === "local" ? "LOCAL" : ("REMOTE" as const);
 }
 
-function toFragmentCreate(f: UiFragment) {
-  const slides = (f.slides ?? []).map((s: UiSlide) => ({
+function toFragmentCreate(fragment: UiFragment) {
+  const slides = (fragment.slides ?? []).map((s: UiSlide) => ({
     title: s.title,
     content: s.content,
     order: s.order,
   }));
-  const videos = (f.videos ?? []).map((v: UiVideo) => ({
+  const videos = (fragment.videos ?? []).map((v: UiVideo) => ({
     title: v.title,
     youtubeId: v.youtubeId,
     description: v.description ?? null,
     order: v.order,
   }));
 
-  const base = {
-    order: f.order,
-    readingMaterial: f.readingMaterial,
-    studyAids: f.studyAids ?? "",
-    isCollapsed: f.isCollapsed ?? false,
+  type FragmentCreateInput = {
+    order: number;
+    readingMaterial: string;
+    studyAids: string;
+    isCollapsed: boolean;
+    slides: { create: { title: string; content: string; order: number }[] };
+    videos: { create: { title: string; youtubeId: string; description: string | null; order: number }[] };
+    narrationAudio?: {
+      create: {
+        name: string;
+        url: string | null;
+        type: string;
+      };
+    };
+  };
+
+  const base: FragmentCreateInput = {
+    order: fragment.order,
+    readingMaterial: fragment.readingMaterial,
+    studyAids: fragment.studyAids ?? "",
+    isCollapsed: fragment.isCollapsed ?? false,
     slides: { create: slides },
     videos: { create: videos },
-  } as any;
+  };
 
-  if (f.narrationAudio) {
+  if (fragment.narrationAudio) {
     base.narrationAudio = {
       create: {
-        name: f.narrationAudio.name,
-        url: f.narrationAudio.url ?? null,
-        type: mapAudioType(f.narrationAudio.type),
+        name: fragment.narrationAudio.name,
+        url: fragment.narrationAudio.url ?? null,
+        type: mapAudioType(fragment.narrationAudio.type),
       },
     };
   }

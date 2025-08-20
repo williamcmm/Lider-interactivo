@@ -15,7 +15,7 @@ interface Response {
 const registrationSchema = z
   .object({
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-    email: z.string().email("Correo inválido"),
+    email: z.email("Correo inválido"),
     password: z
       .string()
       .min(6, "La contraseña debe tener al menos 6 caracteres"),
@@ -88,8 +88,13 @@ export async function registerUser(
     });
 
     return { ok: true, status: 201, message: "Registro exitoso" };
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: string }).code === "P2002"
+    ) {
       return {
         ok: false,
         status: 409,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TopBar } from "./ui/TopBar";
 import { Sidebar } from "./ui/Sidebar";
 import DesktopSharedView from "./layouts/shared/DesktopSharedView";
@@ -9,14 +9,16 @@ import DesktopSeparateView from "./layouts/separate/DesktopSeparateView";
 import MobileSeparateView from "./layouts/separate/MobileSeparateView";
 // ...existing code...
 import { Seminar, Series, Lesson, Fragment } from "@/types";
+import type { DbSeminar, DbSeries } from "@/types/db";
+import { dbSeminarToUi, dbSeriesToUi } from "@/types/db";
 // Eliminado LocalStorage fallback
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useNotesStore } from "@/store/notesStore";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 type StudyAppProps = {
-  initialSeminars?: any[];
-  initialSeries?: any[];
+  initialSeminars?: DbSeminar[];
+  initialSeries?: DbSeries[];
 };
 
 export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppProps) {
@@ -28,7 +30,9 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
   const { setSharedUsers } = useNotesStore();
 
   // Panel por defecto: 'all' en escritorio/tablet, 'reading' en móvil vertical
-  const [activePanel, setActivePanel] = useState<string>("all");
+  const [activePanel, setActivePanel] = useState<
+    "all" | "reading" | "slides" | "music" | "notes"
+  >("all");
   // Estado para mostrar aviso en móvil vertical en 'Ver todo'
   const [showRotateMessage, setShowRotateMessage] = useState(false);
 
@@ -53,81 +57,36 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
     return () => window.removeEventListener("resize", checkMobile);
   }, [setIsMobile]);
 
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    "portrait"
-  );
+  // Forzar re-render cuando cambia la orientación del dispositivo
+  const [, forceRender] = useState({});
   useEffect(() => {
-    const checkOrientation = () => {
-      setOrientation(
-        window.innerHeight > window.innerWidth ? "portrait" : "landscape"
-      );
+    const handleOrientationChange = () => {
+      // Forzar re-render para que se reevalúen las condiciones de orientación
+      forceRender({});
     };
-    checkOrientation();
-    window.addEventListener("resize", checkOrientation);
-    window.addEventListener("orientationchange", checkOrientation);
+    
+    window.addEventListener("resize", handleOrientationChange);
+    window.addEventListener("orientationchange", handleOrientationChange);
     return () => {
-      window.removeEventListener("resize", checkOrientation);
-      window.removeEventListener("orientationchange", checkOrientation);
+      window.removeEventListener("resize", handleOrientationChange);
+      window.removeEventListener("orientationchange", handleOrientationChange);
     };
   }, []);
+
   // Detectar si es móvil para mostrar hamburguesa
   // Removido porque ahora usamos Zustand
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
-  const mapAudioType = (t: any): 'local' | 'remote' =>
-    String(t || '').toLowerCase() === 'local' ? 'local' : 'remote';
-  const toUiSeminar = (s: any): Seminar => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? undefined,
-    order: s.order,
-    audioFiles: (s.audioFiles ?? []).map((a: any) => ({ id: a.id, name: a.name, url: a.url ?? undefined, type: mapAudioType(a.type) })),
-    lessons: (s.lessons ?? []).map((l: any) => ({
-      id: l.id,
-      title: l.title,
-      content: l.content,
-      containerId: s.id,
-      containerType: 'seminar',
-      order: l.order,
-      fragments: (l.fragments ?? []).map((f: any) => ({
-        id: f.id,
-        order: f.order,
-        readingMaterial: f.readingMaterial,
-        slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
-        videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
-        studyAids: f.studyAids,
-        narrationAudio: f.narrationAudio ? { id: f.narrationAudio.id, name: f.narrationAudio.name, url: f.narrationAudio.url ?? undefined, type: mapAudioType(f.narrationAudio.type) } : undefined,
-        isCollapsed: f.isCollapsed ?? false,
-      })),
-    })),
-  });
-  const toUiSeries = (s: any): Series => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? undefined,
-    order: s.order,
-    audioFiles: (s.audioFiles ?? []).map((a: any) => ({ id: a.id, name: a.name, url: a.url ?? undefined, type: mapAudioType(a.type) })),
-    lessons: (s.lessons ?? []).map((l: any) => ({
-      id: l.id,
-      title: l.title,
-      content: l.content,
-      containerId: s.id,
-      containerType: 'series',
-      order: l.order,
-      fragments: (l.fragments ?? []).map((f: any) => ({
-        id: f.id,
-        order: f.order,
-        readingMaterial: f.readingMaterial,
-        slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
-        videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
-        studyAids: f.studyAids,
-        narrationAudio: f.narrationAudio ? { id: f.narrationAudio.id, name: f.narrationAudio.name, url: f.narrationAudio.url ?? undefined, type: mapAudioType(f.narrationAudio.type) } : undefined,
-        isCollapsed: f.isCollapsed ?? false,
-      })),
-    })),
-  });
-  const [seminars, setSeminars] = useState<Seminar[]>(initialSeminars.map(toUiSeminar));
-  const [series, setSeries] = useState<Series[]>(initialSeries.map(toUiSeries));
+  
+  // Convertir datos iniciales a UI types usando useMemo (no cambian después de inicialización)
+  const seminars = useMemo<Seminar[]>(
+    () => (initialSeminars ?? []).map(dbSeminarToUi),
+    [initialSeminars]
+  );
+  const series = useMemo<Series[]>(
+    () => (initialSeries ?? []).map(dbSeriesToUi),
+    [initialSeries]
+  );
 
   useEffect(() => {
     const setInitialPanel = () => {
@@ -160,21 +119,24 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
     // Inicializar usuarios compartidos en el store
     setSharedUsers(["usuario1@email.com", "usuario2@email.com"]);
     // Seleccionar la primera lección disponible de datos del servidor
-    if (initialSeminars.length > 0 && initialSeminars[0].lessons.length > 0) {
-      setCurrentLesson(initialSeminars[0].lessons[0]);
-    } else if (initialSeries.length > 0 && initialSeries[0].lessons.length > 0) {
-      setCurrentLesson(initialSeries[0].lessons[0]);
+    if (seminars.length > 0 && seminars[0].lessons.length > 0) {
+      setCurrentLesson(seminars[0].lessons[0]);
+    } else if (series.length > 0 && series[0].lessons.length > 0) {
+      setCurrentLesson(series[0].lessons[0]);
     } else {
       setCurrentLesson(null);
     }
+  }, [setSharedUsers, seminars, series]);
 
-  }, [setSharedUsers]);
-
-  // Combinar seminarios y series para la navegación
-  const allContainers = [
-    ...seminars.map((s) => ({ ...s, type: "seminar" as const })),
-    ...series.map((s) => ({ ...s, type: "series" as const })),
-  ].sort((a, b) => a.order - b.order);
+  // Combinar seminarios y series para la navegación (memoizado)
+  const allContainers = useMemo(
+    () =>
+      [
+        ...seminars.map((s) => ({ ...s, type: "seminar" as const })),
+        ...series.map((s) => ({ ...s, type: "series" as const })),
+      ].sort((a, b) => a.order - b.order),
+    [seminars, series]
+  );
 
   const selectLesson = (lesson: Lesson) => {
     setCurrentLesson(lesson);
@@ -264,7 +226,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
           {/* --- Alternancia: mobile vertical usa vista separada; resto usa shared/all o separadas --- */}
           {isMobile && window.innerHeight > window.innerWidth ? (
             <MobileSeparateView
-              activePanel={activePanel as any}
+              activePanel={activePanel}
               currentLesson={currentLesson}
               fragment={fragment}
               fragmentIndex={currentFragmentIndex}
@@ -292,7 +254,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
             )
           ) : isMobile ? (
             <MobileSeparateView
-              activePanel={activePanel as any}
+              activePanel={activePanel}
               currentLesson={currentLesson}
               fragment={fragment}
               fragmentIndex={currentFragmentIndex}
@@ -302,7 +264,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
             />
           ) : (
             <DesktopSeparateView
-              activePanel={activePanel as any}
+              activePanel={activePanel}
               currentLesson={currentLesson}
               fragment={fragment}
               fragmentIndex={currentFragmentIndex}

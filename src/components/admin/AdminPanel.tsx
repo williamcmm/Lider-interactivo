@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { FiBook, FiList } from 'react-icons/fi';
 import { useAdminPanel } from './hooks/useAdminPanel';
-import type { Seminar, Series } from '@/types';
+import type { DbSeminar, DbSeries } from '@/types/db';
 import { LessonEditor } from './components/LessonEditor';
 import { CreationForm } from './components/CreationForm';
 import { ContainerCard } from './components/ContainerCard';
@@ -11,8 +11,8 @@ import { CreationForm as CreationFormType } from './types';
 
 
 interface AdminPanelProps {
-  initialSeminars?: Seminar[];
-  initialSeries?: Series[];
+  initialSeminars?: DbSeminar[];
+  initialSeries?: DbSeries[];
 }
 
 export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPanelProps) {

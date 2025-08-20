@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
 import { FiGrid } from "react-icons/fi";
 import { AuthButton } from "./AuthButton";
 import { AdminButton } from "./AdminButton";
 import { ActionButtonsMobile } from "./ActionButtonsMobile";
 import { Fragment, Lesson } from "@/types";
+import type { PanelKey } from "./panel-options";
 
 interface CompactControlsProps {
-  panelOptions: { key: string; icon: React.ReactNode }[];
-  activePanel: string;
+  panelOptions: { key: Exclude<PanelKey, "all">; icon: React.ReactNode }[];
+  activePanel: PanelKey;
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
   fragmentIndex?: number;
   canCast: boolean;
   canShare: boolean;
-  setActivePanelAction: (panel: string) => void;
+  setActivePanelAction: (panel: PanelKey) => void;
 }
 
 export function CompactControls({
@@ -28,10 +28,6 @@ export function CompactControls({
   canShare,
   setActivePanelAction,
 }: CompactControlsProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isCasting, setIsCasting] = useState(false);
-  const [presentationRequest, setPresentationRequest] = useState<any>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
 
   return (
     <div className="flex items-center space-x-1 flex-1 justify-end">

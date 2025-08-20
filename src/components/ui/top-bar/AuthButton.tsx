@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { FiLogOut, FiUser } from "react-icons/fi";
-import { useEffect } from "react";
 
 interface AuthButtonProps {
   compact?: boolean; // true for mobile icon-only
 }
 
 export function AuthButton({ compact = false }: AuthButtonProps) {
-  const { status, update } = useSession();
+  const { status } = useSession();
   const isAuth = status === "authenticated";
 
   if (!isAuth) {

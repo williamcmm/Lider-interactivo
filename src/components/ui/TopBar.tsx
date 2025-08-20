@@ -4,13 +4,13 @@ import { Fragment, Lesson } from "../../types";
 import { CompactControls } from "./top-bar/CompactControls";
 import { SidebarToggle } from "./top-bar/SidebarToggle";
 import { DesktopControls } from "./top-bar/DesktopControls";
-import { panelOptions } from "./top-bar/panel-options";
+import { panelOptions, PanelKey } from "./top-bar/panel-options";
 interface TopBarProps {
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
   fragmentIndex?: number;
-  activePanel: string;
-  setActivePanel: (panel: string) => void;
+  activePanel: PanelKey;
+  setActivePanel: (panel: PanelKey) => void;
 }
 
 export function TopBar({
@@ -22,7 +22,6 @@ export function TopBar({
 }: TopBarProps) {
   // Detección de móvil client-side mínima
   const [isMobile, setIsMobile] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -33,14 +32,6 @@ export function TopBar({
       window.removeEventListener("resize", checkMobile);
       window.removeEventListener("orientationchange", checkMobile);
     };
-  }, []);
-
-  useEffect(() => {
-    const onChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
   return (

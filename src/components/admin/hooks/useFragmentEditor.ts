@@ -5,7 +5,7 @@ export function useFragmentEditor(initialFragments: Fragment[]) {
   const [fragments, setFragments] = useState<Fragment[]>(initialFragments);
   const [editingFragmentIndex, setEditingFragmentIndex] = useState<number | null>(null);
 
-  const updateFragment = (index: number, field: string, value: any) => {
+  const updateFragment = (index: number, field: string, value: string) => {
     const updatedFragments = [...fragments];
     updatedFragments[index] = { ...updatedFragments[index], [field]: value };
     setFragments(updatedFragments);

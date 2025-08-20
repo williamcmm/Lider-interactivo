@@ -13,7 +13,7 @@ export async function createNote(input: {
 }) {
   try {
     const session = await auth();
-    const userId = (session?.user as any)?.id as string | undefined;
+    const userId = session?.user?.id as string | undefined;
     if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
 
     // Determine type
@@ -43,7 +43,7 @@ export async function createNote(input: {
 export async function deleteNote(id: string) {
   try {
     const session = await auth();
-    const userId = (session?.user as any)?.id as string | undefined;
+    const userId = session?.user?.id as string | undefined;
     if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
 
     const note = await prisma.note.findUnique({ where: { id } });
@@ -64,7 +64,7 @@ export async function deleteNote(id: string) {
 export async function getNotesForFragment(fragmentId: string) {
   try {
     const session = await auth();
-    const userId = (session?.user as any)?.id as string | undefined;
+    const userId = session?.user?.id as string | undefined;
     if (!userId) return { ok: true as const, notes: [] };
 
     const notes = await prisma.note.findMany({
@@ -83,7 +83,7 @@ export async function getNotesForFragment(fragmentId: string) {
 export async function clearNotesForFragment(fragmentId: string) {
   try {
     const session = await auth();
-    const userId = (session?.user as any)?.id as string | undefined;
+    const userId = session?.user?.id as string | undefined;
     if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
 
     await prisma.note.deleteMany({ where: { fragmentId, userId } });

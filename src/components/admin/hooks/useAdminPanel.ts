@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { Seminar, Series, StudyContainer, Fragment, AudioFile } from "@/types";
 import { AdminPanelState, CreationForm, ActiveTab } from "../types";
+import type { 
+  DbSeminar, 
+  DbSeries, 
+  DbFragment, 
+  DbSlide, 
+  DbVideo
+} from "@/types/db";
+import {
+  dbSeminarToUi,
+  dbSeriesToUi
+} from "@/types/db";
 import {
   createSeminarFromAdminForm,
   createSeriesFromAdminForm,
@@ -19,118 +30,20 @@ import {
 import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/crud";
 import { updateSeminarTitle, updateSeriesTitle } from "@/actions/admin/update-serie-seminar-title";
 
-type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
+type InitData = { 
+  initialSeminars?: DbSeminar[]; 
+  initialSeries?: DbSeries[]; 
+};
 
 export function useAdminPanel(init?: InitData) {
-  // Helpers to map DB payload to UI types
-  const mapAudioType = (t: any): AudioFile["type"] =>
-    String(t || "").toLowerCase() === "local" ? "local" : "remote";
-
-  const toUiSeminar = (s: any): Seminar => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? undefined,
-    order: s.order,
-    createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
-    updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
-    audioFiles: (s.audioFiles ?? []).map((a: any) => ({
-      id: a.id,
-      name: a.name,
-      url: a.url ?? undefined,
-      type: mapAudioType(a.type),
-    })),
-    lessons: (s.lessons ?? []).map((l: any) => ({
-      id: l.id,
-      title: l.title,
-      content: l.content,
-      containerId: s.id,
-      containerType: "seminar",
-      order: l.order,
-      fragments: (l.fragments ?? []).map((f: any) => ({
-        id: f.id,
-        order: f.order,
-        readingMaterial: f.readingMaterial,
-        slides: (f.slides ?? []).map((sl: any) => ({
-          id: sl.id,
-          title: sl.title,
-          content: sl.content,
-          order: sl.order,
-        })),
-        videos: (f.videos ?? []).map((v: any) => ({
-          id: v.id,
-          title: v.title,
-          youtubeId: v.youtubeId,
-          description: v.description ?? undefined,
-          order: v.order,
-        })),
-        studyAids: f.studyAids,
-        narrationAudio: f.narrationAudio
-          ? {
-              id: f.narrationAudio.id,
-              name: f.narrationAudio.name,
-              url: f.narrationAudio.url ?? undefined,
-              type: mapAudioType(f.narrationAudio.type),
-            }
-          : undefined,
-        isCollapsed: f.isCollapsed ?? false,
-      })),
-      createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
-      updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
-    })),
-  });
-
-  const toUiSeries = (s: any): Series => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? undefined,
-    order: s.order,
-    createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
-    updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
-    audioFiles: (s.audioFiles ?? []).map((a: any) => ({
-      id: a.id,
-      name: a.name,
-      url: a.url ?? undefined,
-      type: mapAudioType(a.type),
-    })),
-    lessons: (s.lessons ?? []).map((l: any) => ({
-      id: l.id,
-      title: l.title,
-      content: l.content,
-      containerId: s.id,
-      containerType: "series",
-      order: l.order,
-      fragments: (l.fragments ?? []).map((f: any) => ({
-        id: f.id,
-        order: f.order,
-        readingMaterial: f.readingMaterial,
-        slides: (f.slides ?? []).map((sl: any) => ({
-          id: sl.id,
-          title: sl.title,
-          content: sl.content,
-          order: sl.order,
-        })),
-        videos: (f.videos ?? []).map((v: any) => ({
-          id: v.id,
-          title: v.title,
-          youtubeId: v.youtubeId,
-          description: v.description ?? undefined,
-          order: v.order,
-        })),
-        studyAids: f.studyAids,
-        narrationAudio: f.narrationAudio
-          ? {
-              id: f.narrationAudio.id,
-              name: f.narrationAudio.name,
-              url: f.narrationAudio.url ?? undefined,
-              type: mapAudioType(f.narrationAudio.type),
-            }
-          : undefined,
-        isCollapsed: f.isCollapsed ?? false,
-      })),
-      createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
-      updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
-    })),
-  });
+  // Use shared mappers from db.ts instead of local ones
+  const [seminars, setSeminars] = useState<Seminar[]>(
+    (init?.initialSeminars ?? []).map(dbSeminarToUi)
+  );
+  const [series, setSeries] = useState<Series[]>(
+    (init?.initialSeries ?? []).map(dbSeriesToUi)
+  );
+  
   const [state, setState] = useState<AdminPanelState>({
     activeTab: "seminars",
     isCreatingContainer: false,
@@ -151,12 +64,6 @@ export function useAdminPanel(init?: InitData) {
     editingFragmentIndex: null,
   });
 
-  const [seminars, setSeminars] = useState<Seminar[]>(
-    (init?.initialSeminars ?? []).map(toUiSeminar)
-  );
-  const [series, setSeries] = useState<Series[]>(
-    (init?.initialSeries ?? []).map(toUiSeries)
-  );
   // Loading flags
   const [isSavingCreate, setIsSavingCreate] = useState(false);
   const [isSavingFragments, setIsSavingFragments] = useState(false);
@@ -223,7 +130,7 @@ export function useAdminPanel(init?: InitData) {
     }));
   };
 
-  const handleFormFieldChange = (field: keyof CreationForm, value: any) => {
+  const handleFormFieldChange = (field: keyof CreationForm, value: string | number | AudioFile[]) => {
     setState((prev) => ({
       ...prev,
       creationForm: {
@@ -244,57 +151,6 @@ export function useAdminPanel(init?: InitData) {
       alert("Todos los títulos de las lecciones son obligatorios");
       return;
     }
-
-    const newContainer: StudyContainer = {
-      id: `${state.activeTab.slice(0, -1)}_${Date.now()}`,
-      title: state.creationForm.title.trim(),
-      description: state.creationForm.description.trim(),
-      type: state.activeTab === "seminars" ? "seminar" : "series",
-      order: currentData.length + 1,
-      lessons: state.creationForm.lessons.map((lesson, index) => ({
-        id: `lesson_${Date.now()}_${index}`,
-        title: lesson.title.trim(),
-        content: "Contenido por defecto...",
-        containerId: `${state.activeTab.slice(0, -1)}_${Date.now()}`,
-        containerType:
-          state.activeTab === "seminars"
-            ? "seminar"
-            : ("series" as "seminar" | "series"),
-        order: index + 1,
-        fragments: [
-          {
-            id: `fragment_${Date.now()}_${index}_0`,
-            order: 1,
-            readingMaterial: "Contenido de lectura por defecto...",
-            slides: [
-              {
-                id: `slide_${Date.now()}_${index}_0_0`,
-                order: 1,
-                title: "Diapositiva por defecto",
-                content:
-                  "<h2>Título de la diapositiva</h2><p>Contenido de la diapositiva...</p>",
-              },
-            ],
-            videos: [
-              {
-                id: `video_${Date.now()}_${index}_0_0`,
-                order: 1,
-                title: "Video de ejemplo",
-                youtubeId: "dQw4w9WgXcQ",
-                description: "Descripción del video...",
-              },
-            ],
-            studyAids: "Ayudas de estudio por defecto...",
-            narrationAudio: undefined,
-          },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-      audioFiles: state.creationForm.audioFiles,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
 
     if (state.activeTab === "seminars") {
       // Persist via Server Action (Prisma)
@@ -326,73 +182,16 @@ export function useAdminPanel(init?: InitData) {
         });
 
         if (result.ok && result.seminar) {
-          const s = result.seminar as any;
-          const prismaSeminar: Seminar = {
-            id: s.id,
-            title: s.title,
-            description: s.description ?? undefined,
-            order: s.order,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-            audioFiles: (s.audioFiles ?? []).map((a: any) => ({
-              id: a.id,
-              name: a.name,
-              url: a.url ?? undefined,
-              type: (String(a.type || "").toLowerCase() === "local"
-                ? "local"
-                : "remote") as AudioFile["type"],
-            })),
-            lessons: (s.lessons ?? []).map((l: any) => ({
-              id: l.id,
-              title: l.title,
-              content: l.content,
-              containerId: s.id,
-              containerType: "seminar",
-              order: l.order,
-              fragments: (l.fragments ?? []).map((f: any) => ({
-                id: f.id,
-                order: f.order,
-                readingMaterial: f.readingMaterial,
-                slides: (f.slides ?? []).map((sl: any) => ({
-                  id: sl.id,
-                  title: sl.title,
-                  content: sl.content,
-                  order: sl.order,
-                })),
-                videos: (f.videos ?? []).map((v: any) => ({
-                  id: v.id,
-                  title: v.title,
-                  youtubeId: v.youtubeId,
-                  description: v.description ?? undefined,
-                  order: v.order,
-                })),
-                studyAids: f.studyAids,
-                narrationAudio: f.narrationAudio
-                  ? {
-                      id: f.narrationAudio.id,
-                      name: f.narrationAudio.name,
-                      url: f.narrationAudio.url ?? undefined,
-                      type: (String(
-                        f.narrationAudio.type || ""
-                      ).toLowerCase() === "local"
-                        ? "local"
-                        : "remote") as AudioFile["type"],
-                    }
-                  : undefined,
-                isCollapsed: f.isCollapsed ?? false,
-              })),
-              createdAt: new Date(l.createdAt),
-              updatedAt: new Date(l.updatedAt),
-            })),
-          };
+          const s = result.seminar as DbSeminar;
+          const prismaSeminar: Seminar = dbSeminarToUi(s);
           const updatedSeminars = [...seminars, prismaSeminar];
           setSeminars(updatedSeminars);
         } else {
           submitAlert(
-            (result as any).error || "Error creando seminario",
+            (result as { error?: string }).error || "Error creando seminario",
             "error"
           );
-          throw new Error((result as any).error || "Error creando seminario");
+          throw new Error((result as { error?: string }).error || "Error creando seminario");
         }
       } catch (e) {
         console.error("Error creando seminario en backend", e);
@@ -427,71 +226,14 @@ export function useAdminPanel(init?: InitData) {
           description: sanitizedForm.description.trim(),
         });
 
-        if (result.ok && (result as any).series) {
-          const s = (result as any).series;
-          const prismaSeries: Series = {
-            id: s.id,
-            title: s.title,
-            description: s.description ?? undefined,
-            order: s.order,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-            audioFiles: (s.audioFiles ?? []).map((a: any) => ({
-              id: a.id,
-              name: a.name,
-              url: a.url ?? undefined,
-              type: (String(a.type || "").toLowerCase() === "local"
-                ? "local"
-                : "remote") as AudioFile["type"],
-            })),
-            lessons: (s.lessons ?? []).map((l: any) => ({
-              id: l.id,
-              title: l.title,
-              content: l.content,
-              containerId: s.id,
-              containerType: "series",
-              order: l.order,
-              fragments: (l.fragments ?? []).map((f: any) => ({
-                id: f.id,
-                order: f.order,
-                readingMaterial: f.readingMaterial,
-                slides: (f.slides ?? []).map((sl: any) => ({
-                  id: sl.id,
-                  title: sl.title,
-                  content: sl.content,
-                  order: sl.order,
-                })),
-                videos: (f.videos ?? []).map((v: any) => ({
-                  id: v.id,
-                  title: v.title,
-                  youtubeId: v.youtubeId,
-                  description: v.description ?? undefined,
-                  order: v.order,
-                })),
-                studyAids: f.studyAids,
-                narrationAudio: f.narrationAudio
-                  ? {
-                      id: f.narrationAudio.id,
-                      name: f.narrationAudio.name,
-                      url: f.narrationAudio.url ?? undefined,
-                      type: (String(
-                        f.narrationAudio.type || ""
-                      ).toLowerCase() === "local"
-                        ? "local"
-                        : "remote") as AudioFile["type"],
-                    }
-                  : undefined,
-                isCollapsed: f.isCollapsed ?? false,
-              })),
-              createdAt: new Date(l.createdAt),
-              updatedAt: new Date(l.updatedAt),
-            })),
-          };
+        if (result.ok && (result as { series?: DbSeries }).series) {
+          const s = (result as { series: DbSeries }).series;
+          const prismaSeries: Series = dbSeriesToUi(s);
           const updatedSeries = [...series, prismaSeries];
           setSeries(updatedSeries);
         } else {
-          submitAlert((result as any).error || "Error creando serie", "error");
-          throw new Error((result as any).error || "Error creando serie");
+          submitAlert((result as { error?: string }).error || "Error creando serie", "error");
+          throw new Error((result as { error?: string }).error || "Error creando serie");
         }
       } catch (e) {
         console.error("Error creando serie en backend", e);
@@ -536,7 +278,7 @@ export function useAdminPanel(init?: InitData) {
   const onUpdateLessonTitle = async (lessonId: string, title: string) => {
     try {
       const res = await updateLessonTitleAction(lessonId, title);
-      if (!res.ok) throw new Error((res as any).error || "Error actualizando título");
+      if (!res.ok) throw new Error((res as { error?: string }).error || "Error actualizando título");
       const updater = (list: (Seminar | Series)[]) =>
         list.map((c) => ({
           ...c,
@@ -546,18 +288,19 @@ export function useAdminPanel(init?: InitData) {
       setSeries((prev) => updater(prev));
       setState((prev) => {
         if (!prev.editingContainer) return prev;
-        const updated = {
+        const updated: StudyContainer = {
           ...prev.editingContainer,
           lessons: prev.editingContainer.lessons.map((l) =>
             l.id === lessonId ? { ...l, title } : l
           ),
-        } as any;
+        };
         return { ...prev, editingContainer: updated };
       });
       submitAlert("Título actualizado", "success");
-    } catch (e: any) {
-      console.error("Error actualizando título de lección", e);
-      submitAlert(e.message || "No se pudo actualizar el título", "error");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Error actualizando título de lección", error);
+      submitAlert(error.message || "No se pudo actualizar el título", "error");
     }
   };
 
@@ -580,7 +323,7 @@ export function useAdminPanel(init?: InitData) {
       const res = isSeminar
         ? await updateSeminarTitle(containerId, trimmed)
         : await updateSeriesTitle(containerId, trimmed);
-      if (!res.ok) throw new Error((res as any).error || "Error actualizando título");
+      if (!res.ok) throw new Error((res as { error?: string }).error || "Error actualizando título");
       if (isSeminar) {
         setSeminars((prev) => prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s)));
       } else {
@@ -589,12 +332,16 @@ export function useAdminPanel(init?: InitData) {
       setState((prev) => {
         if (!prev.editingContainer) return prev;
         if (prev.editingContainer.id !== containerId) return prev;
-        return { ...prev, editingContainer: { ...prev.editingContainer, title: trimmed } } as any;
+        return { 
+          ...prev, 
+          editingContainer: { ...prev.editingContainer, title: trimmed } 
+        };
       });
       submitAlert("Título actualizado", "success");
-    } catch (e: any) {
-      console.error("Error actualizando título de contenedor", e);
-      submitAlert(e.message || "No se pudo actualizar el título", "error");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Error actualizando título de contenedor", error);
+      submitAlert(error.message || "No se pudo actualizar el título", "error");
     }
   };
 
@@ -616,7 +363,7 @@ export function useAdminPanel(init?: InitData) {
       try {
         setDeletingId(id);
         const res = await deleteSeminarOrSerie(id);
-        if (!res.ok) throw new Error((res as any).error || "Error al eliminar");
+        if (!res.ok) throw new Error((res as { error?: string }).error || "Error al eliminar");
 
         if (res.type === "seminar") {
           const updatedSeminars = seminars.filter((s) => s.id !== id);
@@ -627,9 +374,10 @@ export function useAdminPanel(init?: InitData) {
         }
 
         submitAlert("Eliminado correctamente", "success");
-      } catch (e: any) {
-        console.error("Error eliminando contenedor", e);
-        submitAlert(e.message || "Error eliminando contenedor", "error");
+      } catch (e: unknown) {
+        const error = e as Error;
+        console.error("Error eliminando contenedor", error);
+        submitAlert(error.message || "Error eliminando contenedor", "error");
       } finally {
         setDeletingId(null);
       }
@@ -642,21 +390,21 @@ export function useAdminPanel(init?: InitData) {
     if (!state.editingContainer) return;
     const currentLesson =
       state.editingContainer.lessons[state.selectedLessonIndex];
-  setIsAddingFragment(true);
-  const res = await addFragmentAction(currentLesson.id);
+    setIsAddingFragment(true);
+    const res = await addFragmentAction(currentLesson.id);
     if (res.ok) {
-      const f: any = res.fragment;
+      const f = res.fragment as DbFragment;
       const mapped: Fragment = {
         id: f.id,
         order: f.order,
         readingMaterial: f.readingMaterial,
-        slides: (f.slides ?? []).map((sl: any) => ({
+        slides: (f.slides ?? []).map((sl: DbSlide) => ({
           id: sl.id,
           title: sl.title,
           content: sl.content,
           order: sl.order,
         })),
-        videos: (f.videos ?? []).map((v: any) => ({
+        videos: (f.videos ?? []).map((v: DbVideo) => ({
           id: v.id,
           title: v.title,
           youtubeId: v.youtubeId,
@@ -673,11 +421,11 @@ export function useAdminPanel(init?: InitData) {
       }));
     } else {
       submitAlert(
-        (res as any).error || "No se pudo agregar el fragmento",
+        (res as { error?: string }).error || "No se pudo agregar el fragmento",
         "error"
       );
     }
-  setIsAddingFragment(false);
+    setIsAddingFragment(false);
   };
 
   const removeFragment = async (fragmentIndex: number) => {
@@ -712,7 +460,7 @@ export function useAdminPanel(init?: InitData) {
       await reorderFragmentsAction(currentLesson.id, orderedIds);
     } else {
       submitAlert(
-        (res as any).error || "No se pudo eliminar el fragmento",
+        (res as { error?: string }).error || "No se pudo eliminar el fragmento",
         "error"
       );
     }
@@ -727,7 +475,7 @@ export function useAdminPanel(init?: InitData) {
         await updateFragmentAction(f.id, {
           readingMaterial: f.readingMaterial,
           studyAids: f.studyAids,
-          isCollapsed: (f as any).isCollapsed ?? false,
+          isCollapsed: f.isCollapsed ?? false,
         });
       }
       // Persist order

@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Lesson, Fragment } from '@/types';
+import type { DbLessonWithContainer } from '@/types/db';
+import { dbLessonWithContainerToUi } from '@/types/db';
 import { getLessonById } from '@/actions/admin/lessons/get-lessons-by-id';
+import { Loading } from '@/components/ui/Loading';
 // Preparado para Firestore
 // import { firestore } from '@/lib/firebase';
 
-export default function SharedSlidePage() {
+function SharedSlideContent() {
   const searchParams = useSearchParams();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
@@ -71,25 +74,8 @@ export default function SharedSlidePage() {
       if (lessonId) {
         getLessonById(lessonId).then((res) => {
           if (res.ok) {
-            const l: any = res.lesson;
-            const mapped = {
-              id: l.id,
-              title: l.title,
-              content: l.content,
-              containerId: l.seminarId ?? l.seriesId ?? "",
-              containerType: l.containerType === 'SEMINAR' ? 'seminar' : 'series',
-              order: l.order,
-              fragments: (l.fragments ?? []).map((f: any) => ({
-                id: f.id,
-                order: f.order,
-                readingMaterial: f.readingMaterial,
-                slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
-                videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
-                studyAids: f.studyAids,
-                narrationAudio: undefined,
-                isCollapsed: f.isCollapsed ?? false,
-              }))
-            } as any;
+            const l = res.lesson as unknown as DbLessonWithContainer;
+            const mapped: Lesson = dbLessonWithContainerToUi(l);
             setLesson(mapped);
             setCurrentFragmentIndex(fragmentIndex);
             setCurrentFragment(mapped.fragments[fragmentIndex] || null);
@@ -169,5 +155,13 @@ export default function SharedSlidePage() {
         <p className="text-xs">Líder Interactivo CMM • Vista Compartida</p>
       </div>
     </div>
+  );
+}
+
+export default function SharedSlidePage() {
+  return (
+    <Suspense fallback={<Loading message="Cargando contenido compartido..." />}>
+      <SharedSlideContent />
+    </Suspense>
   );
 }

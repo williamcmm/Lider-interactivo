@@ -2,6 +2,7 @@ import { FiArrowLeft, FiPlus, FiSave, FiLoader, FiEdit2, FiCheck, FiX } from 're
 import { LessonEditorProps } from '../types';
 import { FragmentEditor } from './FragmentEditor';
 import { useState } from 'react';
+import type { AudioFile } from '@/types';
 
 export function LessonEditor({
   container,
@@ -26,7 +27,7 @@ export function LessonEditor({
   const [containerTitleDraft, setContainerTitleDraft] = useState<string>(container.title);
   
   // Funciones para manejo de fragmentos
-  const updateFragment = (index: number, field: string, value: any) => {
+  const updateFragment = (index: number, field: string, value: string | AudioFile | undefined) => {
     const updatedFragments = [...fragments];
     updatedFragments[index] = { ...updatedFragments[index], [field]: value };
     onFragmentUpdate(updatedFragments);

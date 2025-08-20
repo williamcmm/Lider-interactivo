@@ -24,7 +24,7 @@ export function FragmentEditor({
     });
   };
 
-  const updateFragmentAudio = (field: string, value: any) => {
+  const updateFragmentAudio = (field: string, value: string) => {
     if (fragment.narrationAudio) {
       onUpdate(index, 'narrationAudio', {
         ...fragment.narrationAudio,

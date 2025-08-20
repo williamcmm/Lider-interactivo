@@ -37,7 +37,7 @@ interface ReadingContentProps {
  */
 export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
   // Hooks del store de notas para gestión global
-  const { fragmentNotes, setCurrentFragmentId, addNote } = useNotesStore();
+  const { setCurrentFragmentId, addNote } = useNotesStore();
   
   /** Referencia al contenedor principal para scroll y manipulación */
   const contentRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
         
         // Verificar que hay texto seleccionado y un fragmento activo
         if (selectedText && fragment) {
-          let showPopup = true;
+          const showPopup = true;
           
           // Validar longitud mínima del texto seleccionado
           if (selectedText.length <= 3) {

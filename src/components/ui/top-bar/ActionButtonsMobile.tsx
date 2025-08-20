@@ -1,9 +1,10 @@
 "use client";
 
 import { Fragment, Lesson } from "@/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiPlay, FiShare2 } from "react-icons/fi";
 import { TbCast } from "react-icons/tb";
+import { ShareModal } from "../ShareModal";
 
 interface ActionButtonsMobileProps {
   canCast: boolean;
@@ -22,40 +23,54 @@ export function ActionButtonsMobile({
 }: ActionButtonsMobileProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isCasting, setIsCasting] = useState(false);
-  const [presentationRequest, setPresentationRequest] = useState<any>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Sincronizar estado de fullscreen con eventos del navegador
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
   const handleFullscreen = () => {
     const elem = document.documentElement;
     if (!isFullscreen) {
       if (elem.requestFullscreen) {
         elem.requestFullscreen();
-      } else if ((elem as any).webkitRequestFullscreen) {
-        (elem as any).webkitRequestFullscreen();
-      } else if ((elem as any).msRequestFullscreen) {
-        (elem as any).msRequestFullscreen();
+      } else if ('webkitRequestFullscreen' in elem) {
+        (elem as HTMLElement & { webkitRequestFullscreen(): void }).webkitRequestFullscreen();
+      } else if ('msRequestFullscreen' in elem) {
+        (elem as HTMLElement & { msRequestFullscreen(): void }).msRequestFullscreen();
       }
-      setIsFullscreen(true);
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();
-      } else if ((document as any).webkitExitFullscreen) {
-        (document as any).webkitExitFullscreen();
-      } else if ((document as any).msExitFullscreen) {
-        (document as any).msExitFullscreen();
+      } else if ('webkitExitFullscreen' in document) {
+        (document as Document & { webkitExitFullscreen(): void }).webkitExitFullscreen();
+      } else if ('msExitFullscreen' in document) {
+        (document as Document & { msExitFullscreen(): void }).msExitFullscreen();
       }
-      setIsFullscreen(false);
     }
   };
+
   const startCasting = async () => {
     try {
       if ("presentation" in navigator) {
         const presentationUrl = `${window.location.origin}/presentation?lesson=${currentLesson?.id}&fragment=${fragmentIndex}`;
-        const request = new (window as any).PresentationRequest([
-          presentationUrl,
-        ]);
+        
+        // Type assertion más simple para PresentationRequest
+        const PresentationRequestConstructor = (window as unknown as {
+          PresentationRequest: new (urls: string[]) => {
+            start(): Promise<{ send(data: string): void }>;
+          };
+        }).PresentationRequest;
+        
+        const request = new PresentationRequestConstructor([presentationUrl]);
         const connection = await request.start();
         setIsCasting(true);
-        setPresentationRequest(request);
+        
         if (currentFragment) {
           const slideContent =
             currentFragment.slides && currentFragment.slides.length > 0
@@ -90,39 +105,51 @@ export function ActionButtonsMobile({
     setShowShareModal(true);
   };
   return (
-    <div className="flex items-center gap-1">
-      <button
-        className="p-1.5 rounded-full flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 transition duration-150"
-        onClick={handleFullscreen}
-      >
-        <FiPlay className="w-4 h-4" />
-      </button>
+    <>
+      <div className="flex items-center gap-1">
+        <button
+          className="p-1.5 rounded-full flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 transition duration-150"
+          onClick={handleFullscreen}
+        >
+          <FiPlay className="w-4 h-4" />
+        </button>
 
-      <button
-        onClick={startCasting}
-        disabled={!canCast}
-        className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
-          isCasting
-            ? "bg-green-500 hover:bg-green-600"
-            : canCast
-            ? "bg-blue-500 hover:bg-blue-600"
-            : "bg-gray-400 cursor-not-allowed"
-        }`}
-      >
-        <TbCast className="w-4 h-4" />
-      </button>
+        <button
+          onClick={startCasting}
+          disabled={!canCast}
+          className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
+            isCasting
+              ? "bg-green-500 hover:bg-green-600"
+              : canCast
+              ? "bg-blue-500 hover:bg-blue-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <TbCast className="w-4 h-4" />
+        </button>
 
-      <button
-        onClick={shareSlide}
-        disabled={!canShare}
-        className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
-          canShare
-            ? "bg-green-500 hover:bg-green-600"
-            : "bg-gray-400 cursor-not-allowed"
-        }`}
-      >
-        <FiShare2 className="w-4 h-4" />
-      </button>
-    </div>
+        <button
+          onClick={shareSlide}
+          disabled={!canShare}
+          className={`p-1.5 rounded-full flex items-center justify-center text-white transition duration-150 ${
+            canShare
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <FiShare2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {showShareModal && currentLesson && currentFragment && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          lesson={currentLesson}
+          fragment={currentFragment}
+          fragmentIndex={fragmentIndex || 0}
+        />
+      )}
+    </>
   );
 }

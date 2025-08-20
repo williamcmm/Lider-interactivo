@@ -1,9 +1,12 @@
+import { AudioFile, Fragment, Seminar, Series, StudyContainer } from "@/types";
+
+
 export interface CreationForm {
   title: string;
   description: string;
   lessonsCount: number;
   lessons: { title: string; order: number }[];
-  audioFiles: import('@/types').AudioFile[];
+  audioFiles: AudioFile[];
 }
 
 export type ActiveTab = 'seminars' | 'series';
@@ -13,16 +16,16 @@ export interface AdminPanelState {
   isCreatingContainer: boolean;
   isEditingLessons: boolean;
   selectedLessonIndex: number;
-  editingContainer: import('@/types').StudyContainer | null;
+  editingContainer: StudyContainer | null;
   creationForm: CreationForm;
-  fragmentsData: import('@/types').Fragment[];
+  fragmentsData: Fragment[];
   editingFragmentIndex: number | null;
 }
 
 export interface ContainerCardProps {
-  container: import('@/types').Seminar | import('@/types').Series;
+  container: Seminar | Series;
   type: 'seminar' | 'series';
-  onEdit: (container: import('@/types').Seminar | import('@/types').Series) => void;
+  onEdit: (container: Seminar | Series) => void;
   onDelete: (id: string) => void;
   isDeleting?: boolean;
 }
@@ -37,15 +40,15 @@ export interface CreationFormProps {
 }
 
 export interface LessonEditorProps {
-  container: import('@/types').StudyContainer;
+  container: StudyContainer;
   selectedLessonIndex: number;
-  fragments: import('@/types').Fragment[];
+  fragments: Fragment[];
   editingFragmentIndex: number | null;
   onSelectLesson: (index: number) => void;
   onUpdateContainerTitle?: (containerId: string, title: string) => Promise<void> | void;
   onUpdateLessonTitle: (lessonId: string, title: string) => Promise<void> | void;
   onFragmentEdit: (index: number | null) => void;
-  onFragmentUpdate: (fragments: import('@/types').Fragment[]) => void;
+  onFragmentUpdate: (fragments: Fragment[]) => void;
   onAddFragment: () => void;
   onRemoveFragment: (index: number) => void;
   onSaveFragments: () => void;
@@ -55,11 +58,11 @@ export interface LessonEditorProps {
 }
 
 export interface FragmentEditorProps {
-  fragment: import('@/types').Fragment;
+  fragment: Fragment;
   index: number;
   isEditing: boolean;
   onEdit: (index: number) => void;
-  onUpdate: (index: number, field: string, value: any) => void;
+  onUpdate: (index: number, field: string, value: string | AudioFile | undefined) => void;
   onRemove: (index: number) => void;
   onAddSlide: (fragmentIndex: number) => void;
   onUpdateSlide: (fragmentIndex: number, slideIndex: number, field: string, value: string) => void;

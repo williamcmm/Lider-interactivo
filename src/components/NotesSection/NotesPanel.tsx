@@ -34,7 +34,7 @@ export default function NotesPanel() {
         <div className="p-4">
           <h2 className="font-bold mb-2">Ayuda para tomar notas</h2>
           <ul className="list-disc pl-5 text-sm">
-            <li>Escribe tus ideas o apuntes en la pestaña "Notas".</li>
+            <li>Escribe tus ideas o apuntes en la pestaña &quot;Notas&quot;.</li>
             <li>Puedes eliminar notas haciendo clic en el botón de borrar.</li>
             <li>Las notas son privadas y solo visibles para ti.</li>
             <li>Próximamente podrás sincronizarlas en la nube.</li>
@@ -48,11 +48,11 @@ export default function NotesPanel() {
           {/* Lista de notas con scroll */}
           <div className="flex-1 overflow-y-auto p-4">
             <ul className="space-y-2">
-              {fragmentNotes.slice().reverse().map((note, idx) => (
+              {fragmentNotes.slice().reverse().map((note) => (
                 <li key={note.id} className="flex flex-col bg-gray-100 p-3 rounded">
                   {note.selectedText && (
                     <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-400">
-                      <strong>Texto seleccionado:</strong> "{note.selectedText}"
+                      <strong>Texto seleccionado:</strong> &quot;{note.selectedText}&quot;
                     </div>
                   )}
                   <div className="flex justify-between items-start">
@@ -121,8 +121,8 @@ export default function NotesPanel() {
             Aquí verás las notas que otros han compartido contigo. (Demo)
           </p>
           <ul className="mt-2 list-disc pl-5 text-sm">
-            <li>Ejemplo: "Recuerda revisar el capítulo 3"</li>
-            <li>Ejemplo: "Pregunta sobre la parábola del sembrador"</li>
+            <li>Ejemplo: &quot;Recuerda revisar el capítulo 3&quot;</li>
+            <li>Ejemplo: &quot;Pregunta sobre la parábola del sembrador&quot;</li>
           </ul>
         </div>
       );

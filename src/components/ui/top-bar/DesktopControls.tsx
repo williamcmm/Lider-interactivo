@@ -8,14 +8,14 @@ import { AdminButton } from "./AdminButton";
 import { DesktopPanelButtons } from "./DesktopPanelButtons";
 import { ActionButtons } from "./ActionButtons";
 import { ShareModal } from "../ShareModal";
-import { panelOptions } from "./panel-options";
+import { panelOptions, PanelKey } from "./panel-options";
 
 interface DesktopControlsProps {
   currentLesson?: Lesson | null;
   currentFragment?: Fragment | null;
   fragmentIndex?: number;
-  activePanel: string;
-  setActivePanelAction: (panel: string) => void;
+  activePanel: PanelKey;
+  setActivePanelAction: (panel: PanelKey) => void;
 }
 
 export function DesktopControls({
@@ -32,19 +32,21 @@ export function DesktopControls({
   const handleFullscreen = () => {
     const elem = document.documentElement;
     if (!isFullscreen) {
-      if (elem.requestFullscreen) elem.requestFullscreen();
-      else if ((elem as any).webkitRequestFullscreen)
-        (elem as any).webkitRequestFullscreen();
-      else if ((elem as any).msRequestFullscreen)
-        (elem as any).msRequestFullscreen();
-      setIsFullscreen(true);
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if ('webkitRequestFullscreen' in elem) {
+        (elem as HTMLElement & { webkitRequestFullscreen(): void }).webkitRequestFullscreen();
+      } else if ('msRequestFullscreen' in elem) {
+        (elem as HTMLElement & { msRequestFullscreen(): void }).msRequestFullscreen();
+      }
     } else {
-      if (document.exitFullscreen) document.exitFullscreen();
-      else if ((document as any).webkitExitFullscreen)
-        (document as any).webkitExitFullscreen();
-      else if ((document as any).msExitFullscreen)
-        (document as any).msExitFullscreen();
-      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ('webkitExitFullscreen' in document) {
+        (document as Document & { webkitExitFullscreen(): void }).webkitExitFullscreen();
+      } else if ('msExitFullscreen' in document) {
+        (document as Document & { msExitFullscreen(): void }).msExitFullscreen();
+      }
     }
   };
 
@@ -58,11 +60,18 @@ export function DesktopControls({
     try {
       if ("presentation" in navigator) {
         const presentationUrl = `${window.location.origin}/presentation?lesson=${currentLesson?.id}&fragment=${fragmentIndex}`;
-        const request = new (window as any).PresentationRequest([
-          presentationUrl,
-        ]);
+        
+        // Type assertion más simple para PresentationRequest
+        const PresentationRequestConstructor = (window as unknown as {
+          PresentationRequest: new (urls: string[]) => {
+            start(): Promise<{ send(data: string): void }>;
+          };
+        }).PresentationRequest;
+        
+        const request = new PresentationRequestConstructor([presentationUrl]);
         const connection = await request.start();
         setIsCasting(true);
+        
         if (currentFragment) {
           const slideContent =
             currentFragment.slides && currentFragment.slides.length > 0
@@ -109,23 +118,12 @@ export function DesktopControls({
         />
 
         <button
-          className={`px-1 md:px-2 py-1 rounded-full border border-gray-300 flex items-center justify-center transition-colors duration-150 ${
+          className={`w-9 h-9 min-w-[36px] min-h-[36px] aspect-square p-0 rounded-full border border-gray-300 flex items-center justify-center transition-colors duration-150 ${
             activePanel === "all"
               ? "bg-blue-500 text-white"
               : "bg-white text-gray-700 hover:bg-blue-100"
           }`}
           onClick={() => setActivePanelAction("all")}
-          style={{
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
-            aspectRatio: "1/1",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
         >
           <FiGrid className="w-5 h-5" />
         </button>

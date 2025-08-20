@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { FiBluetooth } from 'react-icons/fi';
+import type { BluetoothDeviceInfo } from '@/types/bluetooth';
 
 interface BluetoothControlsProps {
   isBluetoothSupported: boolean;
   isBluetoothConnected: boolean;
-  bluetoothDevice: any;
+  bluetoothDevice: BluetoothDeviceInfo | null;
   onToggleBluetooth: () => Promise<void>;
   onDisconnectBluetooth: () => void;
 }

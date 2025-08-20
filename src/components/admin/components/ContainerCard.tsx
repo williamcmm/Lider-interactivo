@@ -3,7 +3,6 @@ import { ContainerCardProps } from "../types";
 
 export function ContainerCard({
   container,
-  type,
   onEdit,
   onDelete,
   isDeleting,

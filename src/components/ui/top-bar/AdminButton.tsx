@@ -10,7 +10,7 @@ interface AdminButtonProps {
 
 export function AdminButton({ compact = false }: AdminButtonProps) {
   const { data } = useSession();
-  const role = (data as any)?.user?.role;
+  const role = data?.user?.role;
   const isAdmin = role === "ADMIN";
 
   if (!isAdmin) return null;

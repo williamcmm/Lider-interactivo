@@ -71,7 +71,7 @@ export function TextSelectionPopup({ popup, onSaveNote, onClose }: TextSelection
             Texto seleccionado:
           </label>
           <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded border-l-4 border-blue-400 max-h-16 overflow-y-auto">
-            "{popup.selectedText}"
+            &quot;{popup.selectedText}&quot;
           </div>
         </div>
 

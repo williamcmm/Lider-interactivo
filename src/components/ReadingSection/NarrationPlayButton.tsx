@@ -106,6 +106,9 @@ export function NarrationPlayButton({ fragment }: NarrationPlayButtonProps) {
    * 
    * @param error - El error ocurrido durante la reproducción
    */
+
+  // 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAudioError = (error: any) => {
     console.error('Error de audio:', error);
     setIsPlaying(false);

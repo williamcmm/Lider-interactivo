@@ -130,21 +130,3 @@ export interface User {
   role: 'admin' | 'user'; // Roles para permisos
   createdAt: Date;
 }
-
-// Tipos para la Vista Administrador
-export interface AdminFormData {
-  seminars: Seminar[];
-  series: Series[];
-}
-
-export interface LessonFormData {
-  title: string;
-  fragments: Fragment[];
-}
-
-export interface FragmentFormData {
-  readingMaterial: string;
-  slides: Slide[];
-  videos: Video[];
-  studyAids: string;
-}

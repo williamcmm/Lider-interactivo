@@ -38,7 +38,7 @@ export function CreationForm({ form, type, onFormChange, onSave, onCancel, isSav
     });
   };
 
-  const updateAudioFile = (index: number, field: string, value: any) => {
+  const updateAudioFile = (index: number, field: string, value: string) => {
     const updatedAudio = [...form.audioFiles];
     updatedAudio[index] = { ...updatedAudio[index], [field]: value };
     

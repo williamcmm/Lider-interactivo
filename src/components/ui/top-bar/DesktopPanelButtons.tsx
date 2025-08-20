@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
+import type { PanelKey } from "./panel-options";
 
 interface DesktopPanelButtonsProps {
-  panelOptions: { key: string; icon: React.ReactNode }[];
-  activePanel: string;
-  setActivePanelAction: (panel: string) => void;
+  panelOptions: { key: Exclude<PanelKey, "all">; icon: React.ReactNode }[];
+  activePanel: PanelKey;
+  setActivePanelAction: (panel: PanelKey) => void;
 }
 
 export function DesktopPanelButtons({ panelOptions, activePanel, setActivePanelAction }: DesktopPanelButtonsProps) {
