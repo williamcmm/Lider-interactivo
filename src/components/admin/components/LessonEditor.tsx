@@ -9,6 +9,7 @@ export function LessonEditor({
   fragments,
   editingFragmentIndex,
   onSelectLesson,
+  onUpdateContainerTitle,
   onUpdateLessonTitle,
   onFragmentEdit,
   onFragmentUpdate,
@@ -16,10 +17,13 @@ export function LessonEditor({
   onRemoveFragment,
   onSaveFragments,
   onFinish,
-  isSaving
+  isSaving,
+  isAddingFragment
 }: LessonEditorProps) {
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editingLessonTitle, setEditingLessonTitle] = useState<string>("");
+  const [editingContainer, setEditingContainer] = useState<boolean>(false);
+  const [containerTitleDraft, setContainerTitleDraft] = useState<string>(container.title);
   
   // Funciones para manejo de fragmentos
   const updateFragment = (index: number, field: string, value: any) => {
@@ -139,7 +143,57 @@ export function LessonEditor({
             <FiArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Editando: {container.title}</h2>
+            <div className="flex items-center gap-2">
+              {editingContainer ? (
+                <>
+                  <input
+                    autoFocus
+                    value={containerTitleDraft}
+                    onChange={(e) => setContainerTitleDraft(e.target.value)}
+                    className="text-xl font-semibold bg-transparent border-0 border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 text-gray-900"
+                  />
+                  <button
+                    type="button"
+                    className="text-green-600 hover:text-green-700"
+                    onClick={async () => {
+                      const newTitle = containerTitleDraft.trim();
+                      if (!newTitle || !onUpdateContainerTitle) return setEditingContainer(false);
+                      await onUpdateContainerTitle(container.id, newTitle);
+                      setEditingContainer(false);
+                    }}
+                    aria-label="Confirmar título contenedor"
+                  >
+                    <FiCheck className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      setContainerTitleDraft(container.title);
+                      setEditingContainer(false);
+                    }}
+                    aria-label="Cancelar título contenedor"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-semibold text-gray-900">Editando: {container.title}</h2>
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                      setContainerTitleDraft(container.title);
+                      setEditingContainer(true);
+                    }}
+                    aria-label="Editar título contenedor"
+                  >
+                    <FiEdit2 className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
             <div className="text-sm text-gray-600 flex items-center gap-2">
               <span>Lección actual:</span>
               {editingLessonId === currentLesson?.id ? (
@@ -302,10 +356,15 @@ export function LessonEditor({
             </h3>
             <button
               onClick={onAddFragment}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              disabled={isAddingFragment}
+              className={`px-3 py-1 text-sm text-white rounded-lg transition-colors flex items-center ${isAddingFragment ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-              <FiPlus className="w-3 h-3 mr-1" />
-              Agregar Fragmento
+              {isAddingFragment ? (
+                <FiLoader className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <FiPlus className="w-3 h-3 mr-1" />
+              )}
+              {isAddingFragment ? 'Agregando...' : 'Agregar Fragmento'}
             </button>
           </div>
           
@@ -333,9 +392,10 @@ export function LessonEditor({
                 <p className="mb-4">No hay fragmentos en esta lección</p>
                 <button
                   onClick={onAddFragment}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={isAddingFragment}
+                  className={`px-4 py-2 text-white rounded-lg transition-colors ${isAddingFragment ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
-                  Crear Primer Fragmento
+                  {isAddingFragment ? 'Agregando...' : 'Crear Primer Fragmento'}
                 </button>
               </div>
             )}

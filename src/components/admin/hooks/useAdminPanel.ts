@@ -17,6 +17,7 @@ import {
   reorderFragments as reorderFragmentsAction,
 } from "@/actions/admin/fragments/crud";
 import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/crud";
+import { updateSeminarTitle, updateSeriesTitle } from "@/actions/admin/update-serie-seminar-title";
 
 type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
 
@@ -160,6 +161,7 @@ export function useAdminPanel(init?: InitData) {
   const [isSavingCreate, setIsSavingCreate] = useState(false);
   const [isSavingFragments, setIsSavingFragments] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isAddingFragment, setIsAddingFragment] = useState(false);
 
   const currentData = state.activeTab === "seminars" ? seminars : series;
 
@@ -569,6 +571,33 @@ export function useAdminPanel(init?: InitData) {
     }));
   };
 
+  const onUpdateContainerTitle = async (containerId: string, title: string) => {
+    try {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+      // Detect type by current tab or by editingContainer
+      const isSeminar = state.activeTab === "seminars" || state.editingContainer?.type === "seminar";
+      const res = isSeminar
+        ? await updateSeminarTitle(containerId, trimmed)
+        : await updateSeriesTitle(containerId, trimmed);
+      if (!res.ok) throw new Error((res as any).error || "Error actualizando título");
+      if (isSeminar) {
+        setSeminars((prev) => prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s)));
+      } else {
+        setSeries((prev) => prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s)));
+      }
+      setState((prev) => {
+        if (!prev.editingContainer) return prev;
+        if (prev.editingContainer.id !== containerId) return prev;
+        return { ...prev, editingContainer: { ...prev.editingContainer, title: trimmed } } as any;
+      });
+      submitAlert("Título actualizado", "success");
+    } catch (e: any) {
+      console.error("Error actualizando título de contenedor", e);
+      submitAlert(e.message || "No se pudo actualizar el título", "error");
+    }
+  };
+
   const handleDeleteContainer = async (id: string) => {
     // Confirmación amigable
     const result = await Swal.fire({
@@ -613,7 +642,8 @@ export function useAdminPanel(init?: InitData) {
     if (!state.editingContainer) return;
     const currentLesson =
       state.editingContainer.lessons[state.selectedLessonIndex];
-    const res = await addFragmentAction(currentLesson.id);
+  setIsAddingFragment(true);
+  const res = await addFragmentAction(currentLesson.id);
     if (res.ok) {
       const f: any = res.fragment;
       const mapped: Fragment = {
@@ -647,6 +677,7 @@ export function useAdminPanel(init?: InitData) {
         "error"
       );
     }
+  setIsAddingFragment(false);
   };
 
   const removeFragment = async (fragmentIndex: number) => {
@@ -743,6 +774,7 @@ export function useAdminPanel(init?: InitData) {
       isSavingCreate,
       isSavingFragments,
       deletingId,
+  isAddingFragment,
     },
     actions: {
       setActiveTab,
@@ -757,6 +789,7 @@ export function useAdminPanel(init?: InitData) {
       handleSelectLesson,
       handleFinishEditingLessons,
       handleDeleteContainer,
+  onUpdateContainerTitle,
       addFragment,
       removeFragment,
       saveFragmentsToLesson,

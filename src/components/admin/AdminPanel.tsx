@@ -28,6 +28,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
           fragments={state.fragmentsData}
           editingFragmentIndex={state.editingFragmentIndex}
           onSelectLesson={actions.handleSelectLesson}
+          onUpdateContainerTitle={actions.onUpdateContainerTitle}
           onUpdateLessonTitle={actions.onUpdateLessonTitle}
           onFragmentEdit={(index) => 
             actions.setState(prev => ({ ...prev, editingFragmentIndex: index === -1 ? null : index }))
@@ -40,6 +41,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
           onSaveFragments={actions.saveFragmentsToLesson}
           onFinish={actions.handleFinishEditingLessons}
           isSaving={state.isSavingFragments}
+          isAddingFragment={state.isAddingFragment}
         />
       </div>
     );

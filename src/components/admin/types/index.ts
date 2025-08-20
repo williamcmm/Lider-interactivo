@@ -42,6 +42,7 @@ export interface LessonEditorProps {
   fragments: import('@/types').Fragment[];
   editingFragmentIndex: number | null;
   onSelectLesson: (index: number) => void;
+  onUpdateContainerTitle?: (containerId: string, title: string) => Promise<void> | void;
   onUpdateLessonTitle: (lessonId: string, title: string) => Promise<void> | void;
   onFragmentEdit: (index: number | null) => void;
   onFragmentUpdate: (fragments: import('@/types').Fragment[]) => void;
@@ -50,6 +51,7 @@ export interface LessonEditorProps {
   onSaveFragments: () => void;
   onFinish: () => void;
   isSaving?: boolean;
+  isAddingFragment?: boolean;
 }
 
 export interface FragmentEditorProps {
