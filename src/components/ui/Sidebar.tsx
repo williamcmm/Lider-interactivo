@@ -8,9 +8,10 @@ interface SidebarProps {
   containers: Array<(Seminar | Series) & { type: 'seminar' | 'series' }>;
   onSelectLesson: (lesson: Lesson) => void;
   isDesktop?: boolean; // Nueva prop para determinar si está en modo desktop
+  isAuthenticated?: boolean; // Nueva prop para determinar si el usuario está loggeado
 }
 
-export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop = false }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop = false, isAuthenticated = false }: SidebarProps) {
   // Estado de colapsado por id
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   // Estado para detectar móvil
@@ -92,69 +93,88 @@ export function Sidebar({ isOpen, onClose, containers, onSelectLesson, isDesktop
       
         {/* Lista de seminarios y series */}
         <nav className="mt-4 space-y-2 flex-grow overflow-y-auto">
-          {containers.map((container) => {
-            const expanded = expandedIds.includes(container.id);
-            return (
-              <div key={container.id} className="container-item">
-                <button
-                  className="flex items-center w-full text-left py-2 px-3 rounded-xl bg-gray-100 mb-1 focus:outline-none hover:bg-gray-200 transition-colors duration-150"
-                  onClick={() => toggleExpand(container.id)}
-                >
-                  {/* Icono con ancho fijo */}
-                  <div className="w-6 h-6 mr-3 flex-shrink-0 flex items-center justify-center">
-                    {container.type === 'seminar' ? (
-                      <FiBook className="w-5 h-5 text-gray-500" />
-                    ) : (
-                      <FiList className="w-5 h-5 text-gray-500" />
-                    )}
-                  </div>
-                  
-                  {/* Contenido de texto con marquesina */}
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <MarqueeText 
-                      text={container.title} 
-                      className="font-medium text-gray-900" 
-                    />
-                    <MarqueeText 
-                      text={`${container.type === 'seminar' ? 'Seminario' : 'Serie'} • ${container.lessons.length} lecciones`}
-                      className="text-xs text-gray-500 mt-0.5"
-                    />
-                  </div>
-                  
-                  {/* Icono de expansión con ancho fijo */}
-                  <div className="w-6 h-6 ml-2 flex-shrink-0 flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d={expanded ? 'M6 12L12 6' : 'M6 6L12 12'} stroke="#555" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                </button>
-                {expanded && (
-                  <div className="ml-8 mt-2 space-y-1">
-                    {container.lessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        onClick={() => onSelectLesson(lesson)}
-                        className="flex items-center w-full text-left py-1.5 px-3 rounded-lg hover:bg-gray-300 transition duration-150 text-gray-800 text-sm group"
-                      >
-                        {/* Número de orden con ancho fijo */}
-                        <span className="font-medium mr-2 flex-shrink-0 w-6 text-gray-600">
-                          {lesson.order}.
-                        </span>
-                        
-                        {/* Título de la lección con marquesina */}
-                        <div className="flex-1 min-w-0">
-                          <MarqueeText 
-                            text={lesson.title}
-                            className="text-gray-800 group-hover:text-gray-900"
-                          />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {!isAuthenticated ? (
+            <div className="flex flex-col items-center justify-center text-center py-8 px-4">
+              <div className="mb-4">
+                <svg className="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
               </div>
-            );
-          })}
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                Acceso Restringido
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Para acceder a los seminarios y series de estudio, necesitas iniciar sesión en tu cuenta.
+              </p>
+              <p className="text-xs text-gray-400 mt-3">
+                Los contenidos están disponibles solo para usuarios registrados.
+              </p>
+            </div>
+          ) : (
+            containers.map((container) => {
+              const expanded = expandedIds.includes(container.id);
+              return (
+                <div key={container.id} className="container-item">
+                  <button
+                    className="flex items-center w-full text-left py-2 px-3 rounded-xl bg-gray-100 mb-1 focus:outline-none hover:bg-gray-200 transition-colors duration-150"
+                    onClick={() => toggleExpand(container.id)}
+                  >
+                    {/* Icono con ancho fijo */}
+                    <div className="w-6 h-6 mr-3 flex-shrink-0 flex items-center justify-center">
+                      {container.type === 'seminar' ? (
+                        <FiBook className="w-5 h-5 text-gray-500" />
+                      ) : (
+                        <FiList className="w-5 h-5 text-gray-500" />
+                      )}
+                    </div>
+                    
+                    {/* Contenido de texto con marquesina */}
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <MarqueeText 
+                        text={container.title} 
+                        className="font-medium text-gray-900" 
+                      />
+                      <MarqueeText 
+                        text={`${container.type === 'seminar' ? 'Seminario' : 'Serie'} • ${container.lessons.length} lecciones`}
+                        className="text-xs text-gray-500 mt-0.5"
+                      />
+                    </div>
+                    
+                    {/* Icono de expansión con ancho fijo */}
+                    <div className="w-6 h-6 ml-2 flex-shrink-0 flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d={expanded ? 'M6 12L12 6' : 'M6 6L12 12'} stroke="#555" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </button>
+                  {expanded && (
+                    <div className="ml-8 mt-2 space-y-1">
+                      {container.lessons.map((lesson) => (
+                        <button
+                          key={lesson.id}
+                          onClick={() => onSelectLesson(lesson)}
+                          className="flex items-center w-full text-left py-1.5 px-3 rounded-lg hover:bg-gray-300 transition duration-150 text-gray-800 text-sm group"
+                        >
+                          {/* Número de orden con ancho fijo */}
+                          <span className="font-medium mr-2 flex-shrink-0 w-6 text-gray-600">
+                            {lesson.order}.
+                          </span>
+                          
+                          {/* Título de la lección con marquesina */}
+                          <div className="flex-1 min-w-0">
+                            <MarqueeText 
+                              text={lesson.title}
+                              className="text-gray-800 group-hover:text-gray-900"
+                            />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </nav>
         <div className="flex-shrink-0 mt-auto pt-4 border-t border-gray-300 text-xs text-gray-500">
           <p>Líder Interactivo CMM v1.0</p>

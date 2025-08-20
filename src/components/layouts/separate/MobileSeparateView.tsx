@@ -4,7 +4,7 @@ import { ReadingPanel } from "@/components/ReadingSection/ReadingPanel";
 import { SlidePanel } from "@/components/SlideSection/SlidePanel";
 import { MusicPanel } from "@/components/MusicSection/MusicPanel";
 import NotesPanel from "@/components/NotesSection/NotesPanel";
-import type { Lesson, Fragment } from "@/types";
+import type { Lesson, Fragment, AudioFile } from "@/types";
 
 export type PanelKey = "reading" | "slides" | "music" | "notes" | "all";
 
@@ -16,6 +16,7 @@ export interface MobileSeparateViewProps {
   totalFragments: number;
   navigateFragmentAction: (direction: "prev" | "next") => void;
   showRotateMessage: boolean;
+  audioFiles?: AudioFile[];
 }
 
 export default function MobileSeparateView({
@@ -26,6 +27,7 @@ export default function MobileSeparateView({
   totalFragments,
   navigateFragmentAction,
   showRotateMessage,
+  audioFiles,
 }: MobileSeparateViewProps) {
   return (
     <div
@@ -102,7 +104,7 @@ export default function MobileSeparateView({
               onNavigateFragment={navigateFragmentAction}
             />
           )}
-          {activePanel === "music" && <MusicPanel />}
+          {activePanel === "music" && <MusicPanel audioFiles={audioFiles} />}
           {activePanel === "notes" && (
             <div className="pb-24">
               <NotesPanel />

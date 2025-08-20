@@ -4,7 +4,7 @@ import { ReadingPanel } from "@/components/ReadingSection/ReadingPanel";
 import { SlidePanel } from "@/components/SlideSection/SlidePanel";
 import { MusicPanel } from "@/components/MusicSection/MusicPanel";
 import NotesPanel from "@/components/NotesSection/NotesPanel";
-import type { Lesson, Fragment } from "@/types";
+import type { Lesson, Fragment, AudioFile } from "@/types";
 
 export type PanelKey = "reading" | "slides" | "music" | "notes";
 
@@ -15,6 +15,7 @@ export interface DesktopSeparateViewProps {
   fragmentIndex: number;
   totalFragments: number;
   navigateFragmentAction: (direction: "prev" | "next") => void;
+  audioFiles?: AudioFile[];
 }
 
 export default function DesktopSeparateView({
@@ -24,6 +25,7 @@ export default function DesktopSeparateView({
   fragmentIndex,
   totalFragments,
   navigateFragmentAction,
+  audioFiles,
 }: DesktopSeparateViewProps) {
   return (
     <div className="h-full w-full overflow-hidden">
@@ -50,7 +52,7 @@ export default function DesktopSeparateView({
       )}
       {activePanel === "music" && (
         <div className="h-full bg-white shadow-xl rounded-lg overflow-hidden">
-          <MusicPanel />
+          <MusicPanel audioFiles={audioFiles} />
         </div>
       )}
       {activePanel === "notes" && (

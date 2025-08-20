@@ -1,13 +1,26 @@
 import { StudyApp } from '@/components/StudyApp';
 import { getSeminarsAndSeries } from '@/actions/admin/get-seminar-and-series';
+import { auth } from '@/auth.config';
 import type { DbSeminar, DbSeries } from '@/types/db';
 
 export default async function Home() {
-  const result = await getSeminarsAndSeries();
-  const initialSeminars: DbSeminar[] = result.ok ? (result.seminars as DbSeminar[]) : [];
-  const initialSeries: DbSeries[] = result.ok ? (result.series as DbSeries[]) : [];
+  const session = await auth();
+  
+  // Solo obtener datos reales si hay sesión activa
+  let initialSeminars: DbSeminar[] = [];
+  let initialSeries: DbSeries[] = [];
+  
+  if (session) {
+    const result = await getSeminarsAndSeries();
+    initialSeminars = result.ok ? (result.seminars as DbSeminar[]) : [];
+    initialSeries = result.ok ? (result.series as DbSeries[]) : [];
+  }
 
   return (
-  <StudyApp initialSeminars={initialSeminars} initialSeries={initialSeries} />
+  <StudyApp 
+    initialSeminars={initialSeminars} 
+    initialSeries={initialSeries}
+    session={session}
+  />
   );
 }

@@ -15,13 +15,15 @@ import { dbSeminarToUi, dbSeriesToUi } from "@/types/db";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useNotesStore } from "@/store/notesStore";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import type { Session } from "next-auth";
 
 type StudyAppProps = {
   initialSeminars?: DbSeminar[];
   initialSeries?: DbSeries[];
+  session?: Session | null;
 };
 
-export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppProps) {
+export function StudyApp({ initialSeminars = [], initialSeries = [], session }: StudyAppProps) {
   // Zustand store para sidebar
   const { isSidebarOpen, isMobile, closeSidebar, toggleSidebar, setIsMobile } =
     useSidebarStore();
@@ -138,6 +140,18 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
     [seminars, series]
   );
 
+  // Obtener audioFiles del contenedor actual basado en la lección seleccionada
+  const currentAudioFiles = useMemo(() => {
+    if (!currentLesson) return [];
+    
+    // Buscar el contenedor (seminario o serie) que contiene la lección actual
+    const container = allContainers.find(c => 
+      c.lessons.some(lesson => lesson.id === currentLesson.id)
+    );
+    
+    return container?.audioFiles || [];
+  }, [currentLesson, allContainers]);
+
   const selectLesson = (lesson: Lesson) => {
     setCurrentLesson(lesson);
     setCurrentFragmentIndex(0); // Resetear al primer fragmento
@@ -207,6 +221,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
             containers={allContainers}
             onSelectLesson={selectLesson}
             isDesktop={true}
+            isAuthenticated={!!session}
           />
         )}
 
@@ -218,6 +233,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
             containers={allContainers}
             onSelectLesson={selectLesson}
             isDesktop={false}
+            isAuthenticated={!!session}
           />
         )}
 
@@ -233,6 +249,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
               totalFragments={totalFragments}
               navigateFragmentAction={navigateToFragment}
               showRotateMessage={showRotateMessage}
+              audioFiles={currentAudioFiles}
             />
           ) : activePanel === "all" ? (
             isMobile ? (
@@ -242,6 +259,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
                 fragmentIndex={currentFragmentIndex}
                 totalFragments={totalFragments}
                 navigateFragmentAction={navigateToFragment}
+                audioFiles={currentAudioFiles}
               />
             ) : (
               <DesktopSharedView
@@ -250,6 +268,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
                 fragmentIndex={currentFragmentIndex}
                 totalFragments={totalFragments}
                 navigateFragmentAction={navigateToFragment}
+                audioFiles={currentAudioFiles}
               />
             )
           ) : isMobile ? (
@@ -261,6 +280,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
               totalFragments={totalFragments}
               navigateFragmentAction={navigateToFragment}
               showRotateMessage={showRotateMessage}
+              audioFiles={currentAudioFiles}
             />
           ) : (
             <DesktopSeparateView
@@ -270,6 +290,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
               fragmentIndex={currentFragmentIndex}
               totalFragments={totalFragments}
               navigateFragmentAction={navigateToFragment}
+              audioFiles={currentAudioFiles}
             />
           )}
         </div>
