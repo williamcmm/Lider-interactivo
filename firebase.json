@@ -3,10 +3,7 @@
     "source": ".",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
-      "region": "us-central1",
-      "concurrency": 1000,
-      "memory": "1GiB",
-      "timeoutSeconds": 540
+      "region": "us-central1"
     },
     "rewrites": [
       {
