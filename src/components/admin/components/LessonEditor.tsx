@@ -1,4 +1,4 @@
-import { FiArrowLeft, FiPlus, FiSave } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiSave, FiLoader } from 'react-icons/fi';
 import { LessonEditorProps } from '../types';
 import { FragmentEditor } from './FragmentEditor';
 
@@ -13,7 +13,8 @@ export function LessonEditor({
   onAddFragment,
   onRemoveFragment,
   onSaveFragments,
-  onFinish
+  onFinish,
+  isSaving
 }: LessonEditorProps) {
   
   // Funciones para manejo de fragmentos
@@ -145,10 +146,15 @@ export function LessonEditor({
         <div className="flex gap-2">
           <button
             onClick={onSaveFragments}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            disabled={isSaving}
+            className={`px-4 py-2 text-white rounded-lg transition-colors flex items-center ${isSaving ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700'}`}
           >
-            <FiSave className="w-4 h-4 mr-2" />
-            Guardar Cambios
+            {isSaving ? (
+              <FiLoader className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <FiSave className="w-4 h-4 mr-2" />
+            )}
+            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>
       </div>

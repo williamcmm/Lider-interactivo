@@ -133,7 +133,7 @@ export function ShareModal({ isOpen, onClose, lesson, fragment, fragmentIndex }:
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/10 bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div 
         className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
         onClick={(e) => e.stopPropagation()}

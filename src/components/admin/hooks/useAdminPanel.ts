@@ -1,10 +1,16 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { Seminar, Series, StudyContainer, Fragment, AudioFile } from "@/types";
 import { LocalStorageManager } from "@/lib/storage";
 import { AdminPanelState, CreationForm, ActiveTab } from "../types";
-import { createSeminarFromAdminForm } from "@/actions/admin/create-serie-or-seminar";
+import {
+  createSeminarFromAdminForm,
+  createSeriesFromAdminForm,
+} from "@/actions/admin/create-serie-or-seminar";
 import { submitAlert } from "@/utils/alerts";
+import { deleteSeminarOrSerie } from "@/actions/admin/delete-seminar-or-serie";
+import Swal from "sweetalert2";
 
 type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
 
@@ -144,6 +150,10 @@ export function useAdminPanel(init?: InitData) {
   const [series, setSeries] = useState<Series[]>(
     (init?.initialSeries ?? []).map(toUiSeries)
   );
+  // Loading flags
+  const [isSavingCreate, setIsSavingCreate] = useState(false);
+  const [isSavingFragments, setIsSavingFragments] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Cargar desde localStorage solo si no vino data del servidor
   useEffect(() => {
@@ -228,6 +238,7 @@ export function useAdminPanel(init?: InitData) {
   };
 
   const handleSaveContainer = async () => {
+    if (isSavingCreate) return;
     if (!state.creationForm.title.trim()) {
       alert("El título es obligatorio");
       return;
@@ -289,9 +300,10 @@ export function useAdminPanel(init?: InitData) {
       updatedAt: new Date(),
     };
 
-    if (state.activeTab === "seminars") {
+  if (state.activeTab === "seminars") {
       // Persist via Server Action (Prisma). Fallback to localStorage on error.
       try {
+    setIsSavingCreate(true);
         // Sanitize non-serializable fields (File) from audioFiles
         const sanitizedForm: CreationForm = {
           ...state.creationForm,
@@ -380,7 +392,7 @@ export function useAdminPanel(init?: InitData) {
           const updatedSeminars = [...seminars, prismaSeminar];
           setSeminars(updatedSeminars);
           LocalStorageManager.saveSeminars(updatedSeminars);
-        } else {
+  } else {
           submitAlert(
             (result as any).error || "Error creando seminario",
             "error"
@@ -395,11 +407,117 @@ export function useAdminPanel(init?: InitData) {
         const updatedSeminars = [...seminars, newContainer as Seminar];
         setSeminars(updatedSeminars);
         LocalStorageManager.saveSeminars(updatedSeminars);
+      } finally {
+        setIsSavingCreate(false);
       }
     } else {
-      const updatedSeries = [...series, newContainer as Series];
-      setSeries(updatedSeries);
-      LocalStorageManager.saveSeries(updatedSeries);
+      // Series: persist via Server Action as well
+      try {
+        setIsSavingCreate(true);
+        const sanitizedForm: CreationForm = {
+          ...state.creationForm,
+          audioFiles: (state.creationForm.audioFiles ?? []).map(
+            (a) =>
+              ({
+                id: a.id,
+                name: a.name,
+                url: a.url,
+                type: a.type,
+              } as AudioFile)
+          ),
+        };
+
+        const result = await createSeriesFromAdminForm({
+          ...sanitizedForm,
+          lessons: sanitizedForm.lessons.map((l, idx) => ({
+            title: l.title.trim(),
+            order: l.order ?? idx + 1,
+          })),
+          title: sanitizedForm.title.trim(),
+          description: sanitizedForm.description.trim(),
+        });
+
+        if (result.ok && (result as any).series) {
+          const s = (result as any).series;
+          const prismaSeries: Series = {
+            id: s.id,
+            title: s.title,
+            description: s.description ?? undefined,
+            order: s.order,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+            audioFiles: (s.audioFiles ?? []).map((a: any) => ({
+              id: a.id,
+              name: a.name,
+              url: a.url ?? undefined,
+              type: (String(a.type || "").toLowerCase() === "local"
+                ? "local"
+                : "remote") as AudioFile["type"],
+            })),
+            lessons: (s.lessons ?? []).map((l: any) => ({
+              id: l.id,
+              title: l.title,
+              content: l.content,
+              containerId: s.id,
+              containerType: "series",
+              order: l.order,
+              fragments: (l.fragments ?? []).map((f: any) => ({
+                id: f.id,
+                order: f.order,
+                readingMaterial: f.readingMaterial,
+                slides: (f.slides ?? []).map((sl: any) => ({
+                  id: sl.id,
+                  title: sl.title,
+                  content: sl.content,
+                  order: sl.order,
+                })),
+                videos: (f.videos ?? []).map((v: any) => ({
+                  id: v.id,
+                  title: v.title,
+                  youtubeId: v.youtubeId,
+                  description: v.description ?? undefined,
+                  order: v.order,
+                })),
+                studyAids: f.studyAids,
+                narrationAudio: f.narrationAudio
+                  ? {
+                      id: f.narrationAudio.id,
+                      name: f.narrationAudio.name,
+                      url: f.narrationAudio.url ?? undefined,
+                      type: (String(
+                        f.narrationAudio.type || ""
+                      ).toLowerCase() === "local"
+                        ? "local"
+                        : "remote") as AudioFile["type"],
+                    }
+                  : undefined,
+                isCollapsed: f.isCollapsed ?? false,
+              })),
+              createdAt: new Date(l.createdAt),
+              updatedAt: new Date(l.updatedAt),
+            })),
+          };
+          const updatedSeries = [...series, prismaSeries];
+          setSeries(updatedSeries);
+          LocalStorageManager.saveSeries(updatedSeries);
+        } else {
+          submitAlert(
+            (result as any).error || "Error creando serie",
+            "error"
+          );
+          throw new Error((result as any).error || "Error creando serie");
+        }
+      } catch (e) {
+        console.error(
+          "Fallo al crear serie en backend, usando localStorage",
+          e
+        );
+        const updatedSeries = [...series, newContainer as Series];
+        setSeries(updatedSeries);
+        LocalStorageManager.saveSeries(updatedSeries);
+      } finally {
+        setIsSavingCreate(false);
+      }
     }
 
     setState((prev) => ({ ...prev, isCreatingContainer: false }));
@@ -444,18 +562,43 @@ export function useAdminPanel(init?: InitData) {
     }));
   };
 
-  const handleDeleteContainer = (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este contenedor?"))
-      return;
+  const handleDeleteContainer = async (id: string) => {
+    // Confirmación amigable
+    const result = await Swal.fire({
+      title: "¿Eliminar este contenedor?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      confirmButtonColor: "red",
+      cancelButtonText: "Cancelar",
+    });
 
-    if (state.activeTab === "seminars") {
-      const updatedSeminars = seminars.filter((s) => s.id !== id);
-      setSeminars(updatedSeminars);
-      LocalStorageManager.saveSeminars(updatedSeminars);
-    } else {
-      const updatedSeries = series.filter((s) => s.id !== id);
-      setSeries(updatedSeries);
-      LocalStorageManager.saveSeries(updatedSeries);
+    if (result.isConfirmed) {
+      // Nota: submitAlert no devuelve promesa de confirmación. Si se requiere confirm explícito con botón, habría que usar Swal directamente.
+      // Procedemos con eliminación directa por simplicidad, ya que el patrón actual de submitAlert no soporta confirm.
+      try {
+        setDeletingId(id);
+        const res = await deleteSeminarOrSerie(id);
+        if (!res.ok) throw new Error((res as any).error || "Error al eliminar");
+
+        if (res.type === "seminar") {
+          const updatedSeminars = seminars.filter((s) => s.id !== id);
+          setSeminars(updatedSeminars);
+          LocalStorageManager.saveSeminars(updatedSeminars);
+        } else if (res.type === "series") {
+          const updatedSeries = series.filter((s) => s.id !== id);
+          setSeries(updatedSeries);
+          LocalStorageManager.saveSeries(updatedSeries);
+        }
+
+        submitAlert("Eliminado correctamente", "success");
+      } catch (e: any) {
+        console.error("Error eliminando contenedor", e);
+        submitAlert(e.message || "Error eliminando contenedor", "error");
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -507,6 +650,7 @@ export function useAdminPanel(init?: InitData) {
 
   const saveFragmentsToLesson = () => {
     if (!state.editingContainer) return;
+    setIsSavingFragments(true);
 
     // Actualizar los fragmentos en la lección actual
     const updatedContainer = { ...state.editingContainer };
@@ -528,7 +672,9 @@ export function useAdminPanel(init?: InitData) {
       LocalStorageManager.saveSeries(updatedSeries);
     }
 
-    setState((prev) => ({ ...prev, editingContainer: updatedContainer }));
+  setState((prev) => ({ ...prev, editingContainer: updatedContainer }));
+  // Simular pequeña espera para UX y permitir ver spinner
+  setTimeout(() => setIsSavingFragments(false), 300);
   };
 
   const setActiveTab = (tab: ActiveTab) => {
@@ -541,6 +687,9 @@ export function useAdminPanel(init?: InitData) {
       seminars,
       series,
       currentData,
+  isSavingCreate,
+  isSavingFragments,
+  deletingId,
     },
     actions: {
       setActiveTab,

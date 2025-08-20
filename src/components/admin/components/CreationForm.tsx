@@ -1,7 +1,7 @@
-import { FiSave, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiSave, FiX, FiPlus, FiTrash2, FiLoader } from 'react-icons/fi';
 import { CreationFormProps } from '../types';
 
-export function CreationForm({ form, type, onFormChange, onSave, onCancel }: CreationFormProps) {
+export function CreationForm({ form, type, onFormChange, onSave, onCancel, isSaving }: CreationFormProps) {
   const handleLessonsCountChange = (count: number) => {
     const lessons = Array.from({ length: count }, (_, i) => {
       const existingLesson = form.lessons[i];
@@ -65,10 +65,15 @@ export function CreationForm({ form, type, onFormChange, onSave, onCancel }: Cre
         <div className="flex gap-2">
           <button
             onClick={onSave}
-            className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            disabled={isSaving}
+            className={`cursor-pointer px-4 py-2 text-white rounded-lg transition-colors flex items-center ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
-            <FiSave className="w-4 h-4 mr-2" />
-            Guardar
+            {isSaving ? (
+              <FiLoader className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <FiSave className="w-4 h-4 mr-2" />
+            )}
+            {isSaving ? 'Guardando...' : 'Guardar'}
           </button>
           <button
             onClick={onCancel}

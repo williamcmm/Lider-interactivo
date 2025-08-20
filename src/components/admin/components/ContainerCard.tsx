@@ -1,4 +1,4 @@
-import { FiEdit, FiTrash2, FiBook } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiBook, FiLoader } from "react-icons/fi";
 import { ContainerCardProps } from "../types";
 
 export function ContainerCard({
@@ -6,6 +6,7 @@ export function ContainerCard({
   type,
   onEdit,
   onDelete,
+  isDeleting,
 }: ContainerCardProps) {
   const formatDate = (date: Date | undefined) => {
     if (!date) return "Sin fecha";
@@ -36,10 +37,15 @@ export function ContainerCard({
           </button>
           <button
             onClick={() => onDelete(container.id)}
-            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
+            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 disabled:opacity-60"
             title="Eliminar"
+            disabled={!!isDeleting}
           >
-            <FiTrash2 className="h-4 w-4" />
+            {isDeleting ? (
+              <FiLoader className="h-4 w-4 animate-spin" />
+            ) : (
+              <FiTrash2 className="h-4 w-4" />
+            )}
           </button>
         </div>
       </div>

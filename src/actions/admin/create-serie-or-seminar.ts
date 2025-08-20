@@ -28,14 +28,10 @@ export const createSerieOrSeminar = async (
           content?: string;
           fragments?: UiFragment[];
         }[];
-      } & { type?: "seminar" })
+  } & { type?: "seminar" | "series" })
 ) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Compute unique global order for seminars (schema enforces unique order)
-      const agg = await tx.seminar.aggregate({ _max: { order: true } });
-      const nextSeminarOrder = (agg._max.order ?? 0) + 1;
-
       const title = (data as any).title;
       const description = (data as any).description ?? null;
       const audioFiles = (data as any).audioFiles as UiAudioFile[] | undefined;
@@ -47,6 +43,7 @@ export const createSerieOrSeminar = async (
             content?: string;
             fragments?: UiFragment[];
           }[];
+  const type = (data as any).type ?? "seminar";
 
       // Normalize lessons: ensure order, content, and fragments with defaults
       const normalizedLessons = (lessonsInput ?? []).map((l, idx) => {
@@ -56,49 +53,114 @@ export const createSerieOrSeminar = async (
         return { title: (l as any).title, order, content, fragments };
       });
 
-      const created = await tx.seminar.create({
-        data: {
-          title,
-          description,
-          order: nextSeminarOrder,
-          audioFiles:
-            audioFiles && audioFiles.length > 0
-              ? {
-                  create: audioFiles.map((a) => ({
-                    name: a.name,
-                    url: a.url ?? null,
-                    type: mapAudioType(a.type),
-                  })),
-                }
-              : undefined,
-          lessons: {
-            create: normalizedLessons.map((l) => ({
-              title: l.title,
-              content: l.content,
-              order: l.order,
-              containerType: "SEMINAR",
-              fragments: {
-                create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
-              },
-            })),
+      if (type === "series") {
+        // Compute unique global order for series
+        const aggSeries = await tx.series.aggregate({ _max: { order: true } });
+        const nextSeriesOrder = (aggSeries._max.order ?? 0) + 1;
+
+        const createdSeries = await tx.series.create({
+          data: {
+            title,
+            description,
+            order: nextSeriesOrder,
+            audioFiles:
+              audioFiles && audioFiles.length > 0
+                ? {
+                    create: audioFiles.map((a) => ({
+                      name: a.name,
+                      url: a.url ?? null,
+                      type: mapAudioType(a.type),
+                    })),
+                  }
+                : undefined,
+            lessons: {
+              create: normalizedLessons.map((l) => ({
+                title: l.title,
+                content: l.content,
+                order: l.order,
+                containerType: "SERIES",
+                fragments: {
+                  create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
+                },
+              })),
+            },
           },
-        },
-        include: {
-          audioFiles: true,
-          lessons: {
-            include: {
-              fragments: {
-                include: { slides: true, videos: true, narrationAudio: true },
+          include: {
+            audioFiles: true,
+            lessons: {
+              include: {
+                fragments: {
+                  include: { slides: true, videos: true, narrationAudio: true },
+                },
               },
             },
           },
-        },
-      });
+        });
 
-      return created;
+        return { kind: "series" as const, value: createdSeries };
+      } else {
+        // Compute unique global order for seminars
+        const aggSem = await tx.seminar.aggregate({ _max: { order: true } });
+        const nextSeminarOrder = (aggSem._max.order ?? 0) + 1;
+
+        const createdSeminar = await tx.seminar.create({
+          data: {
+            title,
+            description,
+            order: nextSeminarOrder,
+            audioFiles:
+              audioFiles && audioFiles.length > 0
+                ? {
+                    create: audioFiles.map((a) => ({
+                      name: a.name,
+                      url: a.url ?? null,
+                      type: mapAudioType(a.type),
+                    })),
+                  }
+                : undefined,
+            lessons: {
+              create: normalizedLessons.map((l) => ({
+                title: l.title,
+                content: l.content,
+                order: l.order,
+                containerType: "SEMINAR",
+                fragments: {
+                  create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
+                },
+              })),
+            },
+          },
+          include: {
+            audioFiles: true,
+            lessons: {
+              include: {
+                fragments: {
+                  include: { slides: true, videos: true, narrationAudio: true },
+                },
+              },
+            },
+          },
+        });
+
+        return { kind: "seminar" as const, value: createdSeminar };
+      }
     });
 
-    return { ok: true, seminar: result, message: "Seminario creado correctamente", status: 201 };
+    if (result.kind === "series") {
+      return {
+        ok: true,
+        series: result.value,
+        message: "Serie creada correctamente",
+        status: 201,
+      } as const;
+    } else {
+      return {
+        ok: true,
+        seminar: result.value,
+        message: "Seminario creado correctamente",
+        status: 201,
+      } as const;
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("createSerieOrSeminar error:", message);
@@ -124,6 +186,23 @@ export const createSeminarFromAdminForm = async (form: CreationForm) => {
     audioFiles: form.audioFiles,
     lessons,
     type: "seminar",
+  });
+};
+
+export const createSeriesFromAdminForm = async (form: CreationForm) => {
+  const lessons = (form.lessons ?? []).map((l, idx) => ({
+    title: l.title,
+    order: l.order ?? idx + 1,
+    content: "Contenido por defecto...",
+    fragments: [defaultFragment(1)],
+  }));
+
+  return createSerieOrSeminar({
+    title: form.title,
+    description: form.description,
+    audioFiles: form.audioFiles,
+    lessons,
+    type: "series",
   });
 };
 

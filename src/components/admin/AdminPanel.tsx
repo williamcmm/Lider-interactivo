@@ -107,6 +107,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
               }
               onSave={actions.handleSaveContainer}
               onCancel={actions.handleCancelCreation}
+              isSaving={state.isSavingCreate}
             />
           </div>
         ) : (
@@ -150,6 +151,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
                   type={state.activeTab === 'seminars' ? 'seminar' : 'series'}
                   onEdit={actions.handleEditLessons}
                   onDelete={actions.handleDeleteContainer}
+                  isDeleting={state.deletingId === container.id}
                 />
               ))}
             </div>

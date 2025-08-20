@@ -24,6 +24,7 @@ export interface ContainerCardProps {
   type: 'seminar' | 'series';
   onEdit: (container: import('@/types').Seminar | import('@/types').Series) => void;
   onDelete: (id: string) => void;
+  isDeleting?: boolean;
 }
 
 export interface CreationFormProps {
@@ -32,6 +33,7 @@ export interface CreationFormProps {
   onFormChange: (form: CreationForm) => void;
   onSave: () => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }
 
 export interface LessonEditorProps {
@@ -46,6 +48,7 @@ export interface LessonEditorProps {
   onRemoveFragment: (index: number) => void;
   onSaveFragments: () => void;
   onFinish: () => void;
+  isSaving?: boolean;
 }
 
 export interface FragmentEditorProps {
