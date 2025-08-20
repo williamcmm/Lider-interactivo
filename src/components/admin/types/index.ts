@@ -42,6 +42,7 @@ export interface LessonEditorProps {
   fragments: import('@/types').Fragment[];
   editingFragmentIndex: number | null;
   onSelectLesson: (index: number) => void;
+  onUpdateLessonTitle: (lessonId: string, title: string) => Promise<void> | void;
   onFragmentEdit: (index: number | null) => void;
   onFragmentUpdate: (fragments: import('@/types').Fragment[]) => void;
   onAddFragment: () => void;

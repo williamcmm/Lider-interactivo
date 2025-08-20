@@ -28,6 +28,7 @@ export function AdminPanel({ initialSeminars = [], initialSeries = [] }: AdminPa
           fragments={state.fragmentsData}
           editingFragmentIndex={state.editingFragmentIndex}
           onSelectLesson={actions.handleSelectLesson}
+          onUpdateLessonTitle={actions.onUpdateLessonTitle}
           onFragmentEdit={(index) => 
             actions.setState(prev => ({ ...prev, editingFragmentIndex: index === -1 ? null : index }))
           }

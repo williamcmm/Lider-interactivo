@@ -16,6 +16,7 @@ import {
   updateFragment as updateFragmentAction,
   reorderFragments as reorderFragmentsAction,
 } from "@/actions/admin/fragments/crud";
+import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/crud";
 
 type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
 
@@ -530,6 +531,34 @@ export function useAdminPanel(init?: InitData) {
     }));
   };
 
+  const onUpdateLessonTitle = async (lessonId: string, title: string) => {
+    try {
+      const res = await updateLessonTitleAction(lessonId, title);
+      if (!res.ok) throw new Error((res as any).error || "Error actualizando título");
+      const updater = (list: (Seminar | Series)[]) =>
+        list.map((c) => ({
+          ...c,
+          lessons: c.lessons.map((l) => (l.id === lessonId ? { ...l, title } : l)),
+        }));
+      setSeminars((prev) => updater(prev));
+      setSeries((prev) => updater(prev));
+      setState((prev) => {
+        if (!prev.editingContainer) return prev;
+        const updated = {
+          ...prev.editingContainer,
+          lessons: prev.editingContainer.lessons.map((l) =>
+            l.id === lessonId ? { ...l, title } : l
+          ),
+        } as any;
+        return { ...prev, editingContainer: updated };
+      });
+      submitAlert("Título actualizado", "success");
+    } catch (e: any) {
+      console.error("Error actualizando título de lección", e);
+      submitAlert(e.message || "No se pudo actualizar el título", "error");
+    }
+  };
+
   const handleFinishEditingLessons = () => {
     setState((prev) => ({
       ...prev,
@@ -724,6 +753,7 @@ export function useAdminPanel(init?: InitData) {
       handleFormFieldChange,
       handleSaveContainer,
       handleEditLessons,
+  onUpdateLessonTitle,
       handleSelectLesson,
       handleFinishEditingLessons,
       handleDeleteContainer,

@@ -1,6 +1,7 @@
-import { FiArrowLeft, FiPlus, FiSave, FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiSave, FiLoader, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import { LessonEditorProps } from '../types';
 import { FragmentEditor } from './FragmentEditor';
+import { useState } from 'react';
 
 export function LessonEditor({
   container,
@@ -8,6 +9,7 @@ export function LessonEditor({
   fragments,
   editingFragmentIndex,
   onSelectLesson,
+  onUpdateLessonTitle,
   onFragmentEdit,
   onFragmentUpdate,
   onAddFragment,
@@ -16,6 +18,8 @@ export function LessonEditor({
   onFinish,
   isSaving
 }: LessonEditorProps) {
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [editingLessonTitle, setEditingLessonTitle] = useState<string>("");
   
   // Funciones para manejo de fragmentos
   const updateFragment = (index: number, field: string, value: any) => {
@@ -135,12 +139,63 @@ export function LessonEditor({
             <FiArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Editando: {container.title}
-            </h2>
-            <p className="text-sm text-gray-600">
-              Lección actual: {currentLesson?.title}
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900">Editando: {container.title}</h2>
+            <div className="text-sm text-gray-600 flex items-center gap-2">
+              <span>Lección actual:</span>
+              {editingLessonId === currentLesson?.id ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={editingLessonTitle}
+                    onChange={(e) => setEditingLessonTitle(e.target.value)}
+                    className="bg-transparent border-0 border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5"
+                  />
+                  <button
+                    type="button"
+                    className="text-green-600 hover:text-green-700"
+                    onClick={async () => {
+                      if (!currentLesson) return;
+                      const newTitle = editingLessonTitle.trim();
+                      if (!newTitle) return;
+                      await onUpdateLessonTitle(currentLesson.id, newTitle);
+                      setEditingLessonId(null);
+                      setEditingLessonTitle("");
+                    }}
+                    aria-label="Confirmar"
+                  >
+                    <FiCheck className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      setEditingLessonId(null);
+                      setEditingLessonTitle("");
+                    }}
+                    aria-label="Cancelar"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{currentLesson?.title}</span>
+                  {currentLesson && (
+                    <button
+                      type="button"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => {
+                        setEditingLessonId(currentLesson.id);
+                        setEditingLessonTitle(currentLesson.title);
+                      }}
+                      aria-label="Editar título"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -164,22 +219,78 @@ export function LessonEditor({
         <div className="lg:col-span-1">
           <h3 className="font-medium text-gray-900 mb-4">Lecciones</h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {container.lessons.map((lesson, index) => (
-              <button
-                key={lesson.id}
-                onClick={() => onSelectLesson(index)}
-                className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${
-                  index === selectedLessonIndex
-                    ? 'bg-blue-100 text-blue-800 border-2 border-blue-200'
-                    : 'border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <div className="font-medium">{lesson.order}. {lesson.title}</div>
-                <div className="text-gray-500 text-xs mt-1">
-                  {lesson.fragments.length} fragmentos
+            {container.lessons.map((lesson, index) => {
+              const isSelected = index === selectedLessonIndex;
+              const isEditing = editingLessonId === lesson.id;
+              return (
+                <div key={lesson.id} className={`p-3 rounded-lg text-sm transition-colors ${isSelected ? 'bg-blue-100 text-blue-800 border-2 border-blue-200' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => onSelectLesson(index)}
+                      className="text-left flex-1"
+                    >
+                      <div className="font-medium flex items-center gap-2">
+                        <span>{lesson.order}.</span>
+                        {isEditing ? (
+                          <input
+                            autoFocus
+                            value={editingLessonTitle}
+                            onChange={(e) => setEditingLessonTitle(e.target.value)}
+                            className="bg-transparent border-0 border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 w-full"
+                          />
+                        ) : (
+                          <span>{lesson.title}</span>
+                        )}
+                      </div>
+                      <div className="text-gray-500 text-xs mt-1">
+                        {lesson.fragments.length} fragmentos
+                      </div>
+                    </button>
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 ml-2">
+                        <button
+                          type="button"
+                          className="text-green-600 hover:text-green-700"
+                          onClick={async () => {
+                            const newTitle = editingLessonTitle.trim();
+                            if (!newTitle) return;
+                            await onUpdateLessonTitle(lesson.id, newTitle);
+                            setEditingLessonId(null);
+                            setEditingLessonTitle("");
+                          }}
+                          aria-label="Confirmar"
+                        >
+                          <FiCheck className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            setEditingLessonId(null);
+                            setEditingLessonTitle("");
+                          }}
+                          aria-label="Cancelar"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-gray-500 hover:text-gray-700 ml-2"
+                        onClick={() => {
+                          setEditingLessonId(lesson.id);
+                          setEditingLessonTitle(lesson.title);
+                        }}
+                        aria-label="Editar título"
+                      >
+                        <FiEdit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
