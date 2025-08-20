@@ -84,8 +84,12 @@ export const dbFragmentToUi = (f: DbFragment): UiFragment => ({
   id: f.id,
   order: f.order,
   readingMaterial: f.readingMaterial,
-  slides: (f.slides ?? []).map(dbSlideToUi),
-  videos: (f.videos ?? []).map(dbVideoToUi),
+  slides: (f.slides ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map(dbSlideToUi),
+  videos: (f.videos ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map(dbVideoToUi),
   studyAids: f.studyAids,
   narrationAudio: f.narrationAudio
     ? {
@@ -109,7 +113,9 @@ export const dbLessonToUi = (
   containerId,
   containerType,
   order: l.order,
-  fragments: (l.fragments ?? []).map(dbFragmentToUi),
+  fragments: (l.fragments ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map(dbFragmentToUi),
   createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
   updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
 });
@@ -125,7 +131,9 @@ export const dbSeminarToUi = (s: DbSeminar): UiSeminar => ({
     url: a.url ?? undefined,
     type: mapAudioTypeToUi(a.type),
   })),
-  lessons: (s.lessons ?? []).map((l) => dbLessonToUi(l, s.id, 'seminar')),
+  lessons: (s.lessons ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map((l) => dbLessonToUi(l, s.id, 'seminar')),
   createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
   updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
 });
@@ -141,7 +149,9 @@ export const dbSeriesToUi = (s: DbSeries): UiSeries => ({
     url: a.url ?? undefined,
     type: mapAudioTypeToUi(a.type),
   })),
-  lessons: (s.lessons ?? []).map((l) => dbLessonToUi(l, s.id, 'series')),
+  lessons: (s.lessons ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map((l) => dbLessonToUi(l, s.id, 'series')),
   createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
   updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
 });
@@ -153,7 +163,9 @@ export const dbLessonWithContainerToUi = (l: DbLessonWithContainer): UiLesson =>
   containerId: l.seminarId ?? l.seriesId ?? '',
   containerType: l.containerType === 'SEMINAR' ? 'seminar' : 'series',
   order: l.order,
-  fragments: (l.fragments ?? []).map(dbFragmentToUi),
+  fragments: (l.fragments ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map(dbFragmentToUi),
   createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
   updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
 });

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Fragment } from '@/types';
 import { FiPlay, FiPause } from 'react-icons/fi';
+import { submitAlert } from '@/utils/alerts';
 
 interface NarrationPlayButtonProps {
   /** El fragmento actual que puede contener audio de narración */
@@ -66,7 +67,7 @@ export function NarrationPlayButton({ fragment }: NarrationPlayButtonProps) {
   const handlePlayPause = async () => {
     // Verificar que existe audio y elemento HTML
     if (!fragment?.narrationAudio || !audioRef.current) {
-      alert('No hay audio de narración disponible para este fragmento');
+      submitAlert('No hay audio de narración disponible para este fragmento', 'warning');
       return;
     }
 
@@ -84,7 +85,7 @@ export function NarrationPlayButton({ fragment }: NarrationPlayButtonProps) {
       }
     } catch (error) {
       console.error('Error al reproducir audio:', error);
-      alert('Error al reproducir el audio de narración. Verifica que el archivo sea válido.');
+      submitAlert('Error al reproducir el audio de narración. Verifica que el archivo sea válido.', 'error');
       setIsPlaying(false);
     } finally {
       setIsLoading(false);
@@ -113,7 +114,7 @@ export function NarrationPlayButton({ fragment }: NarrationPlayButtonProps) {
     console.error('Error de audio:', error);
     setIsPlaying(false);
     setIsLoading(false);
-    alert('Error al cargar el audio de narración. Verifica la URL o el archivo.');
+    submitAlert('Error al cargar el audio de narración. Verifica la URL o el archivo.', 'error');
   };
 
   /**

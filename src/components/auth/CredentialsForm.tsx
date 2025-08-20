@@ -166,7 +166,7 @@ export function CredentialsForm() {
             type="button"
             className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium"
             onClick={() =>
-              alert("Funcionalidad de recuperación de contraseña próximamente")
+              submitAlert("Funcionalidad de recuperación de contraseña próximamente", "info")
             }
           >
             ¿Olvidaste tu contraseña?

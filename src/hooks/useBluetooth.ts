@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import type {
-  BluetoothDevice,
-  BluetoothRequestDeviceOptions,
-  NavigatorBluetooth
-} from '@/types/bluetooth';
+import { BluetoothDevice, NavigatorBluetooth, BluetoothRequestDeviceOptions } from '@/types/bluetooth';
+import { submitAlert } from '@/utils/alerts';
 
 /**
  * Hook personalizado para manejar la lógica de Bluetooth
@@ -22,7 +19,7 @@ export function useBluetooth() {
 
   const connectBluetooth = async () => {
     if (!isBluetoothSupported) {
-      alert('Bluetooth no está soportado en este navegador. Necesitas Chrome, Edge o un navegador compatible con Web Bluetooth API.');
+      submitAlert('Bluetooth no está soportado en este navegador. Necesitas Chrome, Edge o un navegador compatible con Web Bluetooth API.', 'error');
       return;
     }
 
@@ -70,7 +67,7 @@ export function useBluetooth() {
     if (bluetoothDevice && bluetoothDevice.gatt?.connected) {
       bluetoothDevice.gatt.disconnect();
       setIsBluetoothConnected(false);
-      alert('Dispositivo Bluetooth desconectado');
+      submitAlert('Dispositivo Bluetooth desconectado', 'info');
     }
   };
 

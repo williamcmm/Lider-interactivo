@@ -3,17 +3,14 @@
 import { useState } from "react";
 import { Seminar, Series, StudyContainer, Fragment, AudioFile } from "@/types";
 import { AdminPanelState, CreationForm, ActiveTab } from "../types";
-import type { 
-  DbSeminar, 
-  DbSeries, 
-  DbFragment, 
-  DbSlide, 
-  DbVideo
+import type {
+  DbSeminar,
+  DbSeries,
+  DbFragment,
+  DbSlide,
+  DbVideo,
 } from "@/types/db";
-import {
-  dbSeminarToUi,
-  dbSeriesToUi
-} from "@/types/db";
+import { dbSeminarToUi, dbSeriesToUi } from "@/types/db";
 import {
   createSeminarFromAdminForm,
   createSeriesFromAdminForm,
@@ -28,11 +25,14 @@ import {
   reorderFragments as reorderFragmentsAction,
 } from "@/actions/admin/fragments/crud";
 import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/crud";
-import { updateSeminarTitle, updateSeriesTitle } from "@/actions/admin/update-serie-seminar-title";
+import {
+  updateSeminarTitle,
+  updateSeriesTitle,
+} from "@/actions/admin/update-serie-seminar-title";
 
-type InitData = { 
-  initialSeminars?: DbSeminar[]; 
-  initialSeries?: DbSeries[]; 
+type InitData = {
+  initialSeminars?: DbSeminar[];
+  initialSeries?: DbSeries[];
 };
 
 export function useAdminPanel(init?: InitData) {
@@ -43,7 +43,7 @@ export function useAdminPanel(init?: InitData) {
   const [series, setSeries] = useState<Series[]>(
     (init?.initialSeries ?? []).map(dbSeriesToUi)
   );
-  
+
   const [state, setState] = useState<AdminPanelState>({
     activeTab: "seminars",
     isCreatingContainer: false,
@@ -130,7 +130,10 @@ export function useAdminPanel(init?: InitData) {
     }));
   };
 
-  const handleFormFieldChange = (field: keyof CreationForm, value: string | number | AudioFile[]) => {
+  const handleFormFieldChange = (
+    field: keyof CreationForm,
+    value: string | number | AudioFile[]
+  ) => {
     setState((prev) => ({
       ...prev,
       creationForm: {
@@ -143,12 +146,15 @@ export function useAdminPanel(init?: InitData) {
   const handleSaveContainer = async () => {
     if (isSavingCreate) return;
     if (!state.creationForm.title.trim()) {
-      alert("El título es obligatorio");
+      submitAlert("El título es obligatorio", "error");
       return;
     }
 
     if (state.creationForm.lessons.some((lesson) => !lesson.title.trim())) {
-      alert("Todos los títulos de las lecciones son obligatorios");
+      submitAlert(
+        "Todos los títulos de las lecciones son obligatorios",
+        "error"
+      );
       return;
     }
 
@@ -186,16 +192,21 @@ export function useAdminPanel(init?: InitData) {
           const prismaSeminar: Seminar = dbSeminarToUi(s);
           const updatedSeminars = [...seminars, prismaSeminar];
           setSeminars(updatedSeminars);
+          // Solo cerrar el formulario y resetear si fue exitoso
+          setState((prev) => ({ ...prev, isCreatingContainer: false }));
+          resetCreationForm();
+          submitAlert("Seminario creado exitosamente", "success");
         } else {
-          submitAlert(
-            (result as { error?: string }).error || "Error creando seminario",
-            "error"
-          );
-          throw new Error((result as { error?: string }).error || "Error creando seminario");
+          console.error("Error creando seminario:", result.error);
+          submitAlert("Error creando seminario", "error");
+          // No cerrar el formulario ni resetear cuando hay error
+          return;
         }
       } catch (e) {
         console.error("Error creando seminario en backend", e);
         submitAlert("Error creando seminario", "error");
+        // No cerrar el formulario ni resetear cuando hay error
+        return;
       } finally {
         setIsSavingCreate(false);
       }
@@ -231,20 +242,25 @@ export function useAdminPanel(init?: InitData) {
           const prismaSeries: Series = dbSeriesToUi(s);
           const updatedSeries = [...series, prismaSeries];
           setSeries(updatedSeries);
+          // Solo cerrar el formulario y resetear si fue exitoso
+          setState((prev) => ({ ...prev, isCreatingContainer: false }));
+          resetCreationForm();
+          submitAlert("Serie creada exitosamente", "success");
         } else {
-          submitAlert((result as { error?: string }).error || "Error creando serie", "error");
-          throw new Error((result as { error?: string }).error || "Error creando serie");
+          console.error("Error creando serie:", result.error);
+          submitAlert("Error creando serie", "error");
+          // No cerrar el formulario ni resetear cuando hay error
+          return;
         }
       } catch (e) {
         console.error("Error creando serie en backend", e);
         submitAlert("Error creando serie", "error");
+        // No cerrar el formulario ni resetear cuando hay error
+        return;
       } finally {
         setIsSavingCreate(false);
       }
     }
-
-    setState((prev) => ({ ...prev, isCreatingContainer: false }));
-    resetCreationForm();
   };
 
   const handleEditLessons = (container: Seminar | Series) => {
@@ -278,11 +294,16 @@ export function useAdminPanel(init?: InitData) {
   const onUpdateLessonTitle = async (lessonId: string, title: string) => {
     try {
       const res = await updateLessonTitleAction(lessonId, title);
-      if (!res.ok) throw new Error((res as { error?: string }).error || "Error actualizando título");
+      if (!res.ok)
+        throw new Error(
+          (res as { error?: string }).error || "Error actualizando título"
+        );
       const updater = (list: (Seminar | Series)[]) =>
         list.map((c) => ({
           ...c,
-          lessons: c.lessons.map((l) => (l.id === lessonId ? { ...l, title } : l)),
+          lessons: c.lessons.map((l) =>
+            l.id === lessonId ? { ...l, title } : l
+          ),
         }));
       setSeminars((prev) => updater(prev));
       setSeries((prev) => updater(prev));
@@ -319,22 +340,31 @@ export function useAdminPanel(init?: InitData) {
       const trimmed = title.trim();
       if (!trimmed) return;
       // Detect type by current tab or by editingContainer
-      const isSeminar = state.activeTab === "seminars" || state.editingContainer?.type === "seminar";
+      const isSeminar =
+        state.activeTab === "seminars" ||
+        state.editingContainer?.type === "seminar";
       const res = isSeminar
         ? await updateSeminarTitle(containerId, trimmed)
         : await updateSeriesTitle(containerId, trimmed);
-      if (!res.ok) throw new Error((res as { error?: string }).error || "Error actualizando título");
+      if (!res.ok)
+        throw new Error(
+          (res as { error?: string }).error || "Error actualizando título"
+        );
       if (isSeminar) {
-        setSeminars((prev) => prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s)));
+        setSeminars((prev) =>
+          prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s))
+        );
       } else {
-        setSeries((prev) => prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s)));
+        setSeries((prev) =>
+          prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s))
+        );
       }
       setState((prev) => {
         if (!prev.editingContainer) return prev;
         if (prev.editingContainer.id !== containerId) return prev;
-        return { 
-          ...prev, 
-          editingContainer: { ...prev.editingContainer, title: trimmed } 
+        return {
+          ...prev,
+          editingContainer: { ...prev.editingContainer, title: trimmed },
         };
       });
       submitAlert("Título actualizado", "success");
@@ -363,7 +393,10 @@ export function useAdminPanel(init?: InitData) {
       try {
         setDeletingId(id);
         const res = await deleteSeminarOrSerie(id);
-        if (!res.ok) throw new Error((res as { error?: string }).error || "Error al eliminar");
+        if (!res.ok)
+          throw new Error(
+            (res as { error?: string }).error || "Error al eliminar"
+          );
 
         if (res.type === "seminar") {
           const updatedSeminars = seminars.filter((s) => s.id !== id);
@@ -522,7 +555,7 @@ export function useAdminPanel(init?: InitData) {
       isSavingCreate,
       isSavingFragments,
       deletingId,
-  isAddingFragment,
+      isAddingFragment,
     },
     actions: {
       setActiveTab,
@@ -533,11 +566,11 @@ export function useAdminPanel(init?: InitData) {
       handleFormFieldChange,
       handleSaveContainer,
       handleEditLessons,
-  onUpdateLessonTitle,
+      onUpdateLessonTitle,
       handleSelectLesson,
       handleFinishEditingLessons,
       handleDeleteContainer,
-  onUpdateContainerTitle,
+      onUpdateContainerTitle,
       addFragment,
       removeFragment,
       saveFragmentsToLesson,

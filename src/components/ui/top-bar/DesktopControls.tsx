@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { FiGrid } from "react-icons/fi";
 import { Fragment, Lesson } from "@/types";
 import { AuthButton } from "./AuthButton";
+import { submitAlert } from "@/utils/alerts";
 import { AdminButton } from "./AdminButton";
 import { DesktopPanelButtons } from "./DesktopPanelButtons";
 import { ActionButtons } from "./ActionButtons";
@@ -92,15 +93,16 @@ export function DesktopControls({
       }
     } catch (error) {
       console.error("Error al iniciar presentación:", error);
-      alert(
-        "No se pudo conectar a una pantalla externa. Asegúrate de que haya dispositivos compatibles disponibles."
+      submitAlert(
+        "No se pudo conectar a una pantalla externa. Asegúrate de que haya dispositivos compatibles disponibles.",
+        "error"
       );
     }
   };
 
   const shareSlide = () => {
     if (!currentLesson || !currentFragment) {
-      alert("No hay una lección o fragmento seleccionado para compartir.");
+      submitAlert("No hay una lección o fragmento seleccionado para compartir.", "warning");
       return;
     }
     setShowShareModal(true);

@@ -3,6 +3,7 @@ import { Lesson, Fragment, TextSelectionPopup as TextSelectionPopupType } from '
 import { TextSelectionPopup } from '../ui/TextSelectionPopup';
 import { useNotesStore } from '../../store/notesStore';
 import { defaultContentHtml } from '../../constants/defaultContent';
+import { submitAlert } from '@/utils/alerts';
 
 interface ReadingContentProps {
   /** La lección actual seleccionada o null si no hay ninguna */
@@ -143,7 +144,7 @@ export function ReadingContent({ lesson, fragment }: ReadingContentProps) {
   const handleSaveSelectionNote = (noteContent: string) => {
     // Validaciones previas
     if (!lesson || !fragment || !noteContent.trim() || !textSelectionPopup.selectedText) {
-      alert('Debes seleccionar texto y escribir una nota.');
+      submitAlert('Debes seleccionar texto y escribir una nota.', 'error');
       return;
     }
     

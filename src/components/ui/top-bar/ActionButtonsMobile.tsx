@@ -4,6 +4,7 @@ import { Fragment, Lesson } from "@/types";
 import { useState, useEffect } from "react";
 import { FiPlay, FiShare2 } from "react-icons/fi";
 import { TbCast } from "react-icons/tb";
+import { submitAlert } from "@/utils/alerts";
 import { ShareModal } from "../ShareModal";
 
 interface ActionButtonsMobileProps {
@@ -91,15 +92,16 @@ export function ActionButtonsMobile({
       }
     } catch (error) {
       console.error("Error al iniciar presentación:", error);
-      alert(
-        "No se pudo conectar a una pantalla externa. Asegúrate de que haya dispositivos compatibles disponibles."
+      submitAlert(
+        "No se pudo conectar a una pantalla externa. Asegúrate de que haya dispositivos compatibles disponibles.",
+        "error"
       );
     }
   };
 
   const shareSlide = () => {
     if (!currentLesson || !currentFragment) {
-      alert("No hay una lección o fragmento seleccionado para compartir.");
+      submitAlert("No hay una lección o fragmento seleccionado para compartir.", "warning");
       return;
     }
     setShowShareModal(true);

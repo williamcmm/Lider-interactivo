@@ -1,5 +1,6 @@
 import { Fragment, Lesson } from "@/types";
 import React, { useState } from "react";
+import { submitAlert } from "@/utils/alerts";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ export function ShareModal({
       return sessionRef.id;
     } catch (error) {
       console.error("Error al crear la sesión compartida:", error);
-      alert("Error al crear la sesión compartida.");
+      submitAlert("Error al crear la sesión compartida.", "error");
       return null;
     } finally {
       setLoading(false);
@@ -90,7 +91,7 @@ export function ShareModal({
           shareUrl
         )}`;
         window.open(whatsappUrl, "_blank");
-        setTimeout(() => alert("✅ ¡Enlace copiado y WhatsApp abierto!"), 500);
+        setTimeout(() => submitAlert("✅ ¡Enlace copiado y WhatsApp abierto!", "success"), 500);
         onClose();
       },
     },
@@ -107,7 +108,7 @@ export function ShareModal({
           `📖 ${lesson.title} - Fragmento ${fragmentIndex + 1}`
         )}`;
         window.open(telegramUrl, "_blank");
-        setTimeout(() => alert("✅ ¡Enlace copiado y Telegram abierto!"), 500);
+        setTimeout(() => submitAlert("✅ ¡Enlace copiado y Telegram abierto!", "success"), 500);
         onClose();
       },
     },
@@ -125,7 +126,7 @@ export function ShareModal({
         const mailtoUrl = `mailto:?subject=${emailSubject}&body=${emailBody}`;
         window.location.href = mailtoUrl;
         setTimeout(
-          () => alert("✅ ¡Enlace copiado y cliente de email abierto!"),
+          () => submitAlert("✅ ¡Enlace copiado y cliente de email abierto!", "success"),
           500
         );
         onClose();
@@ -139,8 +140,9 @@ export function ShareModal({
         if (!sessionId) return;
         const success = await copyToClipboard();
         if (success) {
-          alert(
-            "✅ ¡Enlace copiado al portapapeles! Puedes pegarlo en cualquier aplicación."
+          submitAlert(
+            "✅ ¡Enlace copiado al portapapeles! Puedes pegarlo en cualquier aplicación.",
+            "success"
           );
         } else {
           prompt("Copia este enlace:", shareUrl);
