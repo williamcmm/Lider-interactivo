@@ -14,7 +14,12 @@ import { useSidebarStore } from "@/store/sidebarStore";
 import { useNotesStore } from "@/store/notesStore";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-export function StudyApp() {
+type StudyAppProps = {
+  initialSeminars?: any[];
+  initialSeries?: any[];
+};
+
+export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppProps) {
   // Zustand store para sidebar
   const { isSidebarOpen, isMobile, closeSidebar, toggleSidebar, setIsMobile } =
     useSidebarStore();
@@ -69,8 +74,60 @@ export function StudyApp() {
   // Removido porque ahora usamos Zustand
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
-  const [seminars, setSeminars] = useState<Seminar[]>([]);
-  const [series, setSeries] = useState<Series[]>([]);
+  const mapAudioType = (t: any): 'local' | 'remote' =>
+    String(t || '').toLowerCase() === 'local' ? 'local' : 'remote';
+  const toUiSeminar = (s: any): Seminar => ({
+    id: s.id,
+    title: s.title,
+    description: s.description ?? undefined,
+    order: s.order,
+    audioFiles: (s.audioFiles ?? []).map((a: any) => ({ id: a.id, name: a.name, url: a.url ?? undefined, type: mapAudioType(a.type) })),
+    lessons: (s.lessons ?? []).map((l: any) => ({
+      id: l.id,
+      title: l.title,
+      content: l.content,
+      containerId: s.id,
+      containerType: 'seminar',
+      order: l.order,
+      fragments: (l.fragments ?? []).map((f: any) => ({
+        id: f.id,
+        order: f.order,
+        readingMaterial: f.readingMaterial,
+        slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
+        videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
+        studyAids: f.studyAids,
+        narrationAudio: f.narrationAudio ? { id: f.narrationAudio.id, name: f.narrationAudio.name, url: f.narrationAudio.url ?? undefined, type: mapAudioType(f.narrationAudio.type) } : undefined,
+        isCollapsed: f.isCollapsed ?? false,
+      })),
+    })),
+  });
+  const toUiSeries = (s: any): Series => ({
+    id: s.id,
+    title: s.title,
+    description: s.description ?? undefined,
+    order: s.order,
+    audioFiles: (s.audioFiles ?? []).map((a: any) => ({ id: a.id, name: a.name, url: a.url ?? undefined, type: mapAudioType(a.type) })),
+    lessons: (s.lessons ?? []).map((l: any) => ({
+      id: l.id,
+      title: l.title,
+      content: l.content,
+      containerId: s.id,
+      containerType: 'series',
+      order: l.order,
+      fragments: (l.fragments ?? []).map((f: any) => ({
+        id: f.id,
+        order: f.order,
+        readingMaterial: f.readingMaterial,
+        slides: (f.slides ?? []).map((sl: any) => ({ id: sl.id, title: sl.title, content: sl.content, order: sl.order })),
+        videos: (f.videos ?? []).map((v: any) => ({ id: v.id, title: v.title, youtubeId: v.youtubeId, description: v.description ?? undefined, order: v.order })),
+        studyAids: f.studyAids,
+        narrationAudio: f.narrationAudio ? { id: f.narrationAudio.id, name: f.narrationAudio.name, url: f.narrationAudio.url ?? undefined, type: mapAudioType(f.narrationAudio.type) } : undefined,
+        isCollapsed: f.isCollapsed ?? false,
+      })),
+    })),
+  });
+  const [seminars, setSeminars] = useState<Seminar[]>(initialSeminars.map(toUiSeminar));
+  const [series, setSeries] = useState<Series[]>(initialSeries.map(toUiSeries));
 
   useEffect(() => {
     const setInitialPanel = () => {
@@ -98,27 +155,38 @@ export function StudyApp() {
     ? currentLesson.fragments.length
     : 0;
 
-  // Cargar datos desde localStorage al montar el componente
+  // Cargar datos desde localStorage al montar el componente como fallback si no hay data del servidor
   useEffect(() => {
     // Inicializar usuarios compartidos en el store
     setSharedUsers(["usuario1@email.com", "usuario2@email.com"]);
 
-    // Cargar datos desde localStorage (solo si existen)
-    const storedSeminars = LocalStorageManager.getSeminars();
-    const storedSeries = LocalStorageManager.getSeries();
+    const hasServerData = (initialSeminars?.length ?? 0) > 0 || (initialSeries?.length ?? 0) > 0;
+    if (!hasServerData) {
+      // Cargar datos desde localStorage (solo si existen)
+      const storedSeminars = LocalStorageManager.getSeminars();
+      const storedSeries = LocalStorageManager.getSeries();
+      setSeminars(storedSeminars);
+      setSeries(storedSeries);
+      // Selección por defecto desde almacenamiento local
+      if (storedSeminars.length > 0 && storedSeminars[0].lessons.length > 0) {
+        setCurrentLesson(storedSeminars[0].lessons[0]);
+      } else if (storedSeries.length > 0 && storedSeries[0].lessons.length > 0) {
+        setCurrentLesson(storedSeries[0].lessons[0]);
+      } else {
+        setCurrentLesson(null);
+      }
+      return;
+    }
 
-    setSeminars(storedSeminars);
-    setSeries(storedSeries);
-
-    // Seleccionar la primera lección disponible por defecto (solo si hay datos)
-    if (storedSeminars.length > 0 && storedSeminars[0].lessons.length > 0) {
-      setCurrentLesson(storedSeminars[0].lessons[0]);
-    } else if (storedSeries.length > 0 && storedSeries[0].lessons.length > 0) {
-      setCurrentLesson(storedSeries[0].lessons[0]);
+    // Si hay data del servidor, seleccionar la primera lección disponible
+    if (initialSeminars.length > 0 && initialSeminars[0].lessons.length > 0) {
+      setCurrentLesson(initialSeminars[0].lessons[0]);
+    } else if (initialSeries.length > 0 && initialSeries[0].lessons.length > 0) {
+      setCurrentLesson(initialSeries[0].lessons[0]);
     } else {
-      // No hay datos, mantener currentLesson como null
       setCurrentLesson(null);
     }
+
   }, [setSharedUsers]);
 
   // Combinar seminarios y series para la navegación

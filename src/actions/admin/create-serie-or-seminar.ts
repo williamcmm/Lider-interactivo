@@ -1,0 +1,198 @@
+"use server";
+
+import prisma from "@/lib/prisma";
+import {
+  Seminar,
+  Fragment as UiFragment,
+  Slide as UiSlide,
+  Video as UiVideo,
+  AudioFile as UiAudioFile,
+} from "@/types";
+import type { CreationForm } from "@/components/admin/types";
+
+/**
+ * Create a Seminar and all nested content using a single Prisma transaction.
+ * Accepts either a full Seminar-like payload (from UI state) or a minimal form payload.
+ * Returns { ok, seminar?, error? } to keep server-action friendly semantics.
+ */
+export const createSerieOrSeminar = async (
+  data:
+    | Seminar
+    | ({
+        title: string;
+        description?: string;
+        audioFiles?: UiAudioFile[];
+        lessons: {
+          title: string;
+          order?: number;
+          content?: string;
+          fragments?: UiFragment[];
+        }[];
+      } & { type?: "seminar" })
+) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Compute unique global order for seminars (schema enforces unique order)
+      const agg = await tx.seminar.aggregate({ _max: { order: true } });
+      const nextSeminarOrder = (agg._max.order ?? 0) + 1;
+
+      const title = (data as any).title;
+      const description = (data as any).description ?? null;
+      const audioFiles = (data as any).audioFiles as UiAudioFile[] | undefined;
+      const lessonsInput = (data as any).lessons as
+        | Seminar["lessons"]
+        | {
+            title: string;
+            order?: number;
+            content?: string;
+            fragments?: UiFragment[];
+          }[];
+
+      // Normalize lessons: ensure order, content, and fragments with defaults
+      const normalizedLessons = (lessonsInput ?? []).map((l, idx) => {
+        const order = (l as any).order ?? idx + 1;
+        const content = (l as any).content ?? "Contenido por defecto...";
+        const fragments = (l as any).fragments ?? [defaultFragment(1)];
+        return { title: (l as any).title, order, content, fragments };
+      });
+
+      const created = await tx.seminar.create({
+        data: {
+          title,
+          description,
+          order: nextSeminarOrder,
+          audioFiles:
+            audioFiles && audioFiles.length > 0
+              ? {
+                  create: audioFiles.map((a) => ({
+                    name: a.name,
+                    url: a.url ?? null,
+                    type: mapAudioType(a.type),
+                  })),
+                }
+              : undefined,
+          lessons: {
+            create: normalizedLessons.map((l) => ({
+              title: l.title,
+              content: l.content,
+              order: l.order,
+              containerType: "SEMINAR",
+              fragments: {
+                create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
+              },
+            })),
+          },
+        },
+        include: {
+          audioFiles: true,
+          lessons: {
+            include: {
+              fragments: {
+                include: { slides: true, videos: true, narrationAudio: true },
+              },
+            },
+          },
+        },
+      });
+
+      return created;
+    });
+
+    return { ok: true, seminar: result, message: "Seminario creado correctamente", status: 201 };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("createSerieOrSeminar error:", message);
+    return { ok: false, error: message, status: 500 };
+  }
+};
+
+/**
+ * Convenience wrapper: create a Seminar from the AdminPanel CreationForm.
+ * Uses default one-fragment/one-slide seed per lesson like the UI mock.
+ */
+export const createSeminarFromAdminForm = async (form: CreationForm) => {
+  const lessons = (form.lessons ?? []).map((l, idx) => ({
+    title: l.title,
+    order: l.order ?? idx + 1,
+    content: "Contenido por defecto...",
+    fragments: [defaultFragment(1)],
+  }));
+
+  return createSerieOrSeminar({
+    title: form.title,
+    description: form.description,
+    audioFiles: form.audioFiles,
+    lessons,
+    type: "seminar",
+  });
+};
+
+// =============== Helpers ===============
+
+function mapAudioType(t: UiAudioFile["type"]) {
+  return t === "local" ? "LOCAL" : ("REMOTE" as const);
+}
+
+function toFragmentCreate(f: UiFragment) {
+  const slides = (f.slides ?? []).map((s: UiSlide) => ({
+    title: s.title,
+    content: s.content,
+    order: s.order,
+  }));
+  const videos = (f.videos ?? []).map((v: UiVideo) => ({
+    title: v.title,
+    youtubeId: v.youtubeId,
+    description: v.description ?? null,
+    order: v.order,
+  }));
+
+  const base = {
+    order: f.order,
+    readingMaterial: f.readingMaterial,
+    studyAids: f.studyAids ?? "",
+    isCollapsed: f.isCollapsed ?? false,
+    slides: { create: slides },
+    videos: { create: videos },
+  } as any;
+
+  if (f.narrationAudio) {
+    base.narrationAudio = {
+      create: {
+        name: f.narrationAudio.name,
+        url: f.narrationAudio.url ?? null,
+        type: mapAudioType(f.narrationAudio.type),
+      },
+    };
+  }
+
+  return base;
+}
+
+function defaultFragment(order: number): UiFragment {
+  return {
+    id: `fragment_seed_${Date.now()}_${order}`,
+    order,
+    readingMaterial: "Contenido de lectura por defecto...",
+    studyAids: "Ayudas de estudio por defecto...",
+    isCollapsed: false,
+    slides: [
+      {
+        id: `slide_seed_${Date.now()}_${order}_1`,
+        order: 1,
+        title: "Diapositiva por defecto",
+        content:
+          "<h2>Título de la diapositiva</h2><p>Contenido de la diapositiva...</p>",
+      },
+    ],
+    videos: [
+      {
+        id: `video_seed_${Date.now()}_${order}_1`,
+        order: 1,
+        title: "Video de ejemplo",
+        youtubeId: "dQw4w9WgXcQ",
+        description: "Descripción del video...",
+      },
+    ],
+    narrationAudio: undefined,
+  };
+}

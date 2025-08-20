@@ -65,14 +65,14 @@ export function CreationForm({ form, type, onFormChange, onSave, onCancel }: Cre
         <div className="flex gap-2">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
           >
             <FiSave className="w-4 h-4 mr-2" />
             Guardar
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+            className="cursor-pointer px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
           >
             <FiX className="w-4 h-4 mr-2" />
             Cancelar
@@ -151,7 +151,7 @@ export function CreationForm({ form, type, onFormChange, onSave, onCancel }: Cre
           </h3>
           <button
             onClick={addAudioFile}
-            className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            className="cursor-pointer px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
           >
             <FiPlus className="w-3 h-3 mr-1" />
             Agregar Audio

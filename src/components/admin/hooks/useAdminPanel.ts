@@ -1,114 +1,240 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { Seminar, Series, StudyContainer, Fragment, AudioFile } from '@/types';
-import { LocalStorageManager } from '@/lib/storage';
-import { AdminPanelState, CreationForm, ActiveTab } from '../types';
+import { useState, useEffect } from "react";
+import { Seminar, Series, StudyContainer, Fragment, AudioFile } from "@/types";
+import { LocalStorageManager } from "@/lib/storage";
+import { AdminPanelState, CreationForm, ActiveTab } from "../types";
+import { createSeminarFromAdminForm } from "@/actions/admin/create-serie-or-seminar";
+import { submitAlert } from "@/utils/alerts";
 
-export function useAdminPanel() {
+type InitData = { initialSeminars?: any[]; initialSeries?: any[] };
+
+export function useAdminPanel(init?: InitData) {
+  // Helpers to map DB payload to UI types
+  const mapAudioType = (t: any): AudioFile["type"] =>
+    String(t || "").toLowerCase() === "local" ? "local" : "remote";
+
+  const toUiSeminar = (s: any): Seminar => ({
+    id: s.id,
+    title: s.title,
+    description: s.description ?? undefined,
+    order: s.order,
+    createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
+    updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
+    audioFiles: (s.audioFiles ?? []).map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      url: a.url ?? undefined,
+      type: mapAudioType(a.type),
+    })),
+    lessons: (s.lessons ?? []).map((l: any) => ({
+      id: l.id,
+      title: l.title,
+      content: l.content,
+      containerId: s.id,
+      containerType: "seminar",
+      order: l.order,
+      fragments: (l.fragments ?? []).map((f: any) => ({
+        id: f.id,
+        order: f.order,
+        readingMaterial: f.readingMaterial,
+        slides: (f.slides ?? []).map((sl: any) => ({
+          id: sl.id,
+          title: sl.title,
+          content: sl.content,
+          order: sl.order,
+        })),
+        videos: (f.videos ?? []).map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          youtubeId: v.youtubeId,
+          description: v.description ?? undefined,
+          order: v.order,
+        })),
+        studyAids: f.studyAids,
+        narrationAudio: f.narrationAudio
+          ? {
+              id: f.narrationAudio.id,
+              name: f.narrationAudio.name,
+              url: f.narrationAudio.url ?? undefined,
+              type: mapAudioType(f.narrationAudio.type),
+            }
+          : undefined,
+        isCollapsed: f.isCollapsed ?? false,
+      })),
+      createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
+      updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
+    })),
+  });
+
+  const toUiSeries = (s: any): Series => ({
+    id: s.id,
+    title: s.title,
+    description: s.description ?? undefined,
+    order: s.order,
+    createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
+    updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
+    audioFiles: (s.audioFiles ?? []).map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      url: a.url ?? undefined,
+      type: mapAudioType(a.type),
+    })),
+    lessons: (s.lessons ?? []).map((l: any) => ({
+      id: l.id,
+      title: l.title,
+      content: l.content,
+      containerId: s.id,
+      containerType: "series",
+      order: l.order,
+      fragments: (l.fragments ?? []).map((f: any) => ({
+        id: f.id,
+        order: f.order,
+        readingMaterial: f.readingMaterial,
+        slides: (f.slides ?? []).map((sl: any) => ({
+          id: sl.id,
+          title: sl.title,
+          content: sl.content,
+          order: sl.order,
+        })),
+        videos: (f.videos ?? []).map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          youtubeId: v.youtubeId,
+          description: v.description ?? undefined,
+          order: v.order,
+        })),
+        studyAids: f.studyAids,
+        narrationAudio: f.narrationAudio
+          ? {
+              id: f.narrationAudio.id,
+              name: f.narrationAudio.name,
+              url: f.narrationAudio.url ?? undefined,
+              type: mapAudioType(f.narrationAudio.type),
+            }
+          : undefined,
+        isCollapsed: f.isCollapsed ?? false,
+      })),
+      createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
+      updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
+    })),
+  });
   const [state, setState] = useState<AdminPanelState>({
-    activeTab: 'seminars',
+    activeTab: "seminars",
     isCreatingContainer: false,
     isEditingLessons: false,
     selectedLessonIndex: 0,
     editingContainer: null,
     creationForm: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       lessonsCount: 10,
-      lessons: Array.from({ length: 10 }, (_, i) => ({ title: '', order: i + 1 })),
-      audioFiles: []
+      lessons: Array.from({ length: 10 }, (_, i) => ({
+        title: "",
+        order: i + 1,
+      })),
+      audioFiles: [],
     },
     fragmentsData: [],
-    editingFragmentIndex: null
+    editingFragmentIndex: null,
   });
 
-  const [seminars, setSeminars] = useState<Seminar[]>([]);
-  const [series, setSeries] = useState<Series[]>([]);
+  const [seminars, setSeminars] = useState<Seminar[]>(
+    (init?.initialSeminars ?? []).map(toUiSeminar)
+  );
+  const [series, setSeries] = useState<Series[]>(
+    (init?.initialSeries ?? []).map(toUiSeries)
+  );
 
-  // Cargar datos desde localStorage al montar el componente
+  // Cargar desde localStorage solo si no vino data del servidor
   useEffect(() => {
-    const storedSeminars = LocalStorageManager.getSeminars();
-    const storedSeries = LocalStorageManager.getSeries();
-    
-    setSeminars(storedSeminars);
-    setSeries(storedSeries);
+    if ((init?.initialSeminars?.length ?? 0) === 0) {
+      const storedSeminars = LocalStorageManager.getSeminars();
+      if (storedSeminars.length) setSeminars(storedSeminars);
+    }
+    if ((init?.initialSeries?.length ?? 0) === 0) {
+      const storedSeries = LocalStorageManager.getSeries();
+      if (storedSeries.length) setSeries(storedSeries);
+    }
   }, []);
 
-  const currentData = state.activeTab === 'seminars' ? seminars : series;
+  const currentData = state.activeTab === "seminars" ? seminars : series;
 
   // ============== FUNCIONES PARA MANEJO DE CONTENEDORES ==============
 
   const resetCreationForm = () => {
     const defaultForm: CreationForm = {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       lessonsCount: 10,
-      lessons: Array.from({ length: 10 }, (_, i) => ({ title: '', order: i + 1 })),
-      audioFiles: []
+      lessons: Array.from({ length: 10 }, (_, i) => ({
+        title: "",
+        order: i + 1,
+      })),
+      audioFiles: [],
     };
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
-      creationForm: defaultForm
+      creationForm: defaultForm,
     }));
   };
 
   const handleCreateContainer = () => {
-    setState(prev => ({ ...prev, isCreatingContainer: true }));
+    setState((prev) => ({ ...prev, isCreatingContainer: true }));
     resetCreationForm();
   };
 
   const handleCancelCreation = () => {
-    setState(prev => ({ ...prev, isCreatingContainer: false }));
+    setState((prev) => ({ ...prev, isCreatingContainer: false }));
   };
 
   const handleLessonsCountChange = (count: number) => {
     const lessons = Array.from({ length: count }, (_, i) => {
       const existingLesson = state.creationForm.lessons[i];
-      return existingLesson || { title: '', order: i + 1 };
+      return existingLesson || { title: "", order: i + 1 };
     });
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       creationForm: {
         ...prev.creationForm,
         lessonsCount: count,
-        lessons
-      }
+        lessons,
+      },
     }));
   };
 
   const handleLessonTitleChange = (index: number, title: string) => {
     const updatedLessons = [...state.creationForm.lessons];
     updatedLessons[index] = { ...updatedLessons[index], title };
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
       creationForm: {
         ...prev.creationForm,
-        lessons: updatedLessons
-      }
+        lessons: updatedLessons,
+      },
     }));
   };
 
   const handleFormFieldChange = (field: keyof CreationForm, value: any) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       creationForm: {
         ...prev.creationForm,
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
-  const handleSaveContainer = () => {
+  const handleSaveContainer = async () => {
     if (!state.creationForm.title.trim()) {
-      alert('El título es obligatorio');
+      alert("El título es obligatorio");
       return;
     }
 
-    if (state.creationForm.lessons.some(lesson => !lesson.title.trim())) {
-      alert('Todos los títulos de las lecciones son obligatorios');
+    if (state.creationForm.lessons.some((lesson) => !lesson.title.trim())) {
+      alert("Todos los títulos de las lecciones son obligatorios");
       return;
     }
 
@@ -116,106 +242,218 @@ export function useAdminPanel() {
       id: `${state.activeTab.slice(0, -1)}_${Date.now()}`,
       title: state.creationForm.title.trim(),
       description: state.creationForm.description.trim(),
-      type: state.activeTab === 'seminars' ? 'seminar' : 'series',
+      type: state.activeTab === "seminars" ? "seminar" : "series",
       order: currentData.length + 1,
       lessons: state.creationForm.lessons.map((lesson, index) => ({
         id: `lesson_${Date.now()}_${index}`,
         title: lesson.title.trim(),
-        content: 'Contenido por defecto...',
+        content: "Contenido por defecto...",
         containerId: `${state.activeTab.slice(0, -1)}_${Date.now()}`,
-        containerType: state.activeTab === 'seminars' ? 'seminar' : 'series' as 'seminar' | 'series',
+        containerType:
+          state.activeTab === "seminars"
+            ? "seminar"
+            : ("series" as "seminar" | "series"),
         order: index + 1,
         fragments: [
           {
             id: `fragment_${Date.now()}_${index}_0`,
             order: 1,
-            readingMaterial: 'Contenido de lectura por defecto...',
-            slides: [{
-              id: `slide_${Date.now()}_${index}_0_0`,
-              order: 1,
-              title: 'Diapositiva por defecto',
-              content: '<h2>Título de la diapositiva</h2><p>Contenido de la diapositiva...</p>'
-            }],
-            videos: [{
-              id: `video_${Date.now()}_${index}_0_0`,
-              order: 1,
-              title: 'Video de ejemplo',
-              youtubeId: 'dQw4w9WgXcQ',
-              description: 'Descripción del video...'
-            }],
-            studyAids: 'Ayudas de estudio por defecto...',
-            narrationAudio: undefined
-          }
+            readingMaterial: "Contenido de lectura por defecto...",
+            slides: [
+              {
+                id: `slide_${Date.now()}_${index}_0_0`,
+                order: 1,
+                title: "Diapositiva por defecto",
+                content:
+                  "<h2>Título de la diapositiva</h2><p>Contenido de la diapositiva...</p>",
+              },
+            ],
+            videos: [
+              {
+                id: `video_${Date.now()}_${index}_0_0`,
+                order: 1,
+                title: "Video de ejemplo",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Descripción del video...",
+              },
+            ],
+            studyAids: "Ayudas de estudio por defecto...",
+            narrationAudio: undefined,
+          },
         ],
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })),
       audioFiles: state.creationForm.audioFiles,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    if (state.activeTab === 'seminars') {
-      const updatedSeminars = [...seminars, newContainer as Seminar];
-      setSeminars(updatedSeminars);
-      LocalStorageManager.saveSeminars(updatedSeminars);
+    if (state.activeTab === "seminars") {
+      // Persist via Server Action (Prisma). Fallback to localStorage on error.
+      try {
+        // Sanitize non-serializable fields (File) from audioFiles
+        const sanitizedForm: CreationForm = {
+          ...state.creationForm,
+          audioFiles: (state.creationForm.audioFiles ?? []).map(
+            (a) =>
+              ({
+                id: a.id,
+                name: a.name,
+                url: a.url,
+                type: a.type,
+              } as AudioFile)
+          ),
+        };
+
+        const result = await createSeminarFromAdminForm({
+          ...sanitizedForm,
+          // Ensure lesson titles and orders are trimmed/sequenced
+          lessons: sanitizedForm.lessons.map((l, idx) => ({
+            title: l.title.trim(),
+            order: l.order ?? idx + 1,
+          })),
+          title: sanitizedForm.title.trim(),
+          description: sanitizedForm.description.trim(),
+        });
+
+        if (result.ok && result.seminar) {
+          const s = result.seminar as any;
+          const prismaSeminar: Seminar = {
+            id: s.id,
+            title: s.title,
+            description: s.description ?? undefined,
+            order: s.order,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+            audioFiles: (s.audioFiles ?? []).map((a: any) => ({
+              id: a.id,
+              name: a.name,
+              url: a.url ?? undefined,
+              type: (String(a.type || "").toLowerCase() === "local"
+                ? "local"
+                : "remote") as AudioFile["type"],
+            })),
+            lessons: (s.lessons ?? []).map((l: any) => ({
+              id: l.id,
+              title: l.title,
+              content: l.content,
+              containerId: s.id,
+              containerType: "seminar",
+              order: l.order,
+              fragments: (l.fragments ?? []).map((f: any) => ({
+                id: f.id,
+                order: f.order,
+                readingMaterial: f.readingMaterial,
+                slides: (f.slides ?? []).map((sl: any) => ({
+                  id: sl.id,
+                  title: sl.title,
+                  content: sl.content,
+                  order: sl.order,
+                })),
+                videos: (f.videos ?? []).map((v: any) => ({
+                  id: v.id,
+                  title: v.title,
+                  youtubeId: v.youtubeId,
+                  description: v.description ?? undefined,
+                  order: v.order,
+                })),
+                studyAids: f.studyAids,
+                narrationAudio: f.narrationAudio
+                  ? {
+                      id: f.narrationAudio.id,
+                      name: f.narrationAudio.name,
+                      url: f.narrationAudio.url ?? undefined,
+                      type: (String(
+                        f.narrationAudio.type || ""
+                      ).toLowerCase() === "local"
+                        ? "local"
+                        : "remote") as AudioFile["type"],
+                    }
+                  : undefined,
+                isCollapsed: f.isCollapsed ?? false,
+              })),
+              createdAt: new Date(l.createdAt),
+              updatedAt: new Date(l.updatedAt),
+            })),
+          };
+          const updatedSeminars = [...seminars, prismaSeminar];
+          setSeminars(updatedSeminars);
+          LocalStorageManager.saveSeminars(updatedSeminars);
+        } else {
+          submitAlert(
+            (result as any).error || "Error creando seminario",
+            "error"
+          );
+          throw new Error((result as any).error || "Error creando seminario");
+        }
+      } catch (e) {
+        console.error(
+          "Fallo al crear seminario en backend, usando localStorage",
+          e
+        );
+        const updatedSeminars = [...seminars, newContainer as Seminar];
+        setSeminars(updatedSeminars);
+        LocalStorageManager.saveSeminars(updatedSeminars);
+      }
     } else {
       const updatedSeries = [...series, newContainer as Series];
       setSeries(updatedSeries);
       LocalStorageManager.saveSeries(updatedSeries);
     }
 
-    setState(prev => ({ ...prev, isCreatingContainer: false }));
+    setState((prev) => ({ ...prev, isCreatingContainer: false }));
     resetCreationForm();
   };
 
   const handleEditLessons = (container: Seminar | Series) => {
     const studyContainer: StudyContainer = {
       ...container,
-      type: container.id.includes('seminar') ? 'seminar' : 'series'
+      type: container.id.includes("seminar") ? "seminar" : "series",
     };
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
       editingContainer: studyContainer,
       isEditingLessons: true,
       selectedLessonIndex: 0,
       fragmentsData: container.lessons[0]?.fragments || [],
-      editingFragmentIndex: null
+      editingFragmentIndex: null,
     }));
   };
 
   const handleSelectLesson = (index: number) => {
     if (!state.editingContainer) return;
-    
+
     const selectedLesson = state.editingContainer.lessons[index];
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedLessonIndex: index,
       fragmentsData: selectedLesson?.fragments || [],
-      editingFragmentIndex: null
+      editingFragmentIndex: null,
     }));
   };
 
   const handleFinishEditingLessons = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isEditingLessons: false,
       editingContainer: null,
       fragmentsData: [],
-      editingFragmentIndex: null
+      editingFragmentIndex: null,
     }));
   };
 
   const handleDeleteContainer = (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este contenedor?')) return;
+    if (!confirm("¿Estás seguro de que deseas eliminar este contenedor?"))
+      return;
 
-    if (state.activeTab === 'seminars') {
-      const updatedSeminars = seminars.filter(s => s.id !== id);
+    if (state.activeTab === "seminars") {
+      const updatedSeminars = seminars.filter((s) => s.id !== id);
       setSeminars(updatedSeminars);
       LocalStorageManager.saveSeminars(updatedSeminars);
     } else {
-      const updatedSeries = series.filter(s => s.id !== id);
+      const updatedSeries = series.filter((s) => s.id !== id);
       setSeries(updatedSeries);
       LocalStorageManager.saveSeries(updatedSeries);
     }
@@ -229,36 +467,41 @@ export function useAdminPanel() {
     const newFragment = {
       id: `fragment_${Date.now()}`,
       order: state.fragmentsData.length + 1,
-      readingMaterial: 'Nuevo contenido de lectura...',
-      slides: [{
-        id: `slide_${Date.now()}_0`,
-        order: 1,
-        title: 'Nueva Diapositiva',
-        content: '<h2>Título de la nueva diapositiva</h2><p>Contenido...</p>'
-      }],
+      readingMaterial: "Nuevo contenido de lectura...",
+      slides: [
+        {
+          id: `slide_${Date.now()}_0`,
+          order: 1,
+          title: "Nueva Diapositiva",
+          content: "<h2>Título de la nueva diapositiva</h2><p>Contenido...</p>",
+        },
+      ],
       videos: [],
-      studyAids: 'Nuevas ayudas de estudio...',
-      narrationAudio: undefined
+      studyAids: "Nuevas ayudas de estudio...",
+      narrationAudio: undefined,
     };
 
     const updatedFragments = [...state.fragmentsData, newFragment];
-    setState(prev => ({ ...prev, fragmentsData: updatedFragments }));
+    setState((prev) => ({ ...prev, fragmentsData: updatedFragments }));
   };
 
   const removeFragment = (fragmentIndex: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este fragmento?')) return;
+    if (!confirm("¿Estás seguro de que deseas eliminar este fragmento?"))
+      return;
 
-    const updatedFragments = state.fragmentsData.filter((_, index) => index !== fragmentIndex);
-    
+    const updatedFragments = state.fragmentsData.filter(
+      (_, index) => index !== fragmentIndex
+    );
+
     // Reordenar los fragmentos restantes
     updatedFragments.forEach((fragment, index) => {
       fragment.order = index + 1;
     });
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       fragmentsData: updatedFragments,
-      editingFragmentIndex: null
+      editingFragmentIndex: null,
     }));
   };
 
@@ -267,28 +510,29 @@ export function useAdminPanel() {
 
     // Actualizar los fragmentos en la lección actual
     const updatedContainer = { ...state.editingContainer };
-    updatedContainer.lessons[state.selectedLessonIndex].fragments = state.fragmentsData;
+    updatedContainer.lessons[state.selectedLessonIndex].fragments =
+      state.fragmentsData;
 
     // Guardar en localStorage
-    if (state.activeTab === 'seminars') {
-      const updatedSeminars = seminars.map(s => 
+    if (state.activeTab === "seminars") {
+      const updatedSeminars = seminars.map((s) =>
         s.id === updatedContainer.id ? updatedContainer : s
       );
       setSeminars(updatedSeminars);
       LocalStorageManager.saveSeminars(updatedSeminars);
     } else {
-      const updatedSeries = series.map(s => 
+      const updatedSeries = series.map((s) =>
         s.id === updatedContainer.id ? updatedContainer : s
       );
       setSeries(updatedSeries);
       LocalStorageManager.saveSeries(updatedSeries);
     }
 
-    setState(prev => ({ ...prev, editingContainer: updatedContainer }));
+    setState((prev) => ({ ...prev, editingContainer: updatedContainer }));
   };
 
   const setActiveTab = (tab: ActiveTab) => {
-    setState(prev => ({ ...prev, activeTab: tab }));
+    setState((prev) => ({ ...prev, activeTab: tab }));
   };
 
   return {
@@ -296,7 +540,7 @@ export function useAdminPanel() {
       ...state,
       seminars,
       series,
-      currentData
+      currentData,
     },
     actions: {
       setActiveTab,
@@ -313,7 +557,7 @@ export function useAdminPanel() {
       addFragment,
       removeFragment,
       saveFragmentsToLesson,
-      setState
-    }
+      setState,
+    },
   };
 }
