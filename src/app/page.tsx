@@ -3,10 +3,21 @@ import { getSeminarsAndSeries } from '@/actions/admin/get-seminar-and-series';
 import type { DbSeminar, DbSeries } from '@/types/db';
 
 export default async function Home() {
-  // Obtener datos públicos siempre (la app se encargará de filtrar según autenticación)
-  const result = await getSeminarsAndSeries();
-  const initialSeminars: DbSeminar[] = result.ok ? (result.seminars as DbSeminar[]) : [];
-  const initialSeries: DbSeries[] = result.ok ? (result.series as DbSeries[]) : [];
+  // Solo obtener datos si hay autenticación válida
+  // La validación se hace en el componente StudyApp para mostrar contenido restringido
+  let initialSeminars: DbSeminar[] = [];
+  let initialSeries: DbSeries[] = [];
+
+  try {
+    const result = await getSeminarsAndSeries();
+    if (result.ok) {
+      initialSeminars = result.seminars as DbSeminar[];
+      initialSeries = result.series as DbSeries[];
+    }
+  } catch (error) {
+    // En caso de error, mantener arrays vacíos
+    console.error('Error loading initial data:', error);
+  }
 
   return (
     <StudyApp 

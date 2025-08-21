@@ -45,9 +45,21 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
             email: firebaseUser.email 
           });
 
-          // Obtener el token de Firebase y guardarlo en cookies
+          // Obtener el token de Firebase y guardarlo en cookies con configuración mejorada para producción
           const token = await firebaseUser.getIdToken();
-          document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=strict`;
+          
+          // Configuración de cookie más robusta para producción
+          const isProduction = process.env.NODE_ENV === 'production';
+          const cookieOptions = [
+            `firebase-token=${token}`,
+            'path=/',
+            'max-age=3600',
+            isProduction ? 'SameSite=Lax' : 'SameSite=strict',
+            isProduction ? 'Secure' : ''
+          ].filter(Boolean).join('; ');
+          
+          document.cookie = cookieOptions;
+          logger.debug("Cookie set:", { isProduction, cookieOptions: cookieOptions.replace(token, '[TOKEN]') });
 
           // Sincronizar usuario con la DB usando Server Action
           const result = await syncFirebaseUser({

@@ -84,13 +84,14 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
   const [currentFragmentIndex, setCurrentFragmentIndex] = useState(0);
   
   // Convertir datos iniciales a UI types usando useMemo (no cambian después de inicialización)
+  // Solo mostrar contenido si el usuario está autenticado
   const seminars = useMemo<Seminar[]>(
-    () => (initialSeminars ?? []).map(dbSeminarToUi),
-    [initialSeminars]
+    () => isAuthenticated ? (initialSeminars ?? []).map(dbSeminarToUi) : [],
+    [initialSeminars, isAuthenticated]
   );
   const series = useMemo<Series[]>(
-    () => (initialSeries ?? []).map(dbSeriesToUi),
-    [initialSeries]
+    () => isAuthenticated ? (initialSeries ?? []).map(dbSeriesToUi) : [],
+    [initialSeries, isAuthenticated]
   );
 
   useEffect(() => {
@@ -123,15 +124,21 @@ export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppP
   useEffect(() => {
     // Inicializar usuarios compartidos en el store
     setSharedUsers(["usuario1@email.com", "usuario2@email.com"]);
-    // Seleccionar la primera lección disponible de datos del servidor
-    if (seminars.length > 0 && seminars[0].lessons.length > 0) {
-      setCurrentLesson(seminars[0].lessons[0]);
-    } else if (series.length > 0 && series[0].lessons.length > 0) {
-      setCurrentLesson(series[0].lessons[0]);
+    
+    // Seleccionar la primera lección disponible solo si el usuario está autenticado
+    if (isAuthenticated) {
+      if (seminars.length > 0 && seminars[0].lessons.length > 0) {
+        setCurrentLesson(seminars[0].lessons[0]);
+      } else if (series.length > 0 && series[0].lessons.length > 0) {
+        setCurrentLesson(series[0].lessons[0]);
+      } else {
+        setCurrentLesson(null);
+      }
     } else {
+      // Si no está autenticado, limpiar la lección actual
       setCurrentLesson(null);
     }
-  }, [setSharedUsers, seminars, series]);
+  }, [setSharedUsers, seminars, series, isAuthenticated]);
 
   // Combinar seminarios y series para la navegación (memoizado)
   const allContainers = useMemo(
