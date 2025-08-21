@@ -17,6 +17,26 @@ export const authConfig = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days to expire the session
   },
+  // Configuración específica para Firebase Hosting
+  trustHost: true,
+  // Configurar el dominio base para las cookies
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" 
+        ? "__Secure-next-auth.session-token" 
+        : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        // Asegurar que las cookies funcionen en Firebase Hosting
+        domain: process.env.NODE_ENV === "production" 
+          ? process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined
+          : undefined,
+      },
+    },
+  },
   callbacks: {
     async signIn({ account, profile }) {
       if (account?.provider === "google") {
@@ -146,20 +166,4 @@ export const authConfig = {
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
-  trustHost: true,
-  secret: process.env.AUTH_SECRET,
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-      },
-    },
-  },
 });
