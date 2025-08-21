@@ -1,7 +1,6 @@
 {
   "hosting": {
     "site": "lider-interactivo-dde88",
-    "public": "public",
     "source": ".",
     "ignore": [
       "firebase.json",
@@ -10,6 +9,12 @@
     ],
     "frameworksBackend": {
       "region": "us-central1"
-    }
+    },
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "ssrliderinteractivodde8"
+      }
+    ]
   }
 }

@@ -17,7 +17,8 @@ const requiredEnvVars = {
 
 // Check for missing environment variables
 const missingVars = Object.entries(requiredEnvVars)
-  .filter(([key, value]) => !value)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .filter(([_, value]) => !value)
   .map(([key]) => `NEXT_PUBLIC_FIREBASE_${key.toUpperCase()}`);
 
 if (missingVars.length > 0) {
