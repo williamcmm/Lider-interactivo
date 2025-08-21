@@ -13,6 +13,7 @@ const isLoggingEnabled = (): boolean => {
   return process.env.NEXT_PUBLIC_ENABLE_LOGGING === 'true';
 };
 
+/* eslint-disable */
 export const logger = {
   log: (...args: any[]) => {
     if (isLoggingEnabled()) {
@@ -63,3 +64,4 @@ export const firebaseLogger = {
     console.error('❌', ...args);
   }
 };
+/* eslint-disable */

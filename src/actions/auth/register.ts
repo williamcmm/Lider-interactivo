@@ -77,32 +77,37 @@ export async function registerUser(
       throw new Error(syncResult.error || 'Failed to sync user with database');
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Registration error:", error);
     
     // Manejar errores específicos de Firebase
     let errorMessage = 'Error en el registro';
-    
-    switch (error.code) {
-      case 'auth/operation-not-allowed':
-        errorMessage = 'El registro no está habilitado. Contacta al administrador.';
-        break;
-      case 'auth/email-already-in-use':
-        errorMessage = 'Ya existe una cuenta con este correo electrónico.';
-        break;
-      case 'auth/invalid-email':
-        errorMessage = 'El formato del correo electrónico no es válido.';
-        break;
-      case 'auth/weak-password':
-        errorMessage = 'La contraseña es muy débil. Debe tener al menos 6 caracteres.';
-        break;
-      case 'auth/network-request-failed':
-        errorMessage = 'Error de conexión. Verifica tu internet.';
-        break;
-      default:
-        errorMessage = error.message || 'Error en el registro';
+
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const firebaseError = error as { code: string; message?: string };
+      switch (firebaseError.code) {
+        case 'auth/operation-not-allowed':
+          errorMessage = 'El registro no está habilitado. Contacta al administrador.';
+          break;
+        case 'auth/email-already-in-use':
+          errorMessage = 'Ya existe una cuenta con este correo electrónico.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'El formato del correo electrónico no es válido.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'La contraseña es muy débil. Debe tener al menos 6 caracteres.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Error de conexión. Verifica tu internet.';
+          break;
+        default:
+          errorMessage = firebaseError.message || 'Error en el registro';
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message || 'Error en el registro';
     }
-    
+
     return {
       ok: false,
       status: 500,

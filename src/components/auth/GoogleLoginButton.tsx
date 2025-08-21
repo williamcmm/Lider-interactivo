@@ -32,26 +32,31 @@ export function GoogleLoginButton({ disabled = false }: GoogleLoginButtonProps) 
       // Redirigir sin mostrar alerta de éxito
       router.push("/");
       
-    } catch (error: any) {
+    } catch (error) {
       firebaseLogger.error("Google login error:", error);
       
       let errorMessage = 'Error al iniciar sesión con Google';
-      
-      switch (error.code) {
-        case 'auth/operation-not-allowed':
-          errorMessage = 'El login con Google no está habilitado. Contacta al administrador.';
-          break;
-        case 'auth/popup-blocked':
-          errorMessage = 'El popup fue bloqueado. Permite popups para este sitio.';
-          break;
-        case 'auth/popup-closed-by-user':
-          errorMessage = 'Login cancelado por el usuario.';
-          break;
-        case 'auth/cancelled-popup-request':
-          errorMessage = 'Solo puede haber un popup de login a la vez.';
-          break;
-        default:
-          errorMessage = error.message || 'Error al iniciar sesión con Google';
+
+      // Narrow error type to access code/message
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        switch ((error as { code: string }).code) {
+          case 'auth/operation-not-allowed':
+            errorMessage = 'El login con Google no está habilitado. Contacta al administrador.';
+            break;
+          case 'auth/popup-blocked':
+            errorMessage = 'El popup fue bloqueado. Permite popups para este sitio.';
+            break;
+          case 'auth/popup-closed-by-user':
+            errorMessage = 'Login cancelado por el usuario.';
+            break;
+          case 'auth/cancelled-popup-request':
+            errorMessage = 'Solo puede haber un popup de login a la vez.';
+            break;
+          default:
+            errorMessage = (error as { message?: string }).message || 'Error al iniciar sesión con Google';
+        }
+      } else {
+        errorMessage = 'Error al iniciar sesión con Google';
       }
       
       submitAlert(errorMessage, "error");

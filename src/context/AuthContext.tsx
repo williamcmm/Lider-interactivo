@@ -3,14 +3,15 @@
 import React, { createContext, useContext } from 'react';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { User } from 'firebase/auth';
+import { Note, SharedNote } from '@/types';
 
 interface FirebaseUser {
   id: string;
   name: string;
   email: string;
   role: string;
-  notes: any[];
-  sharedNotes: any[];
+  notes: Note[];
+  sharedNotes: SharedNote[];
   firebaseUser: User;
 }
 

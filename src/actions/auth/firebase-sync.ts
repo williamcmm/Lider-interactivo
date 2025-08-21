@@ -1,6 +1,9 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import { Note, SharedNote } from '@/types';
+import { firebaseLogger } from '@/utils/logger';
+import { dbNoteToUi, dbSharedNoteToUi } from '@/types/db';
 
 interface SyncUserParams {
   uid: string;
@@ -15,15 +18,15 @@ interface SyncUserResult {
     name: string;
     email: string;
     role: string;
-    notes: any[];
-    sharedNotes: any[];
+    notes: Note[];
+    sharedNotes: SharedNote[];
   };
   error?: string;
 }
 
 export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Promise<SyncUserResult> {
   try {
-    console.log("🔥 Firebase sync action:", { uid, email, name });
+    firebaseLogger.auth("Firebase sync action:", { uid, email, name });
 
     if (!uid || !email) {
       return {
@@ -64,7 +67,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        console.log("✅ Updated existing user with Firebase UID");
+        firebaseLogger.success("Updated existing user with Firebase UID");
       } else {
         // Crear nuevo usuario
         user = await prisma.user.create({
@@ -79,7 +82,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        console.log("✅ Created new user");
+        firebaseLogger.success("Created new user");
       }
     } else {
       // Actualizar información si es necesaria
@@ -92,7 +95,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        console.log("✅ Updated user name");
+        firebaseLogger.success("Updated user name");
       }
     }
 
@@ -103,13 +106,13 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
         name: user.name,
         email: user.email,
         role: user.role,
-        notes: user.notes,
-        sharedNotes: user.sharedNotes,
+        notes: user.notes.map(dbNoteToUi),
+        sharedNotes: user.sharedNotes.map(dbSharedNoteToUi),
       }
     };
 
   } catch (error) {
-    console.error("❌ Firebase sync error:", error);
+    firebaseLogger.error("Firebase sync error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Sync error'

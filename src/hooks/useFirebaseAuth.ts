@@ -3,14 +3,15 @@ import { User } from 'firebase/auth';
 import { auth, onAuthStateChanged } from '@/lib/firebase';
 import { syncFirebaseUser } from '@/actions/auth/firebase-sync';
 import { firebaseLogger, logger } from '@/utils/logger';
+import { Note, SharedNote } from '@/types';
 
 interface FirebaseUser {
   id: string;
   name: string;
   email: string;
   role: string;
-  notes: any[];
-  sharedNotes: any[];
+  notes: Note[];
+  sharedNotes: SharedNote[];
   firebaseUser: User;
 }
 

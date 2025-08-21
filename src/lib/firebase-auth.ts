@@ -1,21 +1,16 @@
+import { Note, SharedNote } from "@/types";
 import { initializeApp, getApps } from "firebase/app";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
+import {
+  getAuth,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User
+  User,
 } from "firebase/auth";
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc 
-} from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -28,7 +23,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app =
+  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -40,11 +36,11 @@ export interface AppUser {
   id: string;
   email: string;
   name: string;
-  role: 'USER' | 'ADMIN';
+  role: "USER" | "ADMIN";
   createdAt: Date;
   updatedAt: Date;
-  notes?: any[];
-  sharedNotes?: any[];
+  notes?: Note[];
+  sharedNotes?: SharedNote[];
 }
 
 export interface AuthSession {
@@ -62,7 +58,13 @@ export const authService = {
       return { success: true, user: userData };
     } catch (error: any) {
       console.error("Error signing in:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error:
+          typeof error === "object" && error !== null && "message" in error
+            ? (error as { message: string }).message
+            : String(error),
+      };
     }
   },
 
@@ -71,31 +73,47 @@ export const authService = {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      
+
       // Verificar si el usuario existe en Firestore
       let userData = await getUserData(user.uid);
-      
+
       if (!userData) {
         // Crear usuario en Firestore si no existe
         userData = await createUserProfile(user);
       }
-      
+
       return { success: true, user: userData };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error signing in with Google:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error:
+          typeof error === "object" && error !== null && "message" in error
+            ? (error as { message: string }).message
+            : String(error),
+      };
     }
   },
 
   // Registro con email/password
   async signUp(email: string, password: string, name: string) {
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const userData = await createUserProfile(result.user, name);
       return { success: true, user: userData };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error signing up:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error:
+          typeof error === "object" && error !== null && "message" in error
+            ? (error as { message: string }).message
+            : String(error),
+      };
     }
   },
 
@@ -104,9 +122,15 @@ export const authService = {
     try {
       await signOut(auth);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error signing out:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error:
+          typeof error === "object" && error !== null && "message" in error
+            ? (error as { message: string }).message
+            : String(error),
+      };
     }
   },
 
@@ -133,7 +157,7 @@ async function getUserData(uid: string): Promise<AppUser | null> {
         id: uid,
         email: data.email,
         name: data.name,
-        role: data.role || 'USER',
+        role: data.role || "USER",
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
         notes: data.notes || [],
@@ -148,12 +172,18 @@ async function getUserData(uid: string): Promise<AppUser | null> {
 }
 
 // Función para crear perfil de usuario en Firestore
-async function createUserProfile(firebaseUser: User, displayName?: string): Promise<AppUser> {
+async function createUserProfile(
+  firebaseUser: User,
+  displayName?: string
+): Promise<AppUser> {
   const userData: AppUser = {
     id: firebaseUser.uid,
     email: firebaseUser.email!,
-    name: displayName || firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-    role: 'USER', // Por defecto USER, cambiar manualmente a ADMIN en Firestore
+    name:
+      displayName ||
+      firebaseUser.displayName ||
+      firebaseUser.email!.split("@")[0],
+    role: "USER", // Por defecto USER, cambiar manualmente a ADMIN en Firestore
     createdAt: new Date(),
     updatedAt: new Date(),
     notes: [],
@@ -166,7 +196,7 @@ async function createUserProfile(firebaseUser: User, displayName?: string): Prom
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    
+
     console.log("✅ User profile created:", userData.email);
     return userData;
   } catch (error) {

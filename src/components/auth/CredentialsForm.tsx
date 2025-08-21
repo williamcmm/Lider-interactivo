@@ -55,34 +55,40 @@ export function CredentialsForm() {
       // Redirigir sin mostrar alerta de éxito
       router.push("/");
 
-    } catch (error: any) {
+    } catch (error) {
       firebaseLogger.error("Login error:", error);
       
       // Manejar errores específicos de Firebase
       let errorMessage = 'Error de autenticación';
-      
-      switch (error.code) {
-        case 'auth/operation-not-allowed':
-          errorMessage = 'El método de autenticación no está habilitado. Contacta al administrador.';
-          break;
-        case 'auth/user-not-found':
-          errorMessage = 'No existe una cuenta con este correo electrónico.';
-          break;
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'El formato del correo electrónico no es válido.';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Esta cuenta ha sido deshabilitada.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Demasiados intentos fallidos. Intenta más tarde.';
-          break;
-        default:
-          errorMessage = error.message || 'Error de autenticación';
+
+      // Narrow error type before accessing properties
+      if (typeof error === "object" && error !== null && "code" in error) {
+        const firebaseError = error as { code: string; message?: string };
+        switch (firebaseError.code) {
+          case 'auth/operation-not-allowed':
+            errorMessage = 'El método de autenticación no está habilitado. Contacta al administrador.';
+            break;
+          case 'auth/user-not-found':
+            errorMessage = 'No existe una cuenta con este correo electrónico.';
+            break;
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+            errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'El formato del correo electrónico no es válido.';
+            break;
+          case 'auth/user-disabled':
+            errorMessage = 'Esta cuenta ha sido deshabilitada.';
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = 'Demasiados intentos fallidos. Intenta más tarde.';
+            break;
+          default:
+            errorMessage = firebaseError.message || 'Error de autenticación';
+        }
+      } else {
+        errorMessage = 'Error de autenticación';
       }
       
       submitAlert(errorMessage, "error");

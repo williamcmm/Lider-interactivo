@@ -169,3 +169,89 @@ export const dbLessonWithContainerToUi = (l: DbLessonWithContainer): UiLesson =>
   createdAt: l.createdAt ? new Date(l.createdAt) : undefined,
   updatedAt: l.updatedAt ? new Date(l.updatedAt) : undefined,
 });
+
+// ===================== MAPPERS PARA NOTES Y SHARED NOTES =====================
+import type { Note as UiNote, SharedNote as UiSharedNote } from '@/types';
+
+// Definir tipos de Prisma para Notes y SharedNotes
+type PrismaNoteType = 'DIRECT' | 'SELECTION' | 'IMPORTED';
+
+export type DbNote = {
+  id: string;
+  content: string;
+  contentHtml: string | null;
+  isShared: boolean;
+  type: PrismaNoteType;
+  selectedText: string | null;
+  positionStart: number | null;
+  positionEnd: number | null;
+  userId: string;
+  lessonId: string | null;
+  fragmentId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type DbSharedNote = {
+  id: string;
+  content: string;
+  selectedText: string | null;
+  noteId: string;
+  authorName: string;
+  comment: string | null;
+  lessonTitle: string;
+  seminarTitle: string;
+  fragmentOrder: number;
+  sharedAt: Date;
+  authorId: string;
+};
+
+// Función auxiliar para convertir NoteType de Prisma a tipo de aplicación
+export function convertNoteType(prismaType: PrismaNoteType): UiNote['type'] {
+  switch (prismaType) {
+    case 'DIRECT':
+      return 'direct';
+    case 'SELECTION':
+      return 'selection';
+    case 'IMPORTED':
+      return 'imported';
+    default:
+      return 'direct';
+  }
+}
+
+// Función para convertir nota de Prisma a tipo de aplicación
+export function dbNoteToUi(prismaNote: DbNote): UiNote {
+  return {
+    id: prismaNote.id,
+    content: prismaNote.content,
+    userId: prismaNote.userId,
+    isShared: prismaNote.isShared,
+    type: convertNoteType(prismaNote.type),
+    selectedText: prismaNote.selectedText || undefined,
+    position: (prismaNote.positionStart !== null && prismaNote.positionEnd !== null) ? {
+      start: prismaNote.positionStart,
+      end: prismaNote.positionEnd
+    } : undefined,
+    createdAt: prismaNote.createdAt,
+    updatedAt: prismaNote.updatedAt,
+    contentHtml: prismaNote.contentHtml || undefined,
+    fragmentId: prismaNote.fragmentId || undefined,
+  };
+}
+
+// Función para convertir nota compartida de Prisma a tipo de aplicación
+export function dbSharedNoteToUi(prismaSharedNote: DbSharedNote): UiSharedNote {
+  return {
+    id: prismaSharedNote.id,
+    noteId: prismaSharedNote.noteId,
+    content: prismaSharedNote.content,
+    authorName: prismaSharedNote.authorName,
+    selectedText: prismaSharedNote.selectedText || undefined,
+    comment: prismaSharedNote.comment || undefined,
+    lessonTitle: prismaSharedNote.lessonTitle,
+    seminarTitle: prismaSharedNote.seminarTitle,
+    fragmentOrder: prismaSharedNote.fragmentOrder,
+    sharedAt: prismaSharedNote.sharedAt,
+  };
+}
