@@ -17,13 +17,14 @@ datasource db {
 
 // Modelo para usuarios
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  role      Role     @default(USER)
-  password  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  firebaseUid String?  @unique // UID de Firebase para autenticación
+  role        Role     @default(USER)
+  password    String?  // Opcional para usuarios de Firebase
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relaciones
   notes       Note[]

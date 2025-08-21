@@ -15,18 +15,21 @@ import { dbSeminarToUi, dbSeriesToUi } from "@/types/db";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useNotesStore } from "@/store/notesStore";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import type { Session } from "next-auth";
+import { useAuth } from "@/context/AuthContext";
 
 type StudyAppProps = {
   initialSeminars?: DbSeminar[];
   initialSeries?: DbSeries[];
-  session?: Session | null;
 };
 
-export function StudyApp({ initialSeminars = [], initialSeries = [], session }: StudyAppProps) {
+export function StudyApp({ initialSeminars = [], initialSeries = [] }: StudyAppProps) {
   // Zustand store para sidebar
   const { isSidebarOpen, isMobile, closeSidebar, toggleSidebar, setIsMobile } =
     useSidebarStore();
+  
+  // Hook de autenticación con Firebase
+  const { user: authUser } = useAuth();
+  const isAuthenticated = !!authUser;
 
   // Zustand store para notas - inicializar en el componente principal
   const { setSharedUsers } = useNotesStore();
@@ -221,7 +224,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [], session }: 
             containers={allContainers}
             onSelectLesson={selectLesson}
             isDesktop={true}
-            isAuthenticated={!!session}
+            isAuthenticated={isAuthenticated}
           />
         )}
 
@@ -233,7 +236,7 @@ export function StudyApp({ initialSeminars = [], initialSeries = [], session }: 
             containers={allContainers}
             onSelectLesson={selectLesson}
             isDesktop={false}
-            isAuthenticated={!!session}
+            isAuthenticated={isAuthenticated}
           />
         )}
 

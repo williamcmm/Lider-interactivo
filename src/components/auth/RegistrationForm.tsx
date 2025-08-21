@@ -28,6 +28,7 @@ export function RegistrationForm() {
       if (!state.ok) {
         submitAlert(state.message, "error");
       } else {
+        // Redirigir sin mostrar alerta de éxito
         router.push("/");
         window.location.reload()
       }
@@ -216,11 +217,6 @@ export function RegistrationForm() {
           </>
         )}
       </button>
-
-      {/* Feedback general */}
-      {state && state.ok && (
-        <p className="text-sm text-green-600">{state.message}</p>
-      )}
     </form>
   );
 }

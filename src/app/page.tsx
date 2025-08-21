@@ -1,26 +1,17 @@
 import { StudyApp } from '@/components/StudyApp';
 import { getSeminarsAndSeries } from '@/actions/admin/get-seminar-and-series';
-import { auth } from '@/auth.config';
 import type { DbSeminar, DbSeries } from '@/types/db';
 
 export default async function Home() {
-  const session = await auth();
-  
-  // Solo obtener datos reales si hay sesión activa
-  let initialSeminars: DbSeminar[] = [];
-  let initialSeries: DbSeries[] = [];
-  
-  if (session) {
-    const result = await getSeminarsAndSeries();
-    initialSeminars = result.ok ? (result.seminars as DbSeminar[]) : [];
-    initialSeries = result.ok ? (result.series as DbSeries[]) : [];
-  }
+  // Obtener datos públicos siempre (la app se encargará de filtrar según autenticación)
+  const result = await getSeminarsAndSeries();
+  const initialSeminars: DbSeminar[] = result.ok ? (result.seminars as DbSeminar[]) : [];
+  const initialSeries: DbSeries[] = result.ok ? (result.series as DbSeries[]) : [];
 
   return (
-  <StudyApp 
-    initialSeminars={initialSeminars} 
-    initialSeries={initialSeries}
-    session={session}
-  />
+    <StudyApp 
+      initialSeminars={initialSeminars} 
+      initialSeries={initialSeries}
+    />
   );
 }

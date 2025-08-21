@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { FiSettings } from "react-icons/fi";
+import { useIsAdmin } from "@/context/AuthContext";
 
 interface AdminButtonProps {
   compact?: boolean;
 }
 
 export function AdminButton({ compact = false }: AdminButtonProps) {
-  const { data } = useSession();
-  const role = data?.user?.role;
-  const isAdmin = role === "ADMIN";
+  const isAdmin = useIsAdmin();
+
+  console.log("🔍 AdminButton - Is admin:", isAdmin);
 
   if (!isAdmin) return null;
 

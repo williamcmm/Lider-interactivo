@@ -1,23 +1,20 @@
 "use client";
 
-import { authenticate } from "@/actions/auth/login";
 import { submitAlert } from "@/utils/alerts";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { useActionState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { firebaseLogger } from '@/utils/logger';
 
 export function CredentialsForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
-
-  const [state, formAction, isPending] = useActionState(
-    authenticate,
-    undefined
-  );
 
   // Prefill once from localStorage on mount
   useEffect(() => {
@@ -32,12 +29,20 @@ export function CredentialsForm() {
     }
   }, []);
 
-  // Handle post-auth result
-  useEffect(() => {
-    if (!state) return;
-    if (state.ok) {
-      // Persist or clear remembered email on successful auth
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPending(true);
 
+    try {
+      // 1. Primero hacer login en el cliente con Firebase Auth
+      firebaseLogger.auth("Starting client-side Firebase login...");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      firebaseLogger.success("Client-side Firebase login successful:", userCredential.user.uid);
+
+      // 2. El hook useFirebaseAuth se encargará del resto automáticamente
+      // (sincronización con DB, actualización de estado, etc.)
+
+      // Persist or clear remembered email on successful auth
       if (rememberMe && email) {
         localStorage.setItem(
           "auth.remember",
@@ -47,12 +52,44 @@ export function CredentialsForm() {
         localStorage.removeItem("auth.remember");
       }
 
+      // Redirigir sin mostrar alerta de éxito
       router.push("/");
-      window.location.reload();
-    } else {
-      submitAlert(state.message, "error");
+
+    } catch (error: any) {
+      firebaseLogger.error("Login error:", error);
+      
+      // Manejar errores específicos de Firebase
+      let errorMessage = 'Error de autenticación';
+      
+      switch (error.code) {
+        case 'auth/operation-not-allowed':
+          errorMessage = 'El método de autenticación no está habilitado. Contacta al administrador.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'No existe una cuenta con este correo electrónico.';
+          break;
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'El formato del correo electrónico no es válido.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'Esta cuenta ha sido deshabilitada.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Demasiados intentos fallidos. Intenta más tarde.';
+          break;
+        default:
+          errorMessage = error.message || 'Error de autenticación';
+      }
+      
+      submitAlert(errorMessage, "error");
+    } finally {
+      setIsPending(false);
     }
-  }, [state, rememberMe, email, router]);
+  };
 
   // Keep localStorage in sync when user toggles remember or edits email
   useEffect(() => {
@@ -80,7 +117,7 @@ export function CredentialsForm() {
       </div>
 
       {/* Formulario de credenciales */}
-      <form action={formAction} className="space-y-4" autoComplete="on">
+      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
         {/* Campo de email */}
         <div>
           <label

@@ -1,8 +1,8 @@
 "use server";
 
-import prisma from "@/lib/prisma";
-import { signIn } from "@/auth.config";
-import bcrypt from "bcryptjs";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { syncFirebaseUser } from './firebase-sync';
 import { z } from "zod";
 
 interface Response {
@@ -60,54 +60,53 @@ export async function registerUser(
       };
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return {
-        ok: false,
-        status: 409,
-        message: "Ya existe una cuenta con este correo",
-        fieldErrors: { email: "El correo ya está en uso" },
-      };
-    }
+    // Crear usuario en Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
 
-    const hashed = bcrypt.hashSync(password);
-
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashed,
-      },
+    // Sincronizar con la DB
+    const syncResult = await syncFirebaseUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email || '',
+      name: name,
     });
 
-    // Iniciar sesión sin redirigir desde el servidor para evitar NEXT_REDIRECT
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    return { ok: true, status: 201, message: "Registro exitoso" };
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      (error as { code?: string }).code === "P2002"
-    ) {
-      return {
-        ok: false,
-        status: 409,
-        message: "Ya existe una cuenta con este correo",
-        fieldErrors: { email: "El correo ya está en uso" },
-      };
+    if (syncResult.success) {
+      return { ok: true, status: 201, message: "Registro exitoso" };
+    } else {
+      throw new Error(syncResult.error || 'Failed to sync user with database');
     }
 
-    console.error("Error en registro: ", error);
+  } catch (error: any) {
+    console.error("❌ Registration error:", error);
+    
+    // Manejar errores específicos de Firebase
+    let errorMessage = 'Error en el registro';
+    
+    switch (error.code) {
+      case 'auth/operation-not-allowed':
+        errorMessage = 'El registro no está habilitado. Contacta al administrador.';
+        break;
+      case 'auth/email-already-in-use':
+        errorMessage = 'Ya existe una cuenta con este correo electrónico.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'El formato del correo electrónico no es válido.';
+        break;
+      case 'auth/weak-password':
+        errorMessage = 'La contraseña es muy débil. Debe tener al menos 6 caracteres.';
+        break;
+      case 'auth/network-request-failed':
+        errorMessage = 'Error de conexión. Verifica tu internet.';
+        break;
+      default:
+        errorMessage = error.message || 'Error en el registro';
+    }
+    
     return {
       ok: false,
       status: 500,
-      message: "Error interno al registrar usuario",
+      message: errorMessage
     };
   }
 }

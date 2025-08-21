@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth.config";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 // Create a note for the current authenticated user
 export async function createNote(input: {
@@ -12,16 +12,15 @@ export async function createNote(input: {
   lessonId?: string;
 }) {
   try {
-    const session = await auth();
-    const userId = session?.user?.id as string | undefined;
-    if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
+    const user = await getCurrentUser();
+    if (!user) return { ok: false as const, error: "UNAUTHENTICATED" };
 
     // Determine type
     const type = input.selectedText ? "SELECTION" : "DIRECT";
 
     const note = await prisma.note.create({
       data: {
-        userId,
+        userId: user.id,
         content: input.content,
         contentHtml: input.contentHtml ?? null,
         selectedText: input.selectedText ?? null,
@@ -42,12 +41,11 @@ export async function createNote(input: {
 // Delete a note owned by the current user
 export async function deleteNote(id: string) {
   try {
-    const session = await auth();
-    const userId = session?.user?.id as string | undefined;
-    if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
+    const user = await getCurrentUser();
+    if (!user) return { ok: false as const, error: "UNAUTHENTICATED" };
 
     const note = await prisma.note.findUnique({ where: { id } });
-    if (!note || note.userId !== userId) {
+    if (!note || note.userId !== user.id) {
       return { ok: false as const, error: "NOT_FOUND_OR_FORBIDDEN" };
     }
 
@@ -63,12 +61,11 @@ export async function deleteNote(id: string) {
 // Get notes for a fragment for current user
 export async function getNotesForFragment(fragmentId: string) {
   try {
-    const session = await auth();
-    const userId = session?.user?.id as string | undefined;
-    if (!userId) return { ok: true as const, notes: [] };
+    const user = await getCurrentUser();
+    if (!user) return { ok: true as const, notes: [] };
 
     const notes = await prisma.note.findMany({
-      where: { fragmentId, userId },
+      where: { fragmentId, userId: user.id },
       orderBy: { createdAt: "asc" },
     });
     return { ok: true as const, notes };
@@ -82,11 +79,10 @@ export async function getNotesForFragment(fragmentId: string) {
 // Clear notes for a fragment for current user
 export async function clearNotesForFragment(fragmentId: string) {
   try {
-    const session = await auth();
-    const userId = session?.user?.id as string | undefined;
-    if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
+    const user = await getCurrentUser();
+    if (!user) return { ok: false as const, error: "UNAUTHENTICATED" };
 
-    await prisma.note.deleteMany({ where: { fragmentId, userId } });
+    await prisma.note.deleteMany({ where: { fragmentId, userId: user.id } });
     return { ok: true as const };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
