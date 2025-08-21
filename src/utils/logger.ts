@@ -3,6 +3,10 @@
  * Los logs se muestran solo en desarrollo o cuando NEXT_PUBLIC_ENABLE_LOGGING=true
  */
 
+// Tipo para valores que pueden ser loggeados de forma segura
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LoggableValue = string | number | boolean | null | undefined | object | Error | any;
+
 const isLoggingEnabled = (): boolean => {
   // Verificar si estamos en desarrollo
   if (process.env.NODE_ENV === 'development') {
@@ -13,32 +17,31 @@ const isLoggingEnabled = (): boolean => {
   return process.env.NEXT_PUBLIC_ENABLE_LOGGING === 'true';
 };
 
-/* eslint-disable */
 export const logger = {
-  log: (...args: any[]) => {
+  log: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.log(...args);
     }
   },
   
-  warn: (...args: any[]) => {
+  warn: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.warn(...args);
     }
   },
   
-  error: (...args: any[]) => {
+  error: (...args: LoggableValue[]) => {
     // Los errores siempre se muestran, incluso en producción
     console.error(...args);
   },
   
-  info: (...args: any[]) => {
+  info: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.info(...args);
     }
   },
   
-  debug: (...args: any[]) => {
+  debug: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.debug(...args);
     }
@@ -47,21 +50,20 @@ export const logger = {
 
 // Shortcuts para casos específicos de Firebase
 export const firebaseLogger = {
-  auth: (...args: any[]) => {
+  auth: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.log('🔥', ...args);
     }
   },
   
-  success: (...args: any[]) => {
+  success: (...args: LoggableValue[]) => {
     if (isLoggingEnabled()) {
       console.log('✅', ...args);
     }
   },
   
-  error: (...args: any[]) => {
+  error: (...args: LoggableValue[]) => {
     // Los errores siempre se muestran
     console.error('❌', ...args);
   }
 };
-/* eslint-disable */

@@ -56,7 +56,7 @@ export const authService = {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const userData = await getUserData(result.user.uid);
       return { success: true, user: userData };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error signing in:", error);
       return {
         success: false,
