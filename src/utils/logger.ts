@@ -65,5 +65,14 @@ export const firebaseLogger = {
   error: (...args: LoggableValue[]) => {
     // Los errores siempre se muestran
     console.error('❌', ...args);
+  },
+  
+  // Helper para mostrar un resumen conciso cuando no estamos en debug mode
+  summary: (message: string, details?: object) => {
+    if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+      console.log('📊', message, details);
+    } else if (isLoggingEnabled()) {
+      console.log('📊', message);
+    }
   }
 };

@@ -48,31 +48,38 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
             email: firebaseUser.email,
           });
 
-          // Obtener el token de Firebase y guardarlo en cookies con configuración mejorada para producción
+          // Obtener el token de Firebase y guardarlo en cookies con configuración simplificada
           const token = await firebaseUser.getIdToken();
 
-          // Configuración de cookie más robusta para producción
+          // Configuración de cookie más simple y robusta
           const isProduction = process.env.NODE_ENV === "production";
-          const isHTTPS = window.location.protocol === "https:";
+          
+          // En desarrollo, usar configuración simple
+          if (!isProduction) {
+            document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`;
+          } else {
+            // En producción, ajustar según el protocolo
+            const isHTTPS = window.location.protocol === "https:";
+            if (isHTTPS) {
+              document.cookie = `firebase-token=${token}; path=/; max-age=3600; Secure; SameSite=None`;
+            } else {
+              document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Lax`;
+            }
+          }
 
-          const cookieOptions = [
-            `firebase-token=${token}`,
-            "path=/",
-            "max-age=3600",
-            // En producción y HTTPS, usar Secure y SameSite=None para mejor compatibilidad
-            isProduction && isHTTPS ? "Secure" : "",
-            isProduction ? "SameSite=None" : "SameSite=Lax",
-          ]
-            .filter(Boolean)
-            .join("; ");
-
-          document.cookie = cookieOptions;
-          logger.debug("Cookie set:", {
+          logger.debug("Cookie set with simplified config:", {
             isProduction,
-            isHTTPS,
-            cookieOptions: cookieOptions.replace(token, "[TOKEN]"),
+            protocol: window.location.protocol,
             domain: window.location.hostname,
           });
+
+          // Verificar que la cookie se estableció correctamente
+          const testCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('firebase-token='));
+          if (testCookie) {
+            logger.debug("✅ Cookie verified in browser:", testCookie.length > 50 ? "Present" : "Short/Missing");
+          } else {
+            logger.error("❌ Cookie not found in browser after setting");
+          }
 
           // Sincronizar usuario con la DB usando Server Action
           const result = await syncFirebaseUser({

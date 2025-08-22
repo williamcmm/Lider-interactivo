@@ -22,6 +22,7 @@ export function GoogleLoginButton({ disabled = false }: GoogleLoginButtonProps) 
       firebaseLogger.auth("Starting Google login...");
       
       const provider = new GoogleAuthProvider();
+      
       await signInWithPopup(auth, provider);
       
       // El hook useFirebaseAuth se encargará del resto automáticamente

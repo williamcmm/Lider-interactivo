@@ -70,6 +70,17 @@ Una aplicación web moderna para el estudio bíblico con seminarios, series, lec
    NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
    ```
 
+4. Configurar logging (opcional):
+   ```env
+   # Variables para controlar el logging en producción
+   NEXT_PUBLIC_ENABLE_LOGGING=false     # Logs generales en producción
+   NEXT_PUBLIC_DEBUG_AUTH=false         # Logs detallados de autenticación
+   ```
+
+   **Nota**: En desarrollo, los logs siempre están habilitados. En producción:
+   - `NEXT_PUBLIC_ENABLE_LOGGING=true` habilita logs generales
+   - `NEXT_PUBLIC_DEBUG_AUTH=true` habilita logs detallados de autenticación y cookies
+
 ### Desarrollo
 
 Ejecutar el servidor de desarrollo:

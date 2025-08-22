@@ -26,7 +26,12 @@ interface SyncUserResult {
 
 export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Promise<SyncUserResult> {
   try {
-    firebaseLogger.auth("Firebase sync action:", { uid, email, name });
+    // Solo mostrar sync action en debug mode
+    if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+      firebaseLogger.auth("Firebase sync action:", { uid, email, name });
+    } else {
+      firebaseLogger.summary("Syncing Firebase user");
+    }
 
     if (!uid || !email) {
       return {
@@ -67,7 +72,9 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        firebaseLogger.success("Updated existing user with Firebase UID");
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+          firebaseLogger.success("Updated existing user with Firebase UID");
+        }
       } else {
         // Crear nuevo usuario
         user = await prisma.user.create({
@@ -82,7 +89,9 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        firebaseLogger.success("Created new user");
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+          firebaseLogger.success("Created new user");
+        }
       }
     } else {
       // Actualizar información si es necesaria
@@ -95,7 +104,9 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        firebaseLogger.success("Updated user name");
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+          firebaseLogger.success("Updated user name");
+        }
       }
     }
 
