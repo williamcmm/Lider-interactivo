@@ -197,7 +197,6 @@ async function createUserProfile(
       updatedAt: new Date(),
     });
 
-    console.log("✅ User profile created:", userData.email);
     return userData;
   } catch (error) {
     console.error("❌ Error creating user profile:", error);

@@ -11,8 +11,6 @@ interface AdminButtonProps {
 export function AdminButton({ compact = false }: AdminButtonProps) {
   const isAdmin = useIsAdmin();
 
-  console.log("🔍 AdminButton - Is admin:", isAdmin);
-
   if (!isAdmin) return null;
 
   return (

@@ -11,9 +11,7 @@ interface AuthButtonProps {
 }
 
 export function AuthButton({ compact = false }: AuthButtonProps) {
-  const { status, data } = useSession();
-  
-  console.log("🔍 AuthButton - Session:", { status, data });
+  const { status } = useSession()
   
   const isAuth = status === "authenticated";
 
