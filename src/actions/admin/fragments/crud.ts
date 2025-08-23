@@ -1,9 +1,32 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { verifyUser } from "../verify-user";
 
-export async function addFragment(lessonId: string) {
+export async function addFragment(
+  lessonId: string,
+  userId: string | null | undefined
+) {
   try {
+    const { user } = await verifyUser(userId);
+
+    if (!user) {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 401,
+        type: null,
+      };
+    }
+
+    if (user.role !== "ADMIN") {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 403,
+        type: null,
+      };
+    }
     const agg = await prisma.fragment.aggregate({
       _max: { order: true },
       where: { lessonId },
@@ -40,9 +63,29 @@ export async function addFragment(lessonId: string) {
 
 export async function updateFragment(
   id: string,
-  data: { readingMaterial?: string; studyAids?: string; isCollapsed?: boolean }
+  data: { readingMaterial?: string; studyAids?: string; isCollapsed?: boolean },
+  userId: string | null | undefined
 ) {
   try {
+    const { user } = await verifyUser(userId);
+
+    if (!user) {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 401,
+        type: null,
+      };
+    }
+
+    if (user.role !== "ADMIN") {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 403,
+        type: null,
+      };
+    }
     const fragment = await prisma.fragment.update({
       where: { id },
       data,
@@ -52,12 +95,34 @@ export async function updateFragment(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("updateFragment error:", message);
-    return { ok: false as const, error: message };
+    return { ok: false as const, message };
   }
 }
 
-export async function removeFragment(id: string) {
+export async function removeFragment(
+  id: string,
+  userId: string | null | undefined
+) {
   try {
+    const { user } = await verifyUser(userId);
+
+    if (!user) {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 401,
+        type: null,
+      };
+    }
+
+    if (user.role !== "ADMIN") {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 403,
+        type: null,
+      };
+    }
     await prisma.fragment.delete({ where: { id } });
     return { ok: true as const, id };
   } catch (err: unknown) {

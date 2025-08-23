@@ -73,14 +73,6 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
             domain: window.location.hostname,
           });
 
-          // Verificar que la cookie se estableció correctamente
-          const testCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('firebase-token='));
-          if (testCookie) {
-            logger.debug("✅ Cookie verified in browser:", testCookie.length > 50 ? "Present" : "Short/Missing");
-          } else {
-            logger.error("❌ Cookie not found in browser after setting");
-          }
-
           // Sincronizar usuario con la DB usando Server Action
           const result = await syncFirebaseUser({
             uid: firebaseUser.uid,

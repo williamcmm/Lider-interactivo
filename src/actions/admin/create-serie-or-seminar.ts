@@ -9,6 +9,21 @@ import {
   AudioFile as UiAudioFile,
 } from "@/types";
 import type { CreationForm } from "@/components/admin/types";
+import { verifyUser } from "./verify-user";
+
+interface Data {
+  title: string;
+  description?: string;
+  audioFiles?: UiAudioFile[];
+  lessons: {
+    title: string;
+    order?: number;
+    content?: string;
+    fragments?: UiFragment[];
+  }[];
+}
+
+type DataWithType = Data & { type?: "seminar" | "series" };
 
 /**
  * Create a Seminar and all nested content using a single Prisma transaction.
@@ -16,21 +31,29 @@ import type { CreationForm } from "@/components/admin/types";
  * Returns { ok, seminar?, error? } to keep server-action friendly semantics.
  */
 export const createSerieOrSeminar = async (
-  data:
-    | Seminar
-    | ({
-        title: string;
-        description?: string;
-        audioFiles?: UiAudioFile[];
-        lessons: {
-          title: string;
-          order?: number;
-          content?: string;
-          fragments?: UiFragment[];
-        }[];
-  } & { type?: "seminar" | "series" })
+  data: Seminar | DataWithType,
+  userId: string | null | undefined
 ) => {
   try {
+    const { user } = await verifyUser(userId);
+
+    if (!user) {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 401,
+        type: null,
+      };
+    }
+
+    if (user.role !== "ADMIN") {
+      return {
+        ok: false,
+        message: "Usuario no autorizado",
+        status: 403,
+        type: null,
+      };
+    }
     const result = await prisma.$transaction(async (tx) => {
       const title = data.title;
       const description = data.description ?? null;
@@ -43,10 +66,10 @@ export const createSerieOrSeminar = async (
             content?: string;
             fragments?: UiFragment[];
           }[];
-  const type =
-    "type" in data && (data as { type?: "seminar" | "series" }).type
-      ? (data as { type?: "seminar" | "series" }).type
-      : "seminar";
+      const type =
+        "type" in data && (data as { type?: "seminar" | "series" }).type
+          ? (data as { type?: "seminar" | "series" }).type
+          : "seminar";
 
       // Normalize lessons: ensure order, content, and fragments with defaults
       const normalizedLessons = (lessonsInput ?? []).map((lesson, idx) => {
@@ -83,7 +106,9 @@ export const createSerieOrSeminar = async (
                 order: l.order,
                 containerType: "SERIES",
                 fragments: {
-                  create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
+                  create: l.fragments.map((f: UiFragment) =>
+                    toFragmentCreate(f)
+                  ),
                 },
               })),
             },
@@ -128,7 +153,9 @@ export const createSerieOrSeminar = async (
                 order: l.order,
                 containerType: "SEMINAR",
                 fragments: {
-                  create: l.fragments.map((f: UiFragment) => toFragmentCreate(f)),
+                  create: l.fragments.map((f: UiFragment) =>
+                    toFragmentCreate(f)
+                  ),
                 },
               })),
             },
@@ -175,7 +202,10 @@ export const createSerieOrSeminar = async (
  * Convenience wrapper: create a Seminar from the AdminPanel CreationForm.
  * Uses default one-fragment/one-slide seed per lesson like the UI mock.
  */
-export const createSeminarFromAdminForm = async (form: CreationForm) => {
+export const createSeminarFromAdminForm = async (
+  form: CreationForm,
+  userId: string | null | undefined
+) => {
   const lessons = (form.lessons ?? []).map((l, idx) => ({
     title: l.title,
     order: l.order ?? idx + 1,
@@ -183,16 +213,22 @@ export const createSeminarFromAdminForm = async (form: CreationForm) => {
     fragments: [defaultFragment(1)],
   }));
 
-  return createSerieOrSeminar({
-    title: form.title,
-    description: form.description,
-    audioFiles: form.audioFiles,
-    lessons,
-    type: "seminar",
-  });
+  return createSerieOrSeminar(
+    {
+      title: form.title,
+      description: form.description,
+      audioFiles: form.audioFiles,
+      lessons,
+      type: "seminar",
+    },
+    userId
+  );
 };
 
-export const createSeriesFromAdminForm = async (form: CreationForm) => {
+export const createSeriesFromAdminForm = async (
+  form: CreationForm,
+  userId: string | null | undefined
+) => {
   const lessons = (form.lessons ?? []).map((l, idx) => ({
     title: l.title,
     order: l.order ?? idx + 1,
@@ -200,13 +236,16 @@ export const createSeriesFromAdminForm = async (form: CreationForm) => {
     fragments: [defaultFragment(1)],
   }));
 
-  return createSerieOrSeminar({
-    title: form.title,
-    description: form.description,
-    audioFiles: form.audioFiles,
-    lessons,
-    type: "series",
-  });
+  return createSerieOrSeminar(
+    {
+      title: form.title,
+      description: form.description,
+      audioFiles: form.audioFiles,
+      lessons,
+      type: "series",
+    },
+    userId
+  );
 };
 
 // =============== Helpers ===============
@@ -234,7 +273,14 @@ function toFragmentCreate(fragment: UiFragment) {
     studyAids: string;
     isCollapsed: boolean;
     slides: { create: { title: string; content: string; order: number }[] };
-    videos: { create: { title: string; youtubeId: string; description: string | null; order: number }[] };
+    videos: {
+      create: {
+        title: string;
+        youtubeId: string;
+        description: string | null;
+        order: number;
+      }[];
+    };
     narrationAudio?: {
       create: {
         name: string;

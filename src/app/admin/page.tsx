@@ -24,7 +24,7 @@ export default function AdminPage() {
           setSeminars(result.seminars as DbSeminar[]);
           setSeries(result.series as DbSeries[]);
         } else {
-          logger.error("❌ Failed to load admin data:", result.error);
+          logger.error("❌ Failed to load admin data:", result.message);
         }
       } catch (error) {
         logger.error("💥 Error loading admin data:", error);

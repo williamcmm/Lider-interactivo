@@ -52,6 +52,6 @@ export const getSeminarsAndSeries = async () => {
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : "Unknown error";
 		console.error("getSeminarsAndSeries error:", message);
-		return { ok: false as const, error: message };
+		return { ok: false as const, message: message, status: 500 };
 	}
 };

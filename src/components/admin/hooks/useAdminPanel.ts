@@ -24,11 +24,12 @@ import {
   updateFragment as updateFragmentAction,
   reorderFragments as reorderFragmentsAction,
 } from "@/actions/admin/fragments/crud";
-import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/crud";
+import { updateLessonTitle as updateLessonTitleAction } from "@/actions/admin/lessons/update-title";
 import {
   updateSeminarTitle,
   updateSeriesTitle,
 } from "@/actions/admin/update-serie-seminar-title";
+import { useAuth } from "@/context/AuthContext";
 
 type InitData = {
   initialSeminars?: DbSeminar[];
@@ -36,6 +37,9 @@ type InitData = {
 };
 
 export function useAdminPanel(init?: InitData) {
+  // Current user
+  const { user } = useAuth();
+
   // Use shared mappers from db.ts instead of local ones
   const [seminars, setSeminars] = useState<Seminar[]>(
     (init?.initialSeminars ?? []).map(dbSeminarToUi)
@@ -176,16 +180,19 @@ export function useAdminPanel(init?: InitData) {
           ),
         };
 
-        const result = await createSeminarFromAdminForm({
-          ...sanitizedForm,
-          // Ensure lesson titles and orders are trimmed/sequenced
-          lessons: sanitizedForm.lessons.map((l, idx) => ({
-            title: l.title.trim(),
-            order: l.order ?? idx + 1,
-          })),
-          title: sanitizedForm.title.trim(),
-          description: sanitizedForm.description.trim(),
-        });
+        const result = await createSeminarFromAdminForm(
+          {
+            ...sanitizedForm,
+            // Ensure lesson titles and orders are trimmed/sequenced
+            lessons: sanitizedForm.lessons.map((l, idx) => ({
+              title: l.title.trim(),
+              order: l.order ?? idx + 1,
+            })),
+            title: sanitizedForm.title.trim(),
+            description: sanitizedForm.description.trim(),
+          },
+          user?.id
+        );
 
         if (result.ok && result.seminar) {
           const s = result.seminar as DbSeminar;
@@ -198,7 +205,7 @@ export function useAdminPanel(init?: InitData) {
           submitAlert("Seminario creado exitosamente", "success");
         } else {
           console.error("Error creando seminario:", result.error);
-          submitAlert("Error creando seminario", "error");
+          submitAlert(result.message || "Error creando seminario", "error");
           // No cerrar el formulario ni resetear cuando hay error
           return;
         }
@@ -227,15 +234,18 @@ export function useAdminPanel(init?: InitData) {
           ),
         };
 
-        const result = await createSeriesFromAdminForm({
-          ...sanitizedForm,
-          lessons: sanitizedForm.lessons.map((l, idx) => ({
-            title: l.title.trim(),
-            order: l.order ?? idx + 1,
-          })),
-          title: sanitizedForm.title.trim(),
-          description: sanitizedForm.description.trim(),
-        });
+        const result = await createSeriesFromAdminForm(
+          {
+            ...sanitizedForm,
+            lessons: sanitizedForm.lessons.map((l, idx) => ({
+              title: l.title.trim(),
+              order: l.order ?? idx + 1,
+            })),
+            title: sanitizedForm.title.trim(),
+            description: sanitizedForm.description.trim(),
+          },
+          user?.id
+        );
 
         if (result.ok && (result as { series?: DbSeries }).series) {
           const s = (result as { series: DbSeries }).series;
@@ -248,7 +258,7 @@ export function useAdminPanel(init?: InitData) {
           submitAlert("Serie creada exitosamente", "success");
         } else {
           console.error("Error creando serie:", result.error);
-          submitAlert("Error creando serie", "error");
+          submitAlert(result.message || "Error creando serie", "error");
           // No cerrar el formulario ni resetear cuando hay error
           return;
         }
@@ -293,11 +303,8 @@ export function useAdminPanel(init?: InitData) {
 
   const onUpdateLessonTitle = async (lessonId: string, title: string) => {
     try {
-      const res = await updateLessonTitleAction(lessonId, title);
-      if (!res.ok)
-        throw new Error(
-          (res as { error?: string }).error || "Error actualizando título"
-        );
+      const res = await updateLessonTitleAction(lessonId, title, user?.id);
+      if (!res.ok) throw new Error(res.message || "Error actualizando título");
       const updater = (list: (Seminar | Series)[]) =>
         list.map((c) => ({
           ...c,
@@ -344,12 +351,9 @@ export function useAdminPanel(init?: InitData) {
         state.activeTab === "seminars" ||
         state.editingContainer?.type === "seminar";
       const res = isSeminar
-        ? await updateSeminarTitle(containerId, trimmed)
-        : await updateSeriesTitle(containerId, trimmed);
-      if (!res.ok)
-        throw new Error(
-          (res as { error?: string }).error || "Error actualizando título"
-        );
+        ? await updateSeminarTitle(containerId, trimmed, user?.id)
+        : await updateSeriesTitle(containerId, trimmed, user?.id);
+      if (!res.ok) throw new Error(res.message || "Error actualizando título");
       if (isSeminar) {
         setSeminars((prev) =>
           prev.map((s) => (s.id === containerId ? { ...s, title: trimmed } : s))
@@ -392,7 +396,7 @@ export function useAdminPanel(init?: InitData) {
       // Procedemos con eliminación directa por simplicidad, ya que el patrón actual de submitAlert no soporta confirm.
       try {
         setDeletingId(id);
-        const res = await deleteSeminarOrSerie(id);
+        const res = await deleteSeminarOrSerie(id, user?.id);
         if (!res.ok)
           throw new Error(
             (res as { error?: string }).error || "Error al eliminar"
@@ -424,7 +428,7 @@ export function useAdminPanel(init?: InitData) {
     const currentLesson =
       state.editingContainer.lessons[state.selectedLessonIndex];
     setIsAddingFragment(true);
-    const res = await addFragmentAction(currentLesson.id);
+    const res = await addFragmentAction(currentLesson.id, user?.id);
     if (res.ok) {
       const f = res.fragment as DbFragment;
       const mapped: Fragment = {
@@ -453,10 +457,7 @@ export function useAdminPanel(init?: InitData) {
         fragmentsData: [...prev.fragmentsData, mapped],
       }));
     } else {
-      submitAlert(
-        (res as { error?: string }).error || "No se pudo agregar el fragmento",
-        "error"
-      );
+      submitAlert(res.message || "No se pudo agregar el fragmento", "error");
     }
     setIsAddingFragment(false);
   };
@@ -474,7 +475,7 @@ export function useAdminPanel(init?: InitData) {
     if (!result.isConfirmed) return;
     const fragment = state.fragmentsData[fragmentIndex];
     if (!fragment) return;
-    const res = await removeFragmentAction(fragment.id);
+    const res = await removeFragmentAction(fragment.id, user?.id);
     if (res.ok) {
       const updatedFragments = state.fragmentsData.filter(
         (_, index) => index !== fragmentIndex
@@ -492,24 +493,33 @@ export function useAdminPanel(init?: InitData) {
         state.editingContainer!.lessons[state.selectedLessonIndex];
       await reorderFragmentsAction(currentLesson.id, orderedIds);
     } else {
-      submitAlert(
-        (res as { error?: string }).error || "No se pudo eliminar el fragmento",
-        "error"
-      );
+      submitAlert(res.message || "No se pudo eliminar el fragmento", "error");
     }
   };
 
   const saveFragmentsToLesson = async () => {
     if (!state.editingContainer) return;
     setIsSavingFragments(true);
+    let unauthorizedAction: string | null = null;
     try {
       // Persist updates for each fragment basic fields
       for (const f of state.fragmentsData) {
-        await updateFragmentAction(f.id, {
-          readingMaterial: f.readingMaterial,
-          studyAids: f.studyAids,
-          isCollapsed: f.isCollapsed ?? false,
-        });
+        const res = await updateFragmentAction(
+          f.id,
+          {
+            readingMaterial: f.readingMaterial,
+            studyAids: f.studyAids,
+            isCollapsed: f.isCollapsed ?? false,
+          },
+          user?.id
+        );
+        if (!res.ok) {
+          unauthorizedAction =
+            res.message || `Error actualizando fragmento ${f.order}`;
+          throw new Error(unauthorizedAction);
+        } else {
+          unauthorizedAction = null;
+        }
       }
       // Persist order
       const currentLesson =
@@ -536,7 +546,10 @@ export function useAdminPanel(init?: InitData) {
       submitAlert("Fragmentos guardados", "success");
     } catch (e) {
       console.error("Error guardando fragmentos", e);
-      submitAlert("No se pudieron guardar los fragmentos", "error");
+      submitAlert(
+        unauthorizedAction || "No se pudieron guardar los fragmentos",
+        "error"
+      );
     } finally {
       setIsSavingFragments(false);
     }
