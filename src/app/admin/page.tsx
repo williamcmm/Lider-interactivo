@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/Loading";
 import { logger } from "@/utils/logger";
 import { useIsAdmin, useAuth } from "@/context/AuthContext";
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
   const [seminars, setSeminars] = useState<DbSeminar[]>([]);
@@ -39,25 +40,11 @@ export default function AdminPage() {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Debes iniciar sesión</h2>
-          <p className="text-gray-500">Acceso solo para administradores</p>
-        </div>
-      </div>
-    );
+    redirect("/auth/login");
   }
 
   if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Acceso denegado</h2>
-          <p className="text-gray-500">Solo los administradores pueden acceder a esta página.</p>
-        </div>
-      </div>
-    );
+    redirect("/403");
   }
 
   return (
