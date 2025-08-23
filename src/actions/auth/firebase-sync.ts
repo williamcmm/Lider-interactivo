@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import prisma from '@/lib/prisma';
-import { Note, SharedNote } from '@/types';
-import { firebaseLogger } from '@/utils/logger';
-import { dbNoteToUi, dbSharedNoteToUi } from '@/types/db';
+import prisma from "@/lib/prisma";
+import { Note, SharedNote } from "@/types";
+import { firebaseLogger } from "@/utils/logger";
+import { dbNoteToUi, dbSharedNoteToUi } from "@/types/db";
 
 interface SyncUserParams {
   uid: string;
@@ -24,19 +24,21 @@ interface SyncUserResult {
   error?: string;
 }
 
-export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Promise<SyncUserResult> {
+export async function syncFirebaseUser({
+  uid,
+  email,
+  name,
+}: SyncUserParams): Promise<SyncUserResult> {
   try {
     // Solo mostrar sync action en debug mode
-    if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+    if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
       firebaseLogger.auth("Firebase sync action:", { uid, email, name });
-    } else {
-      firebaseLogger.summary("Syncing Firebase user");
     }
 
     if (!uid || !email) {
       return {
         success: false,
-        error: 'UID and email are required'
+        error: "UID and email are required",
       };
     }
 
@@ -63,7 +65,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
         // Actualizar el usuario existente con el Firebase UID
         user = await prisma.user.update({
           where: { id: existingUser.id },
-          data: { 
+          data: {
             firebaseUid: uid,
             name: name || existingUser.name,
           },
@@ -72,7 +74,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
           firebaseLogger.success("Updated existing user with Firebase UID");
         }
       } else {
@@ -81,15 +83,15 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
           data: {
             firebaseUid: uid,
             email,
-            name: name || email.split('@')[0],
-            role: 'USER', // Role por defecto
+            name: name || email.split("@")[0],
+            role: "USER", // Role por defecto
           },
           include: {
             notes: true,
             sharedNotes: true,
           },
         });
-        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
           firebaseLogger.success("Created new user");
         }
       }
@@ -104,7 +106,7 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
             sharedNotes: true,
           },
         });
-        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+        if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
           firebaseLogger.success("Updated user name");
         }
       }
@@ -119,14 +121,13 @@ export async function syncFirebaseUser({ uid, email, name }: SyncUserParams): Pr
         role: user.role,
         notes: user.notes.map(dbNoteToUi),
         sharedNotes: user.sharedNotes.map(dbSharedNoteToUi),
-      }
+      },
     };
-
   } catch (error) {
     firebaseLogger.error("Firebase sync error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Sync error'
+      error: error instanceof Error ? error.message : "Sync error",
     };
   }
 }

@@ -93,9 +93,6 @@ export async function getCurrentUser() {
         email: user.email,
         role: user.role,
       });
-    } else {
-      // Log conciso para producción
-      firebaseLogger.summary(`Auth: ${user.role} user authenticated`);
     }
     
     return user;
